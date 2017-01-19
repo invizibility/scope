@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HiC Data Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <style>
+        #ctrl {
+            width: 200px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background-color: #BBB;
+        }
+
+        #canvas {
+            min-height: 700px;
+            background-color: #EEE;
+            margin-left: 200px;
+            /* Same as left's width */
+        }
+
+        ​
+    </style>
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-queue.v2.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-request.v1.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+    <div id="ctrl" class="container">
+        <div id="monitor">
+            <table class="table table-stripped">
+                <thead>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>width</td>
+                        <td id="canvasWidth"></td>
+                    </tr>
+                    <tr>
+                        <td>height</td>
+                        <td id="canvasHeight"></td>
+                    </tr>
+                    <tr>
+                        <td>bpRes</td>
+                        <td id="bpRes"></td>
+                        <tr>
+                            <td>max value</td>
+                            <td id="matMax"></td>
+                        </tr>
+                        <tr>
+                            <td>min value</td>
+                            <td id="matMin"></td>
+                        </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="parameters" class="form-group">
+            <label for="norm">Normalized Method</label>
+            <select id="norm" class="form-control">
+            </select>
+            <label for="unit">Unit</label>
+            <select id="unit" class="form-control">
+            </select>
+            <label for="regionNum">Regions Number<label>
+            <select id="regionNum" class="form-control">
+              <option value=1>1</option>
+              <option value=2>2</option>
+              <option value=3>3</option>
+            </select>
+            <label for="regions">Regions</label>
+            <div id="regions" style="padding-left:10px">
+
+            </div>
+            <br>
+            <div>
+                <button class="btn" value="submit" id="submit">submit</button>
+            </div>
+        </div>
+    </div>
+    <div id="canvasdiv">
+        <canvas id="canvas">
+      </canvas>
+    </div>
+</body>
+<script>
+    (function(d3, $) {
+
+        //var url = "http://127.0.0.1:6060/get2dnorm/19:1-10000000/19:1-10000000/1/0/0/bin"
+        //console.log(d3.request)
+        var norms = [
+            "NONE",
+            "VC",
+            "VC_SQRT",
+            "KR",
+            "GW_KR",
+            "INTER_KR",
+            "GW_VC",
+            "INTER_VC",
+            "LOADED"
+        ]
+        var units = ["BP", "FRAG"]
+        var bpres = []
+        var default_range = function(length) {
+            return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
+        }
+        var totalLength = function(regions) {
+            var l = 0;
+            regions.forEach(function(r, i) {
+                l += (+r.end) - (+r.start)
+            })
+            return l
+        }
+        var regionsToResIdx = function(regions, width, height) {
+            var w = Math.min(width, height)
+            var l = totalLength(regions)
+            console.log(width, height)
+            console.log(w, l)
+            var pixel = l / w;
+            console.log("pixel", pixel)
+            var resIdx = 0;
+            for (var i = 0; i < bpres.length; i++) {
+                if (bpres[i] < pixel) {
+                    resIdx = i - 1;
+                    break;
+                }
+            }
+            if (resIdx < 0) {
+                resIdx = 0
+            }
+            scope.cellSize = w / (l / bpres[resIdx])
+            scope.offset = []
+            var offset = 0.0;
+            scope.regions.forEach(function(d, i) {
+                scope.offset.push(offset)
+                offset += scope.cellSize * ((+d.end - d.start) / bpres[resIdx])
+            })
+            return resIdx
+        }
+        var scope = {}
+        var getscope = function() {
+            var num = d3.select("#regionNum").node().value
+            scope.regions = []
+            for (var i = 0; i < num; i++) {
+                var chr = d3.select("#region" + i).node().value
+                var se = d3.select("#region" + i + "se").node().value
+                console.log(chr, se)
+                var x = se.split("-")
+                scope.regions.push({
+                    "chr": chr,
+                    "start": x[0],
+                    "end": x[1]
+                })
+            }
+            //scope.width = width
+            //scope.height = height
+            scope.hic = {}
+            scope.hic.norm = d3.select("#norm").node().value
+            scope.hic.unit = d3.select("#unit").node().value
+            scope.hic.bpres = bpres
+            console.log(scope)
+        }
+        var layout = function(regions, mats) {
+
+        }
+        var chrOpts = function(selection) {
+            selection.each(function(chrs, i) {
+                //d3.select(this).selectAll("div").remove()
+                var div = d3.select(this)
+                    .append("div")
+                var id = "region" + i
+                div.append("label").attr("for", id).text(id)
+                var sel = div.append("select").classed("form-control", true).attr("id", id)
+                var opt = sel.selectAll("option")
+                    .data(chrs)
+                opt.enter()
+                    .append("option")
+                    .attr("value", function(d, i) {
+                        return i
+                    })
+                    .attr("length", function(d, i) {
+                        return d.Length
+                    })
+                    .text(function(d, i) {
+                        return d.Name
+                    })
+                var name;
+                var length;
+                sel.on("change", function(d, i) {
+                    lendiv.html("Name:" + chrs[this.selectedIndex].Name + " Length:" + chrs[this.selectedIndex].Length)
+                    name = chrs[this.selectedIndex].Name;
+                    length = chrs[this.selectedIndex].Length;
+                    input.node().value = default_range(length)
+                })
+
+                var lendiv = d3.select(this).append("div")
+                var inputdiv = d3.select(this).append("div")
+                var input = inputdiv.append("input")
+                    .attr("id", "region" + i + "se")
+                    .style("width", "160px")
+
+
+            })
+
+        }
+        var config = {}
+        var chr2idx = {}
+        var width, height
+        var ready = function(error, results) {
+            if (error) throw error;
+            config.norms = results[0]
+            d3.select("#norm").selectAll("option")
+                .data(config.norms)
+                .enter()
+                .append("option")
+                .attr("value", function(d, i) {
+                    return d
+                })
+                .text(function(d, i) {
+                    return norms[d]
+                })
+            config.units = results[1]
+            d3.select("#unit").selectAll("option")
+                .data(config.units)
+                .enter()
+                .append("option")
+                .attr("value", function(d, i) {
+                    return d
+                })
+                .text(function(d, i) {
+                    return units[d]
+                })
+            if (config.units.length == 1) {
+                d3.select("#unit").property("disabled", true)
+            }
+            config.chrs = results[2]
+            config.chrs.forEach(function(d, i) {
+                chr2idx[d] = i
+            })
+            console.log(config)
+            d3.select("#regionNum").on("change", function() {
+                console.log(this.options[this.selectedIndex].value)
+                var data = []
+                for (var i = 0; i < this.options[this.selectedIndex].value; i++) {
+                    data.push(config.chrs)
+                }
+                d3.select("#regions").selectAll("div").remove()
+                var regions = d3.select("#regions").selectAll("div").data(data);
+                regions.enter().append("div").call(chrOpts);
+                //regions.exit().remove();
+            })
+            d3.select("#regions").selectAll("div").data([config.chrs]).enter()
+                .append("div").call(chrOpts)
+
+            resize()
+            bpres = results[3]
+
+        }
+        $(window).resize(function() {
+            resize()
+        });
+        var resize = function() {
+            var canvasdiv = d3.select("#canvasdiv")
+                //var canvas = d3.select("#canvas")
+            var body = d3.select("body")
+            canvasdiv.style("height", $(window).height() + "px")
+            canvasdiv.style("width", ($(window).width() - 200) + "px")
+            width = $(window).width() - 200
+            height = $(window).height()
+            d3.select("#canvasWidth").text(height)
+            d3.select("#canvasHeight").text(width)
+            scope.width = width
+            scope.height = height
+
+        }
+        var server = ""
+        d3_queue.queue(2)
+            .defer(d3.json, server + "/norms")
+            .defer(d3.json, server + "/units")
+            .defer(d3.json, server + "/list")
+            .defer(d3.json, server + "/bpres")
+            .awaitAll(ready);
+        d3.select("#submit").on("click", function() {
+                getscope()
+                loadData(dataReady)
+                    //console.log(data)
+            })
+            /*
+            var callback = function(d) {
+                console.log(d)
+            }
+            S.toolsGetBinaryMatrix(url, callback)
+            var ctx = canvas.node().getContext("2d");
+            for (var x = 0; x < xLen(); x++) {
+                for (var y = 0; y < yLen(); y++) {
+                    ctx.fillStyle = color(data[x][y]);
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
+            }
+            */
+        var dataReady = function(errors, results) {
+                //console.log(errors)
+                console.log(results)
+                var min = Infinity
+                var max = -Infinity
+                scope.mats = []
+                results.forEach(function(text, i) {
+                    var data = d3.tsvParseRows(text).map(function(row) {
+                        return row.map(function(value) {
+                            var v = +value
+                            if (min > v) {
+                                min = v
+                            }
+                            if (max < v) {
+                                max = v
+                            }
+                            return v;
+                        });
+                    });
+                    //console.log(data);
+                    scope.mats.push(data)
+
+                })
+                console.log("min,max", min, max)
+                d3.select("#matMax").text(max)
+                d3.select("#matMin").text(min)
+
+                scope.min = min
+                scope.max = max
+                render()
+
+            }
+            //render scope.regions and scope.mats
+        var offset = function(i) {
+            return scope.offset[i]
+        }
+        var render = function() {
+            d3.select("#canvasdiv").selectAll("canvas").remove();
+            var canvas = d3.select("#canvasdiv").append("canvas").attr("id", "canvas")
+            canvas.attr("height", scope.height)
+                .attr("width", scope.width)
+            var color = d3.scaleLog().domain([scope.min + 1.0, scope.max]).range(["#FFE", "#F12"])
+            var colorScale = function(d) {
+                if (isNaN(d)) {
+                    return color(0)
+                } else {
+                    return color(d)
+                }
+            }
+
+            var l = scope.regions.length;
+
+            var k = 0;
+            for (var i = 0; i < l; i++) {
+                for (var j = i; j < l; j++) {
+                    var x = offset(i);
+                    var y = offset(j);
+                    renderMatrix(canvas, x, y, scope.mats[k], scope.cellSize, colorScale)
+                    k += 1;
+                }
+            }
+        }
+
+        // static function
+        var renderMatrix = function(canvas, xoffset, yoffset, mat, cellSize, colorScale) {
+            var ctx = canvas.node().getContext("2d");
+            //console.log(mat, mat.length)
+            for (var x = 0; x < mat.length; x++) {
+                for (var y = 0; y < mat[0].length; y++) {
+                    ctx.fillStyle = colorScale(mat[x][y]);
+                    ctx.fillRect(xoffset + x * cellSize, yoffset + y * cellSize, cellSize, cellSize);
+                    //console.log((x + xoffset), (y + yoffset), cellSize)
+                }
+            }
+        }
+        var regionString = function(o) {
+            return o.chr + ":" + o.start + "-" + o.end
+        }
+
+        var loadData = function(callback) {
+            var l = scope.regions.length
+            var pairs = []
+            for (var i = 0; i < l; i++) {
+                for (var j = i; j < l; j++) {
+                    pairs.push([i, j])
+                }
+            }
+            var resIdx = regionsToResIdx(scope.regions, scope.width, scope.height) // TODO with width and length parameters
+            console.log("smart resIdx", resIdx)
+            d3.select("#bpRes").text(bpres[resIdx])
+            var q = d3_queue.queue(2)
+                // /get2dnorm/{chr}:{start}-{end}/{chr2}:{start2}-{end2}/{resIdx}/{norm}/{unit}/{format}
+            var generateQueryUrl = function(d) {
+                var a = scope.regions[d[0]]
+                var b = scope.regions[d[1]]
+                var url = "/get2dnorm/" + regionString(a) + "/" + regionString(b) + "/" + resIdx + "/" + scope.hic.norm + "/" + scope.hic.unit + "/text"
+                return url
+            }
+            pairs.forEach(function(d, i) {
+                var url = generateQueryUrl(d)
+                q.defer(d3.text, server + url)
+            })
+            q.awaitAll(callback);
+        }
+
+    }(d3, jQuery))
+</script>
+
+</html>
