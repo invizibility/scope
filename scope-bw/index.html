@@ -1,0 +1,221 @@
+<head>
+    <title>BigWig Data Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <style>
+        #ctrl {
+            width: 200px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background-color: #BBB;
+        }
+
+        #canvas {
+            min-height: 700px;
+            background-color: #EEE;
+            margin-left: 200px;
+            /* Same as left's width */
+        }
+
+        ​
+    </style>
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-queue.v2.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-request.v1.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+    <div id="ctrl" class="container">
+        <div id="monitor">
+            <table class="table table-stripped">
+                <thead>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>width</td>
+                        <td id="canvasWidth"></td>
+                    </tr>
+                    <tr>
+                        <td>height</td>
+                        <td id="canvasHeight"></td>
+                    </tr>
+                    <tr>
+                        <td>binsize</td>
+                        <td id="binSize"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="parameters" class="form-group">
+            <label for="regionNum">Regions Number<label>
+            <select id="regionNum" class="form-control">
+              <option value=1>1</option>
+              <option value=2>2</option>
+              <option value=3>3</option>
+            </select>
+            <label for="regions">Regions</label>
+            <div id="regions" style="padding-left:10px">
+
+            </div>
+            <br>
+            <div>
+                <button class="btn" value="submit" id="submit">submit</button>
+            </div>
+        </div>
+    </div>
+    <div id="canvasdiv">
+        <canvas id="canvas">
+      </canvas>
+    </div>
+</body>
+<script>
+    (function(d3, $) {
+        var server = ""
+        var default_range = function(length) {
+            return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
+        }
+        var totalLength = function(regions) {
+            var l = 0;
+            regions.forEach(function(r, i) {
+                l += (+r.end) - (+r.start)
+            })
+            return l
+        }
+        var chrOpts = function(selection) {
+            selection.each(function(chrs, i) {
+                var div = d3.select(this)
+                    .append("div")
+                var id = "region" + i
+                div.append("label").attr("for", id).text(id)
+                var sel = div.append("select").classed("form-control", true).attr("id", id)
+                var opt = sel.selectAll("option")
+                    .data(chrs)
+                opt.enter()
+                    .append("option")
+                    .attr("value", function(d, i) {
+                        return d.Name // return i if choose chrIdx
+                    })
+                    .attr("length", function(d, i) {
+                        return d.Length
+                    })
+                    .text(function(d, i) {
+                        return d.Name
+                    })
+                var name;
+                var length;
+                sel.on("change", function(d, i) {
+                    lendiv.html("Name:" + chrs[this.selectedIndex].Name + " Length:" + chrs[this.selectedIndex].Length)
+                    name = chrs[this.selectedIndex].Name;
+                    length = chrs[this.selectedIndex].Length;
+                    input.node().value = default_range(length)
+                })
+
+                var lendiv = d3.select(this).append("div")
+                var inputdiv = d3.select(this).append("div")
+                var input = inputdiv.append("input")
+                    .attr("id", "region" + i + "se")
+                    .style("width", "160px")
+            })
+
+        }
+        var scope = {}
+        scope.barHeight = 50;
+        var getscope = function() {
+            var num = d3.select("#regionNum").node().value
+            scope.regions = []
+            for (var i = 0; i < num; i++) {
+                var chr = d3.select("#region" + i).node().value
+                var se = d3.select("#region" + i + "se").node().value
+                console.log(chr, se)
+                var x = se.split("-")
+                scope.regions.push({
+                    "chr": chr,
+                    "start": x[0],
+                    "end": x[1]
+                })
+            }
+            console.log(scope)
+        }
+        var config = {}
+        $(window).resize(function() {
+            resize()
+        });
+        var resize = function() {
+            var canvasdiv = d3.select("#canvasdiv")
+                //var canvas = d3.select("#canvas")
+            var body = d3.select("body")
+            canvasdiv.style("height", $(window).height() + "px")
+            canvasdiv.style("width", ($(window).width() - 200) + "px")
+            scope.width = $(window).width() - 200
+            scope.height = $(window).height()
+            d3.select("#canvasWidth").text(scope.width)
+            d3.select("#canvasHeight").text(scope.height)
+        }
+        resize()
+        var ready = function(error, results) {
+            if (error) throw error;
+            config.chrs = results[0].Chrs
+            d3.select("#regionNum").on("change", function() {
+                console.log(this.options[this.selectedIndex].value)
+                var data = []
+                for (var i = 0; i < this.options[this.selectedIndex].value; i++) {
+                    data.push(config.chrs)
+                }
+                d3.select("#regions").selectAll("div").remove()
+                var regions = d3.select("#regions").selectAll("div").data(data);
+                regions.enter().append("div").call(chrOpts);
+            })
+            d3.select("#regions").selectAll("div").data([config.chrs]).enter()
+                .append("div").call(chrOpts)
+        }
+        d3_queue.queue(2)
+            .defer(d3.json, server + "/list")
+            .awaitAll(ready);
+        var _render_ = function(error, results) {
+            console.log(results)
+            var min = Infinity;
+            var max = -Infinity;
+            results.forEach(function(arr) {
+                arr.forEach(function(d) {
+                    if (d.Max > max) {
+                        max = d.Max
+                    }
+                    if (d.Max < min) {
+                        min = d.Max
+                    }
+                })
+            })
+            var scale = d3.scaleLinear().domain([min, max]).range([0, scope.barHeight])
+            var canvas = d3.select("#canvas")
+        }
+        var _render = function() {
+            var q = d3_queue.queue(2)
+            scope.regions.forEach(function(d) {
+                q.defer(d3.json, server + "/getbin/" + d.chr + ":" + d.start + "-" + d.end + "/" + scope.binsize)
+            })
+            q.awaitAll(_render_)
+        }
+        var render = function() {
+            var length = totalLength(scope.regions)
+            var width = scope.width;
+            var url = server + "/binsize/" + length + "/" + width
+            d3.json(url, function(d) {
+                scope.binsize = d;
+                $("#binSize").text(scope.binsize)
+                _render();
+            })
+        }
+        d3.select("#submit").on("click", function() {
+            getscope()
+            render()
+                //console.log(data)
+        })
+
+    }(d3, jQuery))
+</script>
+
+</html>
