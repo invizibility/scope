@@ -154,6 +154,7 @@
             scope.height = $(window).height()
             d3.select("#canvasWidth").text(scope.width)
             d3.select("#canvasHeight").text(scope.height)
+            d3.select("#canvas").attr("width", scope.width).attr("height", scope.height)
         }
         resize()
         var ready = function(error, results) {
@@ -179,6 +180,17 @@
             console.log(results)
             var min = Infinity;
             var max = -Infinity;
+            var xscales = []
+            var xoffsets = []
+            var offset = 0
+            var totalLen = totalLength(scope.regions)
+            scope.regions.forEach(function(d) {
+                var w = (+(d.end) - (+d.start)) * scope.width / totalLen
+                var scale = d3.scaleLinear().domain([+(d.start), +(d.end)]).range([0, w])
+                xscales.push(scale)
+                xoffsets.push(offset)
+                offset += w
+            })
             results.forEach(function(arr) {
                 arr.forEach(function(d) {
                     if (d.Max > max) {
@@ -189,8 +201,30 @@
                     }
                 })
             })
-            var scale = d3.scaleLinear().domain([min, max]).range([0, scope.barHeight])
+            var yscale = d3.scaleLinear().domain([min, max]).range([0, scope.barHeight])
+            var yoffset = 20
             var canvas = d3.select("#canvas")
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
+            results.forEach(function(region, i) {
+                renderRegion(canvas, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+            })
+
+        }
+        var renderRegion = function(canvas, xoffset, yoffset, region, xscale, yscale, color) {
+            var ctx = canvas.node().getContext("2d");
+            //console.log(mat, mat.length)
+            var background = "#FFF"
+            ctx.fillStyle = background
+            ctx.fillRect(xoffset, yoffset, scope.width, scope.barHeight)
+            for (var i = 0; i < region.length; i++) {
+                ctx.fillStyle = color
+                var x1 = xscale(region[i].From)
+                var x2 = xscale(region[i].To)
+                var width = x2 - x1
+                var height = yscale(region[i].Max)
+                var y1 = scope.barHeight - height
+                ctx.fillRect(xoffset + x1, yoffset + y1, width, height);
+            }
         }
         var _render = function() {
             var q = d3_queue.queue(2)
