@@ -18,6 +18,7 @@ import (
  */
 func CmdServe(c *cli.Context) error {
 	bwURI := c.String("B")
+	log.Println(bwURI)
 	hicURI := c.String("H")
 	port := c.Int("port")
 	router := mux.NewRouter()
@@ -26,6 +27,8 @@ func CmdServe(c *cli.Context) error {
 	reader, err := stream.NewSeekableStreamReader(bwURI)
 	checkErr(err)
 	bwf := NewBbiReader(reader)
+	bwf.InitIndex()
+	log.Println("in reading idx")
 	bw := NewBigWigReader(bwf)
 	AddBwHandle(router, bw, "")
 	hicreader, err := stream.NewSeekableStreamReader(hicURI)
