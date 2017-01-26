@@ -13,7 +13,7 @@ import (
 )
 
 func AddHicHandle(router *mux.Router, hic *HiC, prefix string) {
-	router.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		/*
 		   io.WriteString(w, "Idx\tName\tLength\n")
