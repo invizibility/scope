@@ -1,0 +1,31 @@
+#left {
+    width: 200px;
+    position: absolute;
+    left: 0;
+    top: 25;
+    height: 100%;
+    background-color: #BBB;
+}
+
+#main {
+    min-height: 700px;
+    background-color: #EEE;
+    margin-left: 200px;
+    /* Same as left's width */
+}
+
+#top {
+    min-height: 25px;
+    background-color: #265EB7;
+    color:#EEE;
+    width: 100%;
+    vertical-align: middle;
+    text-align: right;
+    font-size: 12;
+    padding-right: 10px;
+    /* Same as left's width */
+}
+label {
+   padding-left: 4px;
+   padding-right: 2px;
+}

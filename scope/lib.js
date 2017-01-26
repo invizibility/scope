@@ -12,7 +12,7 @@ var BigWig = BigWig || {};
       }
       d3_queue.queue(2)
       .defer(d3.json, URI + "/list")
-      .defer(d3.json, URI + "/binsize")
+      .defer(d3.json, URI + "/binsizes")
       .awaitAll(ready);
     }
 }(BigWig));
