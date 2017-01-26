@@ -11,8 +11,8 @@ import (
 	. "github.com/nimezhu/stream/bigwig"
 )
 
-func AddBwHandle(router *mux.Router, bw *BigWigReader) {
-	router.HandleFunc("/get/{chr}:{start}-{end}/{width}", func(w http.ResponseWriter, r *http.Request) {
+func AddBwHandle(router *mux.Router, bw *BigWigReader, prefix string) {
+	router.HandleFunc(prefix+"/get/{chr}:{start}-{end}/{width}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		chr := params["chr"]
@@ -25,7 +25,7 @@ func AddBwHandle(router *mux.Router, bw *BigWigReader) {
 			}
 		}
 	})
-	router.HandleFunc("/getjson/{chr}:{start}-{end}/{width}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/getjson/{chr}:{start}-{end}/{width}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		chr := params["chr"]
@@ -43,7 +43,7 @@ func AddBwHandle(router *mux.Router, bw *BigWigReader) {
 		checkErr(err)
 		io.WriteString(w, string(j))
 	})
-	router.HandleFunc("/getbin/{chr}:{start}-{end}/{binsize}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/getbin/{chr}:{start}-{end}/{binsize}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		chr := params["chr"]
@@ -61,19 +61,25 @@ func AddBwHandle(router *mux.Router, bw *BigWigReader) {
 		checkErr(err)
 		io.WriteString(w, string(j))
 	})
-	router.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		j, err := json.Marshal(bw.Genome)
 		checkErr(err)
 		io.WriteString(w, string(j))
 	})
-	router.HandleFunc("/binsize/{length}/{width}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/binsize/{length}/{width}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		length, _ := strconv.Atoi(params["length"])
 		width, _ := strconv.Atoi(params["width"])
 		binsize := bw.GetBinsize(length, width)
 		j, err := json.Marshal(binsize)
+		checkErr(err)
+		io.WriteString(w, string(j))
+	})
+	router.HandleFunc(prefix+"/binsizes", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		j, err := json.Marshal(bw.Binsizes())
 		checkErr(err)
 		io.WriteString(w, string(j))
 	})

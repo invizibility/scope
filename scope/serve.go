@@ -27,7 +27,7 @@ func CmdServe(c *cli.Context) error {
 	checkErr(err)
 	bwf := NewBbiReader(reader)
 	bw := NewBigWigReader(bwf)
-	AddBwHandle(router, bw)
+	AddBwHandle(router, bw, "")
 	hicreader, err := stream.NewSeekableStreamReader(hicURI)
 	hic, err := HiC.DataReader(hicreader)
 	checkErr(err)
