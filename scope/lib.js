@@ -161,7 +161,7 @@ snow.dataHic = {};
               .enter()
               .append("option")
               .attr("value", function(d, i) {
-                  return i
+                  return d.Name
               })
               .attr("length", function(d, i) {
                   return d.Length
@@ -508,6 +508,7 @@ snow.dataHic = {};
     r.forEach(function(d){
       s.push({"start":d.start,"end":d.end,"chr":"chr"+d.chr})
     })
+    console.log(s)
     return s
   }
   /* get parameters of regions and hic , then render */
@@ -540,6 +541,7 @@ snow.dataHic = {};
 
   var renderHicCtrlPanel = function(data) {
     hicOpts = data;
+    console.log("hic",data)
     hicCtrl = H.chart().data(data);
     hicCtrlDiv.call(hicCtrl)
     regionCtrl = S.regionForm().chrs(data.chrs).regionNum(2)
