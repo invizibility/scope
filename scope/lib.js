@@ -345,6 +345,9 @@ snow.dataHic = {};
           }
       }
       var render = function() {
+          var ctx = canvas.node().getContext("2d");
+          ctx.fillStyle = "#FFF"
+          ctx.fillRect(xoffset,yoffset,width,height)
           var color = d3.scaleLog().domain([min + 1.0, max]).range(["#FFE", "#F12"])
           var colorScale = function(d) {
               if (isNaN(d)) {
@@ -515,6 +518,7 @@ snow.dataHic = {};
     console.log(regionCtrl.regions())
     var hic = hicCtrl.state()
     var regions = regionCtrl.regions();
+    var edge = Math.min(scope.height-100,scope.width-40)
     var chart = H.canvas()
      .URI(URI)
      .norm(hic.norm)
@@ -522,14 +526,14 @@ snow.dataHic = {};
      .bpres(hicOpts.bpres)
      .xoffset(20)
      .yoffset(20)
-     .width(scope.width-40)
-     .height(scope.height-100)
+     .width(edge)
+     .height(edge)
      .regions(regions)
     //console.log(canvas)
     //console.log(hicOpts.bpres)
     //chart.loadData(console.log)
     //TODO Canvas Call BigWig Too;
-     var bw = B.canvas().URI("").x(20).y(scope.height-60).width(Math.min(scope.height-100,scope.width-40)).regions(addChrPrefix(regions))
+     var bw = B.canvas().URI("").x(20).y(scope.height-60).width(edge).regions(addChrPrefix(regions))
      canvas.call(chart)
      canvas.call(bw)
   })
