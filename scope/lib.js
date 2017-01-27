@@ -18,8 +18,109 @@ snow.dataHic = {};
       .defer(d3.json, URI + "/binsizes")
       .awaitAll(ready);
     }
-  B.chart = function(){
+  B.canvas = function(){
 
+    var height
+    var width
+    var regions
+    var x
+    var y
+    var URI=""
+    var barHeight = 50
+
+    var canvas
+    var binsize
+
+
+    var totalLength = function(regions) {
+        var l = 0;
+        regions.forEach(function(r, i) {
+            l += (+r.end) - (+r.start)
+        })
+        return l
+    }
+
+
+    var renderRegion = function(ctx, xoffset, yoffset, region, xscale, yscale, color) {
+      //  var ctx = canvas.node().getContext("2d");
+        //console.log(mat, mat.length)
+
+        for (var i = 0; i < region.length; i++) {
+            ctx.fillStyle = color
+            var x1 = xscale(region[i].From)
+            var x2 = xscale(region[i].To)
+            var barwidth = x2 - x1
+            var barheight = yscale(region[i].Max)
+            var y1 = barHeight - barheight
+            ctx.fillRect(x + xoffset + x1, y + yoffset + y1, barwidth, barheight);
+        }
+    }
+    var _render_ = function(error, results) {
+        var min = Infinity;
+        var max = -Infinity;
+        var xscales = []
+        var xoffsets = []
+        var yoffset = 0
+        var offset = 0
+        var totalLen = totalLength(regions)
+        regions.forEach(function(d) {
+            var w = (+(d.end) - (+d.start)) * width / totalLen
+            var scale = d3.scaleLinear().domain([+(d.start), +(d.end)]).range([0, w])
+            xscales.push(scale)
+            xoffsets.push(offset)
+            offset += w
+        })
+        results.forEach(function(arr) {
+            arr.forEach(function(d) {
+                if (d.Max > max) {
+                    max = d.Max
+                }
+                if (d.Max < min) {
+                    min = d.Max
+                }
+            })
+        })
+        var yscale = d3.scaleLinear().domain([min, max]).range([0, barHeight])
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
+        var background = "#EFE"
+        var ctx = canvas.node().getContext("2d");
+        ctx.fillStyle = background
+        ctx.fillRect(x , y, width, barHeight)
+        console.log(x,y,width,barHeight)
+        results.forEach(function(region, i) {
+            renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+        })
+
+    }
+    var _render = function() {
+        var q = d3_queue.queue(2)
+        regions.forEach(function(d) {
+            q.defer(d3.json, URI + "/getbin/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
+        })
+        q.awaitAll(_render_)
+    }
+    var render = function() {
+        var length = totalLength(regions)
+        var url = URI + "/binsize/" + length + "/" + width
+        console.log("URL",url)
+        d3.json(url, function(d) {
+            binsize = d;
+            console.log("BINSIZE",binsize)
+            _render();
+        })
+    }
+    chart = function(selection){ //selection is canvas;
+      canvas = selection;
+      render();
+    }
+    chart.x = function(_) { return arguments.length ? (x= _, chart) : x; }
+    chart.y = function(_) { return arguments.length ? (y= _, chart) : y; }
+    chart.regions = function(_) { return arguments.length ? (regions= _, chart) : regions; }
+    chart.width = function(_) { return arguments.length ? (width= _, chart) : width; }
+    chart.height = function(_) { return arguments.length ? (height= _, chart) : height; }
+    chart.URI = function(_) { return arguments.length ? (URI= _, chart) : URI; }
+    chart.barHeight = function(_) { return arguments.length ? (barHeight= _, chart) : barHeight; }
+    return chart
   }
 }(snow.dataBigwig));
 
@@ -399,6 +500,13 @@ snow.dataHic = {};
   var hicCtrlDiv = left.append("div")
   var regionCtrlDiv = left.append("div")
 
+  var addChrPrefix = function(r) { //TODO fix using idx , XY bug
+    var s = []
+    r.forEach(function(d){
+      s.push({"start":d.start,"end":d.end,"chr":"chr"+d.chr})
+    })
+    return s
+  }
   /* get parameters of regions and hic , then render */
   left.append("div").append("button").attr("value","submit")
   .text("submit")
@@ -415,12 +523,15 @@ snow.dataHic = {};
      .xoffset(20)
      .yoffset(20)
      .width(scope.width-40)
-     .height(scope.height-40)
+     .height(scope.height-100)
      .regions(regions)
     //console.log(canvas)
     //console.log(hicOpts.bpres)
     //chart.loadData(console.log)
+    //TODO Canvas Call BigWig Too;
+     var bw = B.canvas().URI("").x(20).y(scope.height-60).width(Math.min(scope.height-100,scope.width-40)).regions(addChrPrefix(regions))
      canvas.call(chart)
+     canvas.call(bw)
   })
 
   var renderHicCtrlPanel = function(data) {
