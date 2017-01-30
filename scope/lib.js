@@ -129,6 +129,7 @@ snow.dataHic = {};
   var chrs
   var regionNum
   var regions;
+  var lengths = [0,0];//two regions;
   var form = {"chrs":[],"ses":[]}
   var chart = function(selection) {
     var data = []
@@ -176,6 +177,7 @@ snow.dataHic = {};
               name = chrs[this.selectedIndex].Name;
               length = chrs[this.selectedIndex].Length;
               form["ses"][i].node().value = default_range(length)
+              lengths[i] = length;
           })
 
           var lendiv = d3.select(this).append("div")
@@ -187,9 +189,10 @@ snow.dataHic = {};
       })
 
   }
-  chart.regions = function(){ //return regions or set regions function.
+  chart.regions = function(_){ //return regions or set regions function.
     //var num = d3.select("#regionNum").node().value
-    var regions = []
+    if (!arguments.length) {
+    regions = []
     for (var i = 0; i < regionNum; i++) {
         var chr = form["chrs"][i].node().value
         var se = form["ses"][i].node().value
@@ -198,13 +201,24 @@ snow.dataHic = {};
         regions.push({
             "chr": chr,
             "start": +x[0],
-            "end": +x[1]
+            "end": +x[1],
+            "length": lengths[i]
         })
     }
     return regions
+  } else {
+    regions = _;
+    //TODO update regions?
+    for(var i = 0;i<regionNum;i++){
+      form["ses"][i].node().value = regions[i].start+"-"+regions[i].end //use ng solve this?
+    }
+    return chart;
+  }
+
   }
   chart.regionNum = function(_) { return arguments.length ? (regionNum= _, chart) : regionNum; }
   chart.chrs = function(_) { return arguments.length ? (chrs= _, chart) : chrs; }
+  //chart.lengths　＝　function(){return lengths;}
   return chart
   }
 }(snow));
@@ -498,7 +512,7 @@ snow.dataHic = {};
   }
   resize()
   var URI = "/hic"
-  var hicCtrl;
+  var hicCtrl, regionCtrl;
   var hicOpts={}
   var hicCtrlDiv = left.append("div")
   var regionCtrlDiv = left.append("div")
@@ -512,9 +526,7 @@ snow.dataHic = {};
     return s
   }
   /* get parameters of regions and hic , then render */
-  left.append("div").append("button").attr("value","submit")
-  .text("submit")
-  .on("click",function(){
+  var plot = function(){
     console.log(hicCtrl.state())
     console.log(regionCtrl.regions())
     var hic = hicCtrl.state()
@@ -537,6 +549,49 @@ snow.dataHic = {};
      var bw = B.canvas().URI("").x(20).y(scope.height-60).width(edge).regions(addChrPrefix(regions))
      canvas.call(chart)
      canvas.call(bw)
+  }
+  /*
+  left.append("div").append("button").attr("value","submit")
+  .text("submit")
+  .on("click",function(){
+    plot()
+  })
+  */
+  var btns = left.append("div").classed("btn-group",true)
+  btns.append("button")
+  .classed("btn",true)
+  .html('<span class="glyphicon glyphicon-zoom-in"></span>')
+  .on("click",function(){
+    var regions = regionCtrl.regions();
+    regions.forEach(function(d,i){
+      var l=Math.round((d.end-d.start)/3)
+      regions[i].start = d.start + l
+      regions[i].end =  d.end - l
+    })
+    regionCtrl.regions(regions)
+    regionCtrlDiv.call(regionCtrl)
+    plot();
+  })
+  btns.append("button")
+     .classed("btn",true)
+     .html('<span class="glyphicon glyphicon-play"></span>')
+    .on("click",function(){
+    var regions = regionCtrl.regions();
+    plot();
+  })
+  btns.append("button")
+     .classed("btn",true)
+     .html('<span class="glyphicon glyphicon-zoom-out"></span>')
+    .on("click",function(){
+    var regions = regionCtrl.regions();
+    regions.forEach(function(d,i){
+      var l=d.end-d.start
+      regions[i].start = d.start - l < 0 ? 0:d.start-l
+      regions[i].end =  d.end + l > d.length ? d.length:d.end+l
+    })
+    regionCtrl.regions(regions)
+    regionCtrlDiv.call(regionCtrl)
+    plot();
   })
 
   var renderHicCtrlPanel = function(data) {
