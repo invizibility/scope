@@ -558,9 +558,23 @@ snow.dataHic = {};
   })
   */
   var btns = left.append("div").classed("btn-group",true)
+  var btns2 = left.append("div").classed("btn-group",true)
   btns.append("button")
+     .classed("btn",true)
+     .html('<small><span class="glyphicon glyphicon-backward"></span></small>')
+    .on("click",function(){
+    var regions = regionCtrl.regions();
+    var l = Math.round((regions[0].end - regions[0].start)/2)
+    var d = regions[0]
+    regions[0].start = d.start - l < 0 ? 0 : d.start-l
+    regions[0].end =  d.end - l < 0 ? d.end:d.end-l
+    regionCtrl.regions(regions)
+    regionCtrlDiv.call(regionCtrl)
+    plot();
+  })
+  btns2.append("button")
   .classed("btn",true)
-  .html('<span class="glyphicon glyphicon-zoom-in"></span>')
+  .html('<small><span class="glyphicon glyphicon-zoom-in"></span></small>')
   .on("click",function(){
     var regions = regionCtrl.regions();
     regions.forEach(function(d,i){
@@ -574,14 +588,14 @@ snow.dataHic = {};
   })
   btns.append("button")
      .classed("btn",true)
-     .html('<span class="glyphicon glyphicon-play"></span>')
+     .html('<small><span class="glyphicon glyphicon-play"></span></small>')
     .on("click",function(){
     var regions = regionCtrl.regions();
     plot();
   })
-  btns.append("button")
+  btns2.append("button")
      .classed("btn",true)
-     .html('<span class="glyphicon glyphicon-zoom-out"></span>')
+     .html('<small><span class="glyphicon glyphicon-zoom-out"></span></small>')
     .on("click",function(){
     var regions = regionCtrl.regions();
     regions.forEach(function(d,i){
@@ -593,7 +607,46 @@ snow.dataHic = {};
     regionCtrlDiv.call(regionCtrl)
     plot();
   })
-
+  btns.append("button")
+     .classed("btn",true)
+     .html('<small><span class="glyphicon glyphicon-forward"></span></small>')
+    .on("click",function(){
+    var regions = regionCtrl.regions();
+    var d = regions[0]
+    var l = Math.round((regions[0].end - regions[0].start)/2)
+    regions[0].start = d.start + l > d.length ? d.start : d.start+l
+    regions[0].end =  d.end + l > d.length ? d.length:d.end+l
+    regionCtrl.regions(regions)
+    regionCtrlDiv.call(regionCtrl)
+    plot();
+  })
+  var btns3 = left.append("div").classed("btn-group",true)
+  btns3.append("button")
+     .classed("btn",true)
+     .html('<small><span class="glyphicon glyphicon-triangle-top"></span></small>')
+    .on("click",function(){
+    var regions = regionCtrl.regions();
+    var l = Math.round((regions[1].end - regions[1].start)/2)
+    var d = regions[1]
+    regions[1].start = d.start - l < 0 ? 0 : d.start-l
+    regions[1].end =  d.end - l < 0 ? d.end:d.end-l
+    regionCtrl.regions(regions)
+    regionCtrlDiv.call(regionCtrl)
+    plot();
+  })
+  btns3.append("button")
+     .classed("btn",true)
+     .html('<small><span class="glyphicon glyphicon-triangle-bottom"></span></small>')
+    .on("click",function(){
+    var regions = regionCtrl.regions();
+    var d = regions[1]
+    var l = Math.round((regions[1].end - regions[1].start)/2)
+    regions[1].start = d.start + l > d.length ? d.start : d.start+l
+    regions[1].end =  d.end + l > d.length ? d.length:d.end+l
+    regionCtrl.regions(regions)
+    regionCtrlDiv.call(regionCtrl)
+    plot();
+  })
   var renderHicCtrlPanel = function(data) {
     hicOpts = data;
     console.log("hic",data)
