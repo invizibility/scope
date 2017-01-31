@@ -358,6 +358,10 @@ snow.dataHic = {};
         var cellSize;
         var offsets;
         var canvas;
+        var svg;
+        var emit = function (d) {
+            console.log("emit")
+        }
 
         var regionString = function (o) {
             return o.chr + ":" + o.start + "-" + o.end
@@ -416,24 +420,60 @@ snow.dataHic = {};
                     k += 1;
                 }
             }
-        }
-        var renderAxis = function(ctx) {
-            ctx.save()
-            ctx.translate(width+xoffset,yoffset)
-            ctx.fillStyle = background
-            ctx.fillRect(0, 0, 200, height);
-            ctx.restore()
-            regions.forEach(function(d,i){
-              var h = (offsets[i+1]||height) - offsets[i]
-              var y = d3.scaleLinear().domain([d.start,d.end]).range([0,h])
-              yaxis(ctx,y,xoffset+width,yoffset+offsets[i],h,d.chr)
-
-            })
+            renderBrush()
 
         }
-        var yaxis = function(context, scale, x, y, height, label) {
-            context.translate(x,y)
-            var tickCount = 10,
+        var renderAxis = function (ctx) {
+                ctx.save()
+                ctx.translate(width + xoffset, yoffset)
+                ctx.fillStyle = background
+                ctx.fillRect(0, 0, 200, height);
+                ctx.restore()
+                regions.forEach(function (d, i) {
+                    var h = (offsets[i + 1] || height) - offsets[i]
+                    var y = d3.scaleLinear().domain([d.start, d.end]).range([0, h])
+                    yaxis(ctx, y, xoffset + width, yoffset + offsets[i], h, d.chr)
+
+                })
+
+            }
+            /** TODO THIS **/
+
+        var renderBrush = function () {
+            var y = offsets[1]
+            var w = offsets[1]
+            var h = height - offsets[1]
+            var xScale = d3.scaleLinear().domain([regions[0].start, regions[0].end]).range([0, w]);
+            var yScale = d3.scaleLinear().domain([regions[1].start, regions[1].end]).range([0, h]);
+            var brushCb = function () {
+
+            }
+            var brushEnd = function () {
+                    var e = d3.event.selection;
+                    console.log(e)
+                    var extent = [
+                        [xScale.invert(e[0][0]),xScale.invert(e[1][0])],
+                        [yScale.invert(e[0][1]),yScale.invert(e[1][1])]
+                    ];
+                    emit(extent)
+                    console.log(extent)
+
+                }
+                //TODO RELATIVE POSITION 200 + 10 padding + 10 pading
+            svg.style("left", xoffset + 215).style("top", yoffset + y + 25).style("width", w).style("height", h)
+            var f = svg.selectAll("svg").attr("width", w).attr("height", h)
+            var brush = d3.brush().on("brush", brushCb).on("end", brushEnd)
+            var b = f.selectAll(".brush")
+                .data([0])
+            b.enter()
+                .append("g")
+                .attr("class", "brush")
+                .merge(b)
+                .call(brush)
+        }
+        var yaxis = function (context, scale, x, y, height, label) {
+            context.translate(x, y)
+            var tickCount = 5,
                 tickSize = 6,
                 tickPadding = 3,
                 ticks = scale.ticks(tickCount),
@@ -469,7 +509,7 @@ snow.dataHic = {};
             context.font = "bold 10px sans-serif";
             context.fillText(label, -10, -10);
             context.restore();
-            context.translate(-x,-y)
+            context.translate(-x, -y)
 
         }
         var renderLine = function (ctx, offset) {
@@ -555,6 +595,9 @@ snow.dataHic = {};
               return chart;
             }
             */
+        chart.svg = function (_) {
+            return arguments.length ? (svg = _, chart) : svg;
+        }
         chart.height = function (_) {
             return arguments.length ? (height = _, chart) : height;
         }
@@ -591,6 +634,9 @@ snow.dataHic = {};
         chart.background = function (_) {
             return arguments.length ? (background = _, chart) : background;
         }
+        chart.emit = function (_) {
+            return arguments.length ? (emit = _, chart) : emit;
+        }
 
         return chart;
 
@@ -616,7 +662,27 @@ snow.dataHic = {};
     var width = top.append("span").attr("id", "width")
     top.append("label").attr("for", "height").text("height")
     var height = top.append("span").attr("id", "height")
-    var canvas = main.append("canvas")
+    var canvasdiv = main.append("div").style("position", "absolute")
+    var canvas = canvasdiv.append("canvas")
+    var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
+    var svg = svgdiv.append("svg") //design for brushes.
+    var brush = d3.brush()
+        //.extent([[0, 0], [width, height]])
+        .on("start", function (e) {
+            console.log("start", e)
+        })
+        .on("brush", function () {
+            var e = d3.event.selection
+            console.log(e)
+        })
+        .on("end", function () {
+            if (!d3.event.sourceEvent) return; // Only transition after input.
+            if (!d3.event.selection) return; // Ignore empty selections.
+            var e = d3.event.selection;
+            console.log(e)
+        })
+
+
     $(window).resize(function () {
         resize()
     })
@@ -625,11 +691,13 @@ snow.dataHic = {};
         scope.width = $(window).width() - 200
         scope.height = $(window).height() - 30
         canvas.attr("width", scope.width).attr("height", scope.height)
+            //svg.attr("width", scope.width).attr("height", scope.height)
         main.style("height", scope.height + "px")
         main.style("width", scope.width + "px")
         width.text(scope.width)
         height.text(scope.height)
-        console.log(scope)
+            //var b = svg.append("g").attr("class", "brush")
+            //b.call(brush)
 
     }
     resize()
@@ -652,11 +720,21 @@ snow.dataHic = {};
             return s
         }
         /* get parameters of regions and hic , then render */
+    var setRegions = function (extent) {
+        var regions = regionCtrl.regions();
+        regions.forEach(function (d, i) {
+            d.start = Math.round(extent[i][0])
+            d.end = Math.round(extent[i][1])
+        })
+        regionCtrl.regions(regions)
+        console.log(regions)
+    }
     var plot = function () {
             console.log(hicCtrl.state())
             console.log(regionCtrl.regions())
             var hic = hicCtrl.state()
             var regions = regionCtrl.regions();
+
             var edge = Math.min(scope.height - 100, scope.width - 40)
             var chart = H.canvas()
                 .URI(URI)
@@ -668,11 +746,14 @@ snow.dataHic = {};
                 .width(edge)
                 .height(edge)
                 .regions(regions)
+                .svg(svgdiv)
+                .emit(setRegions)
                 //console.log(canvas)
                 //console.log(hicOpts.bpres)
                 //chart.loadData(console.log)
                 //TODO Canvas Call BigWig Too;
             var bw = B.canvas().URI("").x(20).y(scope.height - 60).width(edge).regions(addChrPrefix(regions))
+
             canvas.call(chart)
             canvas.call(bw)
         }
