@@ -418,12 +418,18 @@ snow.dataHic = {};
             }
         }
         var renderAxis = function(ctx) {
+            ctx.save()
+            ctx.translate(width+xoffset,yoffset)
+            ctx.fillStyle = background
+            ctx.fillRect(0, 0, 200, height);
+            ctx.restore()
             regions.forEach(function(d,i){
               var h = (offsets[i+1]||height) - offsets[i]
               var y = d3.scaleLinear().domain([d.start,d.end]).range([0,h])
               yaxis(ctx,y,xoffset+width,yoffset+offsets[i],h,d.chr)
 
             })
+
         }
         var yaxis = function(context, scale, x, y, height, label) {
             context.translate(x,y)
@@ -436,24 +442,24 @@ snow.dataHic = {};
             context.beginPath();
             ticks.forEach(function (d) {
                 context.moveTo(0, scale(d));
-                context.lineTo(-6, scale(d));
+                context.lineTo(6, scale(d));
             });
             context.strokeStyle = "black";
             context.stroke();
 
             context.beginPath();
-            context.moveTo(-tickSize, 0);
+            context.moveTo(tickSize, 0);
             context.lineTo(0.5, 0);
             context.lineTo(0.5, height);
-            context.lineTo(-tickSize, height);
+            context.lineTo(tickSize, height);
             context.strokeStyle = "black";
             context.stroke();
 
-            context.textAlign = "right";
+            context.textAlign = "left";
             context.textBaseline = "middle";
             context.fillStyle = "black"
             ticks.forEach(function (d) {
-                context.fillText(tickFormat(d), -tickSize - tickPadding, scale(d));
+                context.fillText(tickFormat(d), tickSize + tickPadding, scale(d));
             });
 
             context.save();
@@ -461,7 +467,7 @@ snow.dataHic = {};
             context.textAlign = "right";
             context.textBaseline = "top";
             context.font = "bold 10px sans-serif";
-            context.fillText(label, -10, 10);
+            context.fillText(label, -10, -10);
             context.restore();
             context.translate(-x,-y)
 
