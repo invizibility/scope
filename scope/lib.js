@@ -571,17 +571,15 @@ snow.dataHic = {};
             var w = Math.min(width, height)
             var l = totalLength(regions)
             var pixel = l / w;
-            var resIdx = 0;
+            var resIdx = bpres.length - 1
             for (var i = 0; i < bpres.length; i++) {
                 if (bpres[i] < pixel) {
                     resIdx = i - 1;
                     break;
                 }
             }
-            if (resIdx < 0) {
-                resIdx = 0
-            }
             cellSize = w / (l / bpres[resIdx])
+            console.log(w,l,bpres[resIdx],cellSize)
             offsets = []
             var offset = 0.0;
             regions.forEach(function (d, i) {
