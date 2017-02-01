@@ -143,23 +143,40 @@ snow.dataHic = {};
         var chrs
         var regionNum
         var regions;
+        var stacks=[];  //previous regions; TODO
+        var regionsSend; //committed send. TODO
+        var send = function(d){console.log(d)}
         var lengths = [0, 0]; //two regions;
         var form = {
-            "chrs": [],
-            "ses": []
+            "chrs": [], //chrs.
+            "ses": []  //start end
         }
         var chart = function (selection) {
             var data = []
             for (var i = 0; i < regionNum; i++) {
                 data.push(chrs)
             }
+
             //TODO RegionNum Selection.
             selection
-                .selectAll("div")
+                .selectAll(".entry")
                 .data(data)
                 .enter()
                 .append("div")
+                .classed("entry",true)
                 .call(chrOpts)
+            selection
+                .selectAll(".send")
+                .data([0])
+                .enter()
+                .append("div")
+                .classed("send",true)
+                .append("button")
+                .attr("value","submit")
+                .on("click",function(){
+                  parseRegions()
+                  send(regions)
+                }).text("submit")
         }
         var default_range = function (length) {
             return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
@@ -203,25 +220,29 @@ snow.dataHic = {};
                     .attr("id", "region" + i + "se")
                     .style("width", "160px") //TODO remove ID and get state.
                 form["ses"].push(se)
+               //TODO Add submit button and commit sen
             })
 
+        }
+        var parseRegions = function() {
+          regions = []
+          for (var i = 0; i < regionNum; i++) {
+              var chr = form["chrs"][i].node().value
+              var se = form["ses"][i].node().value
+                  //console.log(chr, se)
+              var x = se.split("-")
+              regions.push({
+                  "chr": chr,
+                  "start": +x[0],
+                  "end": +x[1],
+                  "length": lengths[i]
+              })
+          }
         }
         chart.regions = function (_) { //return regions or set regions function.
             //var num = d3.select("#regionNum").node().value
             if (!arguments.length) {
-                regions = []
-                for (var i = 0; i < regionNum; i++) {
-                    var chr = form["chrs"][i].node().value
-                    var se = form["ses"][i].node().value
-                        //console.log(chr, se)
-                    var x = se.split("-")
-                    regions.push({
-                        "chr": chr,
-                        "start": +x[0],
-                        "end": +x[1],
-                        "length": lengths[i]
-                    })
-                }
+                parseRegions();
                 return regions
             } else {
                 regions = _;
@@ -240,6 +261,7 @@ snow.dataHic = {};
                 return arguments.length ? (chrs = _, chart) : chrs;
             }
             //chart.lengths　＝　function(){return lengths;}
+        chart.send = function(_) { return arguments.length ? (send= _, chart) : send; }
         return chart
     }
 }(snow));
@@ -438,7 +460,9 @@ snow.dataHic = {};
 
             }
             /** TODO THIS **/
-
+        var cleanBrush = function(){
+          svg.selectAll("svg").selectAll(".brush").remove();
+        }
         var renderBrush = function () {
             var y = offsets[1]
             var w = offsets[1]
@@ -477,7 +501,7 @@ snow.dataHic = {};
                 tickSize = 6,
                 tickPadding = 3,
                 ticks = scale.ticks(tickCount),
-                tickFormat = scale.tickFormat(tickCount);
+                tickFormat = scale.tickFormat(tickCount,"s");
 
             context.beginPath();
             ticks.forEach(function (d) {
@@ -587,6 +611,9 @@ snow.dataHic = {};
         }
         var chart = function (selection) { //selection is canvas itself;
                 canvas = selection;
+                cleanBrush();
+                //add loading... here
+                //render done.
                 loadData();
             }
             /*
@@ -637,231 +664,7 @@ snow.dataHic = {};
         chart.emit = function (_) {
             return arguments.length ? (emit = _, chart) : emit;
         }
-
         return chart;
-
-
-
     }
 
 }(snow.dataHic));
-
-
-(function (d3, $, S) {
-    var H = S.dataHic;
-    var B = S.dataBigwig;
-    var body = d3.select("body")
-    var scope = {}
-    var top = body.append("div").attr("id", "top")
-        .classed("container", true)
-    var main = body.append("div").attr("id", "main")
-        .classed("container", true)
-    var left = body.append("div").attr("id", "left")
-        .classed("container", true)
-    top.append("label").attr("for", "width").text("width")
-    var width = top.append("span").attr("id", "width")
-    top.append("label").attr("for", "height").text("height")
-    var height = top.append("span").attr("id", "height")
-    var canvasdiv = main.append("div").style("position", "absolute")
-    var canvas = canvasdiv.append("canvas")
-    var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
-    var svg = svgdiv.append("svg") //design for brushes.
-    var brush = d3.brush()
-        //.extent([[0, 0], [width, height]])
-        .on("start", function (e) {
-            console.log("start", e)
-        })
-        .on("brush", function () {
-            var e = d3.event.selection
-            console.log(e)
-        })
-        .on("end", function () {
-            if (!d3.event.sourceEvent) return; // Only transition after input.
-            if (!d3.event.selection) return; // Ignore empty selections.
-            var e = d3.event.selection;
-            console.log(e)
-        })
-
-
-    $(window).resize(function () {
-        resize()
-    })
-    var resize = function () {
-        //var canvasdiv = d3.select("#canvasdiv")
-        scope.width = $(window).width() - 200
-        scope.height = $(window).height() - 30
-        canvas.attr("width", scope.width).attr("height", scope.height)
-            //svg.attr("width", scope.width).attr("height", scope.height)
-        main.style("height", scope.height + "px")
-        main.style("width", scope.width + "px")
-        width.text(scope.width)
-        height.text(scope.height)
-            //var b = svg.append("g").attr("class", "brush")
-            //b.call(brush)
-
-    }
-    resize()
-    var URI = "/hic"
-    var hicCtrl, regionCtrl;
-    var hicOpts = {}
-    var hicCtrlDiv = left.append("div")
-    var regionCtrlDiv = left.append("div")
-
-    var addChrPrefix = function (r) { //TODO fix using idx , XY bug
-            var s = []
-            r.forEach(function (d) {
-                s.push({
-                    "start": d.start,
-                    "end": d.end,
-                    "chr": "chr" + d.chr
-                })
-            })
-            console.log(s)
-            return s
-        }
-        /* get parameters of regions and hic , then render */
-    var setRegions = function (extent) {
-        var regions = regionCtrl.regions();
-        regions.forEach(function (d, i) {
-            d.start = Math.round(extent[i][0])
-            d.end = Math.round(extent[i][1])
-        })
-        regionCtrl.regions(regions)
-        console.log(regions)
-    }
-    var plot = function () {
-            console.log(hicCtrl.state())
-            console.log(regionCtrl.regions())
-            var hic = hicCtrl.state()
-            var regions = regionCtrl.regions();
-
-            var edge = Math.min(scope.height - 100, scope.width - 40)
-            var chart = H.canvas()
-                .URI(URI)
-                .norm(hic.norm)
-                .unit(hic.unit)
-                .bpres(hicOpts.bpres)
-                .xoffset(20)
-                .yoffset(20)
-                .width(edge)
-                .height(edge)
-                .regions(regions)
-                .svg(svgdiv)
-                .emit(setRegions)
-                //console.log(canvas)
-                //console.log(hicOpts.bpres)
-                //chart.loadData(console.log)
-                //TODO Canvas Call BigWig Too;
-            var bw = B.canvas().URI("").x(20).y(scope.height - 60).width(edge).regions(addChrPrefix(regions))
-
-            canvas.call(chart)
-            canvas.call(bw)
-        }
-        /*
-        left.append("div").append("button").attr("value","submit")
-        .text("submit")
-        .on("click",function(){
-          plot()
-        })
-        */
-    var btns = left.append("div").classed("btn-group", true)
-    var btns2 = left.append("div").classed("btn-group", true)
-    btns.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-backward"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            var l = Math.round((regions[0].end - regions[0].start) / 2)
-            var d = regions[0]
-            regions[0].start = d.start - l < 0 ? 0 : d.start - l
-            regions[0].end = d.end - l < 0 ? d.end : d.end - l
-            regionCtrl.regions(regions)
-            regionCtrlDiv.call(regionCtrl)
-            plot();
-        })
-    btns2.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-zoom-in"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            regions.forEach(function (d, i) {
-                var l = Math.round((d.end - d.start) / 3)
-                regions[i].start = d.start + l
-                regions[i].end = d.end - l
-            })
-            regionCtrl.regions(regions)
-            regionCtrlDiv.call(regionCtrl)
-            plot();
-        })
-    btns.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-play"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            plot();
-        })
-    btns2.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-zoom-out"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            regions.forEach(function (d, i) {
-                var l = d.end - d.start
-                regions[i].start = d.start - l < 0 ? 0 : d.start - l
-                regions[i].end = d.end + l > d.length ? d.length : d.end + l
-            })
-            regionCtrl.regions(regions)
-            regionCtrlDiv.call(regionCtrl)
-            plot();
-        })
-    btns.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-forward"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            var d = regions[0]
-            var l = Math.round((regions[0].end - regions[0].start) / 2)
-            regions[0].start = d.start + l > d.length ? d.start : d.start + l
-            regions[0].end = d.end + l > d.length ? d.length : d.end + l
-            regionCtrl.regions(regions)
-            regionCtrlDiv.call(regionCtrl)
-            plot();
-        })
-    var btns3 = left.append("div").classed("btn-group", true)
-    btns3.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-triangle-top"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            var l = Math.round((regions[1].end - regions[1].start) / 2)
-            var d = regions[1]
-            regions[1].start = d.start - l < 0 ? 0 : d.start - l
-            regions[1].end = d.end - l < 0 ? d.end : d.end - l
-            regionCtrl.regions(regions)
-            regionCtrlDiv.call(regionCtrl)
-            plot();
-        })
-    btns3.append("button")
-        .classed("btn", true)
-        .html('<small><span class="glyphicon glyphicon-triangle-bottom"></span></small>')
-        .on("click", function () {
-            var regions = regionCtrl.regions();
-            var d = regions[1]
-            var l = Math.round((regions[1].end - regions[1].start) / 2)
-            regions[1].start = d.start + l > d.length ? d.start : d.start + l
-            regions[1].end = d.end + l > d.length ? d.length : d.end + l
-            regionCtrl.regions(regions)
-            regionCtrlDiv.call(regionCtrl)
-            plot();
-        })
-    var renderHicCtrlPanel = function (data) {
-        hicOpts = data;
-        console.log("hic", data)
-        hicCtrl = H.chart().data(data);
-        hicCtrlDiv.call(hicCtrl)
-        regionCtrl = S.regionForm().chrs(data.chrs).regionNum(2)
-        regionCtrlDiv.call(regionCtrl)
-    }
-    H.Get(URI, renderHicCtrlPanel)
-    B.Get("", console.log)
-}(d3, jQuery, snow));
