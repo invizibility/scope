@@ -45,6 +45,7 @@
         var canvas = canvasdiv.append("canvas")
         var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
         var svg = svgdiv.append("svg") //design for brushes.
+        var background = "#BBB"
 
         $(window).resize(function() {
             resize()
@@ -93,6 +94,9 @@
             console.log(regions)
         }
         var plot = function(d) {
+            var ctx = canvas.node().getContext("2d");
+            ctx.fillStyle = background
+            ctx.fillRect(0, 0, scope.width, scope.height)
             console.log(hicCtrl.state())
             console.log(regionCtrl.regions())
             var hic = hicCtrl.state()
