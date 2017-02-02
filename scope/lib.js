@@ -47,12 +47,27 @@ snow.dataHic = {};
 
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color
+                if (isNaN(region[i].From) || isNaN(region[i].To)) {
+                  continue;
+                }
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
-                var barwidth = x2 - x1
-                var barheight = yscale(region[i].Max)
-                var y1 = barHeight - barheight
-                ctx.fillRect(x + xoffset + x1, y + yoffset + y1, barwidth, barheight);
+                var width = x2 - x1
+                var y1 = yscale(region[i].Max) //TODO
+                var ym = yscale(region[i].Sum/region[i].Valid)
+                var y0 = yscale(0);
+                //var y1 = barHeight - height
+                if (y0 < 0) {
+                    ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
+                } else {
+                    if (y1 > y0) {
+                        ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
+                    } else {
+                        ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y0), width, y0 - y1);
+                    }
+                }
+                ctx.fillStyle = "#111"
+                ctx.fillRect(x+xoffset+x1,y+yoffset+(barHeight-ym),width,1)
             }
         }
         var _render_ = function (error, results) {
@@ -143,13 +158,15 @@ snow.dataHic = {};
         var chrs
         var regionNum
         var regions;
-        var stacks=[];  //previous regions; TODO
+        var stacks = []; //previous regions; TODO
         var regionsSend; //committed send. TODO
-        var send = function(d){console.log(d)}
+        var send = function (d) {
+            console.log(d)
+        }
         var lengths = [0, 0]; //two regions;
         var form = {
             "chrs": [], //chrs.
-            "ses": []  //start end
+            "ses": [] //start end
         }
         var chart = function (selection) {
             var data = []
@@ -163,19 +180,19 @@ snow.dataHic = {};
                 .data(data)
                 .enter()
                 .append("div")
-                .classed("entry",true)
+                .classed("entry", true)
                 .call(chrOpts)
             selection
                 .selectAll(".send")
                 .data([0])
                 .enter()
                 .append("div")
-                .classed("send",true)
+                .classed("send", true)
                 .append("button")
-                .attr("value","submit")
-                .on("click",function(){
-                  parseRegions()
-                  send(regions)
+                .attr("value", "submit")
+                .on("click", function () {
+                    parseRegions()
+                    send(regions)
                 }).text("submit")
         }
         var default_range = function (length) {
@@ -220,24 +237,24 @@ snow.dataHic = {};
                     .attr("id", "region" + i + "se")
                     .style("width", "160px") //TODO remove ID and get state.
                 form["ses"].push(se)
-               //TODO Add submit button and commit sen
+                    //TODO Add submit button and commit sen
             })
 
         }
-        var parseRegions = function() {
-          regions = []
-          for (var i = 0; i < regionNum; i++) {
-              var chr = form["chrs"][i].node().value
-              var se = form["ses"][i].node().value
-                  //console.log(chr, se)
-              var x = se.split("-")
-              regions.push({
-                  "chr": chr,
-                  "start": +x[0],
-                  "end": +x[1],
-                  "length": lengths[i]
-              })
-          }
+        var parseRegions = function () {
+            regions = []
+            for (var i = 0; i < regionNum; i++) {
+                var chr = form["chrs"][i].node().value
+                var se = form["ses"][i].node().value
+                    //console.log(chr, se)
+                var x = se.split("-")
+                regions.push({
+                    "chr": chr,
+                    "start": +x[0],
+                    "end": +x[1],
+                    "length": lengths[i]
+                })
+            }
         }
         chart.regions = function (_) { //return regions or set regions function.
             //var num = d3.select("#regionNum").node().value
@@ -261,7 +278,9 @@ snow.dataHic = {};
                 return arguments.length ? (chrs = _, chart) : chrs;
             }
             //chart.lengths　＝　function(){return lengths;}
-        chart.send = function(_) { return arguments.length ? (send= _, chart) : send; }
+        chart.send = function (_) {
+            return arguments.length ? (send = _, chart) : send;
+        }
         return chart
     }
 }(snow));
@@ -460,8 +479,8 @@ snow.dataHic = {};
 
             }
             /** TODO THIS **/
-        var cleanBrush = function(){
-          svg.selectAll("svg").selectAll(".brush").remove();
+        var cleanBrush = function () {
+            svg.selectAll("svg").selectAll(".brush").remove();
         }
         var renderBrush = function () {
             var y = offsets[1]
@@ -476,8 +495,8 @@ snow.dataHic = {};
                     var e = d3.event.selection;
                     console.log(e)
                     var extent = [
-                        [xScale.invert(e[0][0]),xScale.invert(e[1][0])],
-                        [yScale.invert(e[0][1]),yScale.invert(e[1][1])]
+                        [xScale.invert(e[0][0]), xScale.invert(e[1][0])],
+                        [yScale.invert(e[0][1]), yScale.invert(e[1][1])]
                     ];
                     emit(extent)
                     console.log(extent)
@@ -501,7 +520,7 @@ snow.dataHic = {};
                 tickSize = 6,
                 tickPadding = 3,
                 ticks = scale.ticks(tickCount),
-                tickFormat = scale.tickFormat(tickCount,"s");
+                tickFormat = scale.tickFormat(tickCount, "s");
 
             context.beginPath();
             ticks.forEach(function (d) {
@@ -579,7 +598,7 @@ snow.dataHic = {};
                 }
             }
             cellSize = w / (l / bpres[resIdx])
-            console.log(w,l,bpres[resIdx],cellSize)
+            console.log(w, l, bpres[resIdx], cellSize)
             offsets = []
             var offset = 0.0;
             regions.forEach(function (d, i) {
