@@ -84,15 +84,7 @@
                 return s
             }
             /* get parameters of regions and hic , then render */
-        var setRegions = function(e) {
-            var regions = regionCtrl.regions();
-            regions.forEach(function(d, i) {
-                d.start = e[i].start
-                d.end = e[i].end
-            })
-            regionCtrl.regions(regions)
-            console.log(regions)
-        }
+
         var plot = function(d) {
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
@@ -103,6 +95,23 @@
             var regions = d || regionCtrl.regions() //TODO
 
             var edge = Math.min(scope.height - 100, scope.width - 40)
+            var bw = B.canvas()
+                .URI("")
+                .x(20)
+                .y(scope.height - 60)
+                .width(edge)
+                .regions(addChrPrefix(regions))
+                .panel(panel)
+            var setRegions = function(e) {
+                var regions = regionCtrl.regions();
+                regions.forEach(function(d, i) {
+                    d.start = e[i].start
+                    d.end = e[i].end
+                })
+                regionCtrl.regions(regions)
+                bw.response(regions)
+                console.log(regions)
+            }
             var chart = H.canvas()
                 .URI(URI)
                 .norm(hic.norm)
@@ -117,7 +126,8 @@
                 //.svg(svgdiv)
                 //.panel(panel)
                 .emit(setRegions)
-            var bw = B.canvas().URI("").x(20).y(scope.height - 60).width(edge).regions(addChrPrefix(regions))
+
+
             canvas.call(chart)
             canvas.call(bw)
         }
