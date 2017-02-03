@@ -29,6 +29,7 @@ snow.dataHic = {};
         var barHeight = 50
 
         var canvas
+        var panel //canvas parent for add svg;
         var binsize
 
 
@@ -48,7 +49,7 @@ snow.dataHic = {};
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color
                 if (isNaN(region[i].From) || isNaN(region[i].To)) {
-                    continue;
+                    continue; //add handle large width bug
                 }
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
@@ -73,11 +74,52 @@ snow.dataHic = {};
                 ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1)
             }
         }
+        var xscales,xoffsets,widths;
+        var renderResp = function() {
+            //add trackId TODO
+            var resp = panel.selectAll(".bwResp").data(regions)
+            resp.enter().append("svg")
+            .classed("bwResp",true)
+            .merge(resp)
+            .style("position","absolute")
+            .style("top", y)
+            .style("left",function(d,i){return x + xoffsets[i]})
+            .attr("width",function(d,i){return widths[i]})
+            .attr("height",barHeight)
+            resp.selectAll("rect").remove()
+        }
+        var res = function(selection) {
+          selection.each(function(d,i){
+            console.log(d,i)
+            var x = xscales[i](d.start)
+            var l = xscales[i](d.end)-x
+            var rect = d3.select(this).selectAll("rect")
+             .data([{"x":x,"l":l}])
+             rect
+             .enter()
+             .append("rect")
+             .merge(rect)
+             .attr("x",function(d){return d.x})
+             .attr("y",0)
+             .attr("height",barHeight)
+             .attr("width",function(d){return d.l})
+             .attr("fill",function(d){return "#777"})
+             .attr("opacity",0.2)
+          })
+        }
+        var response = function (e) {
+            //console.log(e)
+              panel.selectAll(".bwResp") //need to add trackId
+              .data(e)
+              .call(res)
+
+        }
         var _render_ = function (error, results) {
             var min = Infinity;
             var max = -Infinity;
-            var xscales = []
-            var xoffsets = []
+            xscales = []
+            xoffsets = []
+            widths  = []
             var yoffset = 0
             var offset = 0
             var totalLen = totalLength(regions)
@@ -87,7 +129,9 @@ snow.dataHic = {};
                 xscales.push(scale)
                 xoffsets.push(offset)
                 offset += w
+                widths.push(w)
             })
+            renderResp();
             results.forEach(function (arr) {
                 arr.forEach(function (d) {
                     if (d.Max > max) {
@@ -131,6 +175,7 @@ snow.dataHic = {};
             canvas = selection;
             render();
         }
+        chart.panel = function(_) { return arguments.length ? (panel= _, chart) : panel; }
         chart.x = function (_) {
             return arguments.length ? (x = _, chart) : x;
         }
@@ -151,6 +196,9 @@ snow.dataHic = {};
         }
         chart.barHeight = function (_) {
             return arguments.length ? (barHeight = _, chart) : barHeight;
+        }
+        chart.response = function(e) {
+          response(e)
         }
         return chart
     }
@@ -495,7 +543,6 @@ snow.dataHic = {};
             var l = scales[i](d.end)-x
             var rect = d3.select(this).selectAll("rect")
              .data([{"x":x,"l":l}])
-
              rect
              .enter()
              .append("rect")
@@ -554,26 +601,12 @@ snow.dataHic = {};
                   "start": Math.round(yScale.invert(e[0][1])),
                   "end": Math.round(yScale.invert(e[1][1]))
               }];
-              //emit(extent)
+              emit(extent)
               response(extent)
 
             }
             var brushEnd = function () {
-                    var e = d3.event.selection;
-                    console.log(e)
-                    var extent = [{
-                        "chr": regions[0].chr,
-                        "start": Math.round(xScale.invert(e[0][0])),
-                        "end": Math.round(xScale.invert(e[1][0]))
-                    }, {
-                        "chr": regions[1].chr,
-                        "start": Math.round(yScale.invert(e[0][1])),
-                        "end": Math.round(yScale.invert(e[1][1]))
-                    }];
-                    emit(extent)
-                    response(extent)
 
-                    console.log(extent)
                 }
                 //TODO RELATIVE POSITION 200 + 10 padding + 10 pading
             panel.selectAll(".hicBrush").remove(); //TODO
