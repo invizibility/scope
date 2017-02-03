@@ -84,11 +84,11 @@
                 return s
             }
             /* get parameters of regions and hic , then render */
-        var setRegions = function(extent) {
+        var setRegions = function(e) {
             var regions = regionCtrl.regions();
             regions.forEach(function(d, i) {
-                d.start = Math.round(extent[i][0])
-                d.end = Math.round(extent[i][1])
+                d.start = e[i].start
+                d.end = e[i].end
             })
             regionCtrl.regions(regions)
             console.log(regions)
