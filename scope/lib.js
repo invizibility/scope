@@ -48,14 +48,16 @@ snow.dataHic = {};
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color
                 if (isNaN(region[i].From) || isNaN(region[i].To)) {
-                  continue;
+                    continue;
                 }
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
                 var width = x2 - x1
-                if(width>100) {console.log("debug region",region[i])} //debug
+                if (width > 100) {
+                    console.log("debug region", region[i])
+                } //debug
                 var y1 = yscale(region[i].Max) //TODO
-                var ym = yscale(region[i].Sum/region[i].Valid)
+                var ym = yscale(region[i].Sum / region[i].Valid)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
@@ -68,7 +70,7 @@ snow.dataHic = {};
                     }
                 }
                 ctx.fillStyle = "#111"
-                ctx.fillRect(x+xoffset+x1,y+yoffset+(barHeight-ym),width,1)
+                ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1)
             }
         }
         var _render_ = function (error, results) {
@@ -388,6 +390,7 @@ snow.dataHic = {};
 
         /*parameters for hic data */
         var regions;
+        var scales = [null,null]
         var bpres;
         var norm;
         var unit;
@@ -463,6 +466,7 @@ snow.dataHic = {};
                     k += 1;
                 }
             }
+            renderResp()
             renderBrush()
 
         }
@@ -484,34 +488,102 @@ snow.dataHic = {};
         var cleanBrush = function () {
             //TODO svg.selectAll("svg").selectAll(".brush").remove();
         }
+        var res = function(selection) {
+          selection.each(function(d,i){
+            console.log(d,i)
+            var x = scales[i](d.start)
+            var l = scales[i](d.end)-x
+            var rect = d3.select(this).selectAll("rect")
+             .data([{"x":x,"l":l}])
+
+             rect
+             .enter()
+             .append("rect")
+             .merge(rect)
+             .attr("x",function(d){return d.x})
+             .attr("y",function(d){return d.x})
+             .attr("height",function(d){return d.l})
+             .attr("width",function(d){return d.l})
+             .attr("fill",function(d){return "#777"})
+             .attr("opacity",0.2)
+          })
+        }
+        var response = function (e) {
+            console.log(e)
+              panel.selectAll(".hicResp")
+              .data(e)
+              .call(res)
+
+        }
+        var renderResp = function() {
+          //var w = offsets[1]
+          //var h = height - offsets[1]
+          panel.selectAll(".hicResp").remove(); //TODO
+          var svg = panel.selectAll(".hicResp").data(offsets)
+             .enter()
+             .append("svg")
+             .attr("class", "hicResp")
+          svg.style("position", "absolute")
+              .style("top", function(d){return d+yoffset})
+              .style("left", function(d){return d+xoffset})
+              .attr("width", function(d,i){
+                 return offsets[i+1]-offsets[i] || height - offsets[i]
+              })
+              .attr("height", function(d,i){
+                 return offsets[i+1]-offsets[i] || height - offsets[i]
+              })
+        }
         var renderBrush = function () {
             var y = offsets[1]
             var w = offsets[1]
             var h = height - offsets[1]
             var xScale = d3.scaleLinear().domain([regions[0].start, regions[0].end]).range([0, w]);
             var yScale = d3.scaleLinear().domain([regions[1].start, regions[1].end]).range([0, h]);
+            scales[0]=xScale
+            scales[1]=yScale
+            console.log(xScale)
             var brushCb = function () {
+              var e = d3.event.selection;
+              console.log(e)
+              var extent = [{
+                  "chr": regions[0].chr,
+                  "start": Math.round(xScale.invert(e[0][0])),
+                  "end": Math.round(xScale.invert(e[1][0]))
+              }, {
+                  "chr": regions[1].chr,
+                  "start": Math.round(yScale.invert(e[0][1])),
+                  "end": Math.round(yScale.invert(e[1][1]))
+              }];
+              //emit(extent)
+              response(extent)
 
             }
             var brushEnd = function () {
                     var e = d3.event.selection;
                     console.log(e)
-                    var extent = [
-                        [xScale.invert(e[0][0]), xScale.invert(e[1][0])],
-                        [yScale.invert(e[0][1]), yScale.invert(e[1][1])]
-                    ];
+                    var extent = [{
+                        "chr": regions[0].chr,
+                        "start": Math.round(xScale.invert(e[0][0])),
+                        "end": Math.round(xScale.invert(e[1][0]))
+                    }, {
+                        "chr": regions[1].chr,
+                        "start": Math.round(yScale.invert(e[0][1])),
+                        "end": Math.round(yScale.invert(e[1][1]))
+                    }];
                     emit(extent)
+                    response(extent)
+
                     console.log(extent)
                 }
                 //TODO RELATIVE POSITION 200 + 10 padding + 10 pading
-            panel.selectAll("svg").remove();//TODO
-            var svg = panel.selectAll("svg").data(["0"]).enter().append("svg")
-            svg.style("position","absolute").style("left", xoffset)
-            .style("top", yoffset + y)
-            .attr("width", w)
-            .attr("height", h)
-            console.log("svg",svg)
-            console.log("panel",panel)
+            panel.selectAll(".hicBrush").remove(); //TODO
+            var svg = panel.selectAll(".hicBrush").data(["0"]).enter().append("svg").attr("class", "hicBrush")
+            svg.style("position", "absolute").style("left", xoffset)
+                .style("top", yoffset + y)
+                .attr("width", w)
+                .attr("height", h)
+            console.log("svg", svg)
+            console.log("panel", panel)
             var brush = d3.brush().on("brush", brushCb).on("end", brushEnd)
             var b = svg.selectAll(".brush")
                 .data([0])
@@ -647,7 +719,9 @@ snow.dataHic = {};
               return chart;
             }
             */
-        chart.panel = function(_) { return arguments.length ? (panel= _, chart) : panel; }
+        chart.panel = function (_) {
+            return arguments.length ? (panel = _, chart) : panel;
+        }
         chart.svg = function (_) {
             return arguments.length ? (svg = _, chart) : svg;
         }
