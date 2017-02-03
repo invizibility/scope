@@ -53,6 +53,7 @@ snow.dataHic = {};
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
                 var width = x2 - x1
+                if(width>100) {console.log("debug region",region[i])} //debug
                 var y1 = yscale(region[i].Max) //TODO
                 var ym = yscale(region[i].Sum/region[i].Valid)
                 var y0 = yscale(0);
