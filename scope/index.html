@@ -41,10 +41,10 @@
         var width = top.append("span").attr("id", "width")
         top.append("label").attr("for", "height").text("height")
         var height = top.append("span").attr("id", "height")
-        var canvasdiv = main.append("div").style("position", "absolute")
-        var canvas = canvasdiv.append("canvas")
-        var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
-        var svg = svgdiv.append("svg") //design for brushes.
+        var panel = main.append("div").style("position", "relative")
+        var canvas = panel.append("canvas").style("postion", "absolute")
+            //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
+            //var svg = svgdiv.append("svg") //design for brushes.
         var background = "#BBB"
 
         $(window).resize(function() {
@@ -113,7 +113,9 @@
                 .width(edge)
                 .height(edge)
                 .regions(regions)
-                .svg(svgdiv)
+                .panel(panel)
+                //.svg(svgdiv)
+                //.panel(panel)
                 .emit(setRegions)
             var bw = B.canvas().URI("").x(20).y(scope.height - 60).width(edge).regions(addChrPrefix(regions))
             canvas.call(chart)

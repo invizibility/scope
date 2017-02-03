@@ -401,6 +401,7 @@ snow.dataHic = {};
         var offsets;
         var canvas;
         var svg;
+        var panel;
         var emit = function (d) {
             console.log("emit")
         }
@@ -481,7 +482,7 @@ snow.dataHic = {};
             }
             /** TODO THIS **/
         var cleanBrush = function () {
-            svg.selectAll("svg").selectAll(".brush").remove();
+            //TODO svg.selectAll("svg").selectAll(".brush").remove();
         }
         var renderBrush = function () {
             var y = offsets[1]
@@ -501,18 +502,23 @@ snow.dataHic = {};
                     ];
                     emit(extent)
                     console.log(extent)
-
                 }
                 //TODO RELATIVE POSITION 200 + 10 padding + 10 pading
-            svg.style("left", xoffset + 15).style("top", yoffset + y).style("width", w).style("height", h)
-            var f = svg.selectAll("svg").attr("width", w).attr("height", h)
+            panel.selectAll("svg").remove();//TODO
+            var svg = panel.selectAll("svg").data(["0"]).enter().append("svg")
+            svg.style("position","absolute").style("left", xoffset)
+            .style("top", yoffset + y)
+            .attr("width", w)
+            .attr("height", h)
+            console.log("svg",svg)
+            console.log("panel",panel)
             var brush = d3.brush().on("brush", brushCb).on("end", brushEnd)
-            var b = f.selectAll(".brush")
+            var b = svg.selectAll(".brush")
                 .data([0])
             b.enter()
                 .append("g")
                 .attr("class", "brush")
-                .merge(b)
+                //.merge(b)
                 .call(brush)
         }
         var yaxis = function (context, scale, x, y, height, label) {
@@ -629,6 +635,7 @@ snow.dataHic = {};
         }
         var chart = function (selection) { //selection is canvas itself;
                 canvas = selection;
+                //panel = d3.select("#main") //TODO
                 cleanBrush();
                 //add loading... here
                 //render done.
@@ -640,6 +647,7 @@ snow.dataHic = {};
               return chart;
             }
             */
+        chart.panel = function(_) { return arguments.length ? (panel= _, chart) : panel; }
         chart.svg = function (_) {
             return arguments.length ? (svg = _, chart) : svg;
         }
