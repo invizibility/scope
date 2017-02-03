@@ -504,7 +504,7 @@ snow.dataHic = {};
 
                 }
                 //TODO RELATIVE POSITION 200 + 10 padding + 10 pading
-            svg.style("left", xoffset + 215).style("top", yoffset + y + 25).style("width", w).style("height", h)
+            svg.style("left", xoffset + 15).style("top", yoffset + y).style("width", w).style("height", h)
             var f = svg.selectAll("svg").attr("width", w).attr("height", h)
             var brush = d3.brush().on("brush", brushCb).on("end", brushEnd)
             var b = f.selectAll(".brush")
