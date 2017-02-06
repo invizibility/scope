@@ -66,7 +66,7 @@
         }
         resize()
         var URI = "/hic"
-        var hicCtrl, regionCtrl;
+        var hicCtrl, regionCtrl, paraMonitor;
         var hicOpts = {}
         var hicCtrlDiv = left.append("div")
         var regionCtrlDiv = left.append("div")
@@ -112,6 +112,10 @@
                 bw.response(regions)
                 console.log(regions)
             }
+            var showPara = function(d) {
+                var paratable = S.paraTable().data(d)
+                paraMonitor.call(paratable)
+            }
             var chart = H.canvas()
                 .URI(URI)
                 .norm(hic.norm)
@@ -128,6 +132,7 @@
                 //.svg(svgdiv)
                 //.panel(panel)
                 .emit(setRegions)
+                .callback(showPara)
             var colorbar = S.colorBar().color1(hic.color1).color2(hic.color2).x(scope.width - 100).y(scope.height - 50)
 
             canvas.call(chart).call(colorbar)
@@ -224,6 +229,7 @@
                 regionCtrlDiv.call(regionCtrl)
                 plot();
             })
+        var paraMonitor = left.append("div").classed("panel", true)
         var renderHicCtrlPanel = function(data) {
             hicOpts = data;
             hicCtrl = H.chart().data(data);
