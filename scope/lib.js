@@ -74,44 +74,57 @@ snow.dataHic = {};
                 ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1)
             }
         }
-        var xscales,xoffsets,widths;
-        var renderResp = function() {
+        var xscales, xoffsets, widths;
+        var renderResp = function () {
             //add trackId TODO
             var resp = panel.selectAll(".bwResp").data(regions)
             resp.enter().append("svg")
-            .classed("bwResp",true)
-            .merge(resp)
-            .style("position","absolute")
-            .style("top", y)
-            .style("left",function(d,i){return x + xoffsets[i]})
-            .attr("width",function(d,i){return widths[i]})
-            .attr("height",barHeight)
+                .classed("bwResp", true)
+                .merge(resp)
+                .style("position", "absolute")
+                .style("top", y)
+                .style("left", function (d, i) {
+                    return x + xoffsets[i]
+                })
+                .attr("width", function (d, i) {
+                    return widths[i]
+                })
+                .attr("height", barHeight)
             resp.selectAll("rect").remove()
         }
-        var res = function(selection) {
-          selection.each(function(d,i){
-            console.log(d,i)
-            var x = xscales[i](d.start)
-            var l = xscales[i](d.end)-x
-            var rect = d3.select(this).selectAll("rect")
-             .data([{"x":x,"l":l}])
-             rect
-             .enter()
-             .append("rect")
-             .merge(rect)
-             .attr("x",function(d){return d.x})
-             .attr("y",0)
-             .attr("height",barHeight)
-             .attr("width",function(d){return d.l})
-             .attr("fill",function(d){return "#777"})
-             .attr("opacity",0.2)
-          })
+        var res = function (selection) {
+            selection.each(function (d, i) {
+                console.log(d, i)
+                var x = xscales[i](d.start)
+                var l = xscales[i](d.end) - x
+                var rect = d3.select(this).selectAll("rect")
+                    .data([{
+                        "x": x,
+                        "l": l
+                    }])
+                rect
+                    .enter()
+                    .append("rect")
+                    .merge(rect)
+                    .attr("x", function (d) {
+                        return d.x
+                    })
+                    .attr("y", 0)
+                    .attr("height", barHeight)
+                    .attr("width", function (d) {
+                        return d.l
+                    })
+                    .attr("fill", function (d) {
+                        return "#777"
+                    })
+                    .attr("opacity", 0.2)
+            })
         }
         var response = function (e) {
             //console.log(e)
-              panel.selectAll(".bwResp") //need to add trackId
-              .data(e)
-              .call(res)
+            panel.selectAll(".bwResp") //need to add trackId
+                .data(e)
+                .call(res)
 
         }
         var _render_ = function (error, results) {
@@ -119,7 +132,7 @@ snow.dataHic = {};
             var max = -Infinity;
             xscales = []
             xoffsets = []
-            widths  = []
+            widths = []
             var yoffset = 0
             var offset = 0
             var totalLen = totalLength(regions)
@@ -175,7 +188,9 @@ snow.dataHic = {};
             canvas = selection;
             render();
         }
-        chart.panel = function(_) { return arguments.length ? (panel= _, chart) : panel; }
+        chart.panel = function (_) {
+            return arguments.length ? (panel = _, chart) : panel;
+        }
         chart.x = function (_) {
             return arguments.length ? (x = _, chart) : x;
         }
@@ -197,8 +212,8 @@ snow.dataHic = {};
         chart.barHeight = function (_) {
             return arguments.length ? (barHeight = _, chart) : barHeight;
         }
-        chart.response = function(e) {
-          response(e)
+        chart.response = function (e) {
+            response(e)
         }
         return chart
     }
@@ -335,37 +350,66 @@ snow.dataHic = {};
         return chart
     }
     S.colorBar = function () {
-    var color1
-    var color2
-    //var scale = d3.scaleLinear().range(["#FFFFFF", "#FF0000"])
-    var width = 50
-    var height = 10
-    var x = 20
-    var y = 20
-    var chart = function (selection) { //selection is canvas;
-        var ctx = selection.node().getContext("2d");
-        var grd = ctx.createLinearGradient(x, y, x+width, y);
-        grd.addColorStop(0, color1);
-        grd.addColorStop(1, color2);
-        ctx.fillStyle = grd;
-        ctx.fillRect(x, y, width, height);
+        var color1
+        var color2
+            //var scale = d3.scaleLinear().range(["#FFFFFF", "#FF0000"])
+        var width = 50
+        var height = 10
+        var x = 20
+        var y = 20
+        var chart = function (selection) { //selection is canvas;
+            var ctx = selection.node().getContext("2d");
+            var grd = ctx.createLinearGradient(x, y, x + width, y);
+            grd.addColorStop(0, color1);
+            grd.addColorStop(1, color2);
+            ctx.fillStyle = grd;
+            ctx.fillRect(x, y, width, height);
+        }
+        chart.width = function (_) {
+            return arguments.length ? (width = _, chart) : width;
+        }
+        chart.height = function (_) {
+            return arguments.length ? (height = _, chart) : height;
+        }
+        chart.x = function (_) {
+            return arguments.length ? (x = _, chart) : x;
+        }
+        chart.y = function (_) {
+            return arguments.length ? (y = _, chart) : y;
+        }
+        chart.color1 = function (_) {
+            return arguments.length ? (color1 = _, chart) : color1;
+        }
+        chart.color2 = function (_) {
+            return arguments.length ? (color2 = _, chart) : color2;
+        }
+        return chart
     }
-    chart.width = function (_) {
-        return arguments.length ? (width = _, chart) : width;
+    S.paraTable = function () {
+        var data = {}
+        var chart = function (selection) {
+                //var keys = Object.keys(data)
+                var table = selection.selectAll("table").data([data])
+                table.enter().append("table")
+                table.merge(table)
+                    .classed("table", true)
+                table.selectAll("*").remove();
+                var thead = table.append("thead")
+                var tbody = table.append("tbody")
+                var keys = Object.keys(data)
+                var rows = tbody.selectAll("tr")
+                    .data(keys)
+                    .enter()
+                    .append("tr")
+                rows.append("td").text(function(d){return d})
+                rows.append("td").text(function(d){return data[d]})
+
+            }
+        chart.data = function (_) {
+            return arguments.length ? (data = _, chart) : data;
+        }
+        return chart;
     }
-    chart.height = function (_) {
-        return arguments.length ? (height = _, chart) : height;
-    }
-    chart.x = function (_) {
-        return arguments.length ? (x = _, chart) : x;
-    }
-    chart.y = function (_) {
-        return arguments.length ? (y = _, chart) : y;
-    }
-    chart.color1 = function(_) { return arguments.length ? (color1= _, chart) : color1; }
-    chart.color2 = function(_) { return arguments.length ? (color2= _, chart) : color2; }
-    return chart
-}
 
 }(snow));
 (function (H) {
@@ -417,7 +461,7 @@ snow.dataHic = {};
     H.chart = function () { //cfg chart
             var data
             var form
-            var unitInput, normInput , color1Input, color2Input
+            var unitInput, normInput, color1Input, color2Input
             var chart = function (selection) {
                 selection.selectAll("*").remove();
                 form = selection.append("div").classed("form-group", true)
@@ -450,18 +494,18 @@ snow.dataHic = {};
                 }
                 var colorInputDiv = form.append("div")
                 colorInputDiv.append("label").text("Min")
-                color1Input = colorInputDiv.append("input").attr("type","color")
-                    .attr("value","#FFFFFF")
+                color1Input = colorInputDiv.append("input").attr("type", "color")
+                    .attr("value", "#FFFFFF")
                 colorInputDiv.append("label").text("Max")
-                color2Input = colorInputDiv.append("input").attr("type","color")
-                        .attr("value","#FF0000")
+                color2Input = colorInputDiv.append("input").attr("type", "color")
+                    .attr("value", "#FF0000")
             }
             chart.state = function () {
                 return {
                     "unit": unitInput.node().value,
                     "norm": normInput.node().value,
-                    "color1" : color1Input.node().value,
-                    "color2" : color2Input.node().value
+                    "color1": color1Input.node().value,
+                    "color2": color2Input.node().value
                 }
             }
             chart.data = function (_) {
@@ -480,7 +524,7 @@ snow.dataHic = {};
 
         /*parameters for hic data */
         var regions;
-        var scales = [null,null]
+        var scales = [null, null]
         var bpres;
         var norm;
         var unit;
@@ -526,18 +570,20 @@ snow.dataHic = {};
         }
         var color1
         var color2
+        var color3 //for inter chromosome
+        var color4 //for inter chromosome
         var background = "#FFF"
         var lineColor = "#000"
         var render = function () {
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
             ctx.fillRect(xoffset, yoffset, width, height)
-            var color = d3.scaleLog().domain([min + 1.0, max+1.0]).range([color1, color2]) //TODO not log scale
+            var color = d3.scaleLog().domain([min + 1.0, max + 1.0]).range([color1, color2]) //TODO not log scale
             var colorScale = function (d) {
                 if (isNaN(d)) {
-                    return "#FFF"//color(0)
+                    return "#FFF" //color(0)
                 } else {
-                    return color(d+1.0)
+                    return color(d + 1.0)
                 }
             }
 
@@ -558,7 +604,7 @@ snow.dataHic = {};
             }
             renderResp()
             renderBrush()
-
+            callback({"resolution":bpres[resIdx]}) //callback to send parameters
         }
         var renderAxis = function (ctx) {
                 ctx.save()
@@ -578,49 +624,66 @@ snow.dataHic = {};
         var cleanBrush = function () {
             //TODO svg.selectAll("svg").selectAll(".brush").remove();
         }
-        var res = function(selection) {
-          selection.each(function(d,i){
-            console.log(d,i)
-            var x = scales[i](d.start)
-            var l = scales[i](d.end)-x
-            var rect = d3.select(this).selectAll("rect")
-             .data([{"x":x,"l":l}])
-             rect
-             .enter()
-             .append("rect")
-             .merge(rect)
-             .attr("x",function(d){return d.x})
-             .attr("y",function(d){return d.x})
-             .attr("height",function(d){return d.l})
-             .attr("width",function(d){return d.l})
-             .attr("fill",function(d){return "#777"})
-             .attr("opacity",0.2)
-          })
+        var res = function (selection) {
+            selection.each(function (d, i) {
+                console.log(d, i)
+                var x = scales[i](d.start)
+                var l = scales[i](d.end) - x
+                var rect = d3.select(this).selectAll("rect")
+                    .data([{
+                        "x": x,
+                        "l": l
+                    }])
+                rect
+                    .enter()
+                    .append("rect")
+                    .merge(rect)
+                    .attr("x", function (d) {
+                        return d.x
+                    })
+                    .attr("y", function (d) {
+                        return d.x
+                    })
+                    .attr("height", function (d) {
+                        return d.l
+                    })
+                    .attr("width", function (d) {
+                        return d.l
+                    })
+                    .attr("fill", function (d) {
+                        return "#777"
+                    })
+                    .attr("opacity", 0.2)
+            })
         }
         var response = function (e) {
             console.log(e)
-              panel.selectAll(".hicResp")
-              .data(e)
-              .call(res)
+            panel.selectAll(".hicResp")
+                .data(e)
+                .call(res)
 
         }
-        var renderResp = function() {
-          //var w = offsets[1]
-          //var h = height - offsets[1]
-          panel.selectAll(".hicResp").remove(); //TODO
-          var svg = panel.selectAll(".hicResp").data(offsets)
-             .enter()
-             .append("svg")
-             .attr("class", "hicResp")
-          svg.style("position", "absolute")
-              .style("top", function(d){return d+yoffset})
-              .style("left", function(d){return d+xoffset})
-              .attr("width", function(d,i){
-                 return offsets[i+1]-offsets[i] || height - offsets[i]
-              })
-              .attr("height", function(d,i){
-                 return offsets[i+1]-offsets[i] || height - offsets[i]
-              })
+        var renderResp = function () {
+            //var w = offsets[1]
+            //var h = height - offsets[1]
+            panel.selectAll(".hicResp").remove(); //TODO
+            var svg = panel.selectAll(".hicResp").data(offsets)
+                .enter()
+                .append("svg")
+                .attr("class", "hicResp")
+            svg.style("position", "absolute")
+                .style("top", function (d) {
+                    return d + yoffset
+                })
+                .style("left", function (d) {
+                    return d + xoffset
+                })
+                .attr("width", function (d, i) {
+                    return offsets[i + 1] - offsets[i] || height - offsets[i]
+                })
+                .attr("height", function (d, i) {
+                    return offsets[i + 1] - offsets[i] || height - offsets[i]
+                })
         }
         var renderBrush = function () {
             var y = offsets[1]
@@ -628,23 +691,23 @@ snow.dataHic = {};
             var h = height - offsets[1]
             var xScale = d3.scaleLinear().domain([regions[0].start, regions[0].end]).range([0, w]);
             var yScale = d3.scaleLinear().domain([regions[1].start, regions[1].end]).range([0, h]);
-            scales[0]=xScale
-            scales[1]=yScale
-            console.log(xScale)
+            scales[0] = xScale
+            scales[1] = yScale
+            //console.log(xScale)
             var brushCb = function () {
-              var e = d3.event.selection;
-              console.log(e)
-              var extent = [{
-                  "chr": regions[0].chr,
-                  "start": Math.round(xScale.invert(e[0][0])),
-                  "end": Math.round(xScale.invert(e[1][0]))
-              }, {
-                  "chr": regions[1].chr,
-                  "start": Math.round(yScale.invert(e[0][1])),
-                  "end": Math.round(yScale.invert(e[1][1]))
-              }];
-              emit(extent)
-              response(extent)
+                var e = d3.event.selection;
+                console.log(e)
+                var extent = [{
+                    "chr": regions[0].chr,
+                    "start": Math.round(xScale.invert(e[0][0])),
+                    "end": Math.round(xScale.invert(e[1][0]))
+                }, {
+                    "chr": regions[1].chr,
+                    "start": Math.round(yScale.invert(e[0][1])),
+                    "end": Math.round(yScale.invert(e[1][1]))
+                }];
+                emit(extent)
+                response(extent)
 
             }
             var brushEnd = function () {
@@ -714,8 +777,12 @@ snow.dataHic = {};
             ctx.fillRect(offset, yoffset, 1, height);
             ctx.fillRect(xoffset, offset, width, 1);
         }
+        var callback = function(d) {
+          console.log(d)
+        }
         var dataReady = function (errors, results) {
-            console.log(results)
+            //console.log(results)
+            callback(results)
             min = Infinity
             max = -Infinity
             mats = []
@@ -752,7 +819,7 @@ snow.dataHic = {};
                 }
             }
             cellSize = w / (l / bpres[resIdx])
-            console.log(w, l, bpres[resIdx], cellSize)
+          //  console.log(w, l, bpres[resIdx], cellSize)
             offsets = []
             var offset = 0.0;
             regions.forEach(function (d, i) {
@@ -839,6 +906,7 @@ snow.dataHic = {};
         chart.emit = function (_) {
             return arguments.length ? (emit = _, chart) : emit;
         }
+        chart.callback = function(_) { return arguments.length ? (callback= _, chart) : callback; }
         return chart;
     }
 
