@@ -499,12 +499,12 @@ snow.dataHic = {};
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
             ctx.fillRect(xoffset, yoffset, width, height)
-            var color = d3.scaleLog().domain([min + 1.0, max]).range([color1, color2]) //TODO not log scale
+            var color = d3.scaleLog().domain([min + 1.0, max+1.0]).range([color1, color2]) //TODO not log scale
             var colorScale = function (d) {
                 if (isNaN(d)) {
                     return "#FFF"//color(0)
                 } else {
-                    return color(d)
+                    return color(d+1.0)
                 }
             }
 
