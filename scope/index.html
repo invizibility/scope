@@ -123,6 +123,8 @@
                 .height(edge)
                 .regions(regions)
                 .panel(panel)
+                .color1(hic.color1)
+                .color2(hic.color2)
                 //.svg(svgdiv)
                 //.panel(panel)
                 .emit(setRegions)
@@ -223,7 +225,6 @@
             })
         var renderHicCtrlPanel = function(data) {
             hicOpts = data;
-            console.log("hic", data)
             hicCtrl = H.chart().data(data);
             hicCtrlDiv.call(hicCtrl)
             regionCtrl = S.regionForm().chrs(data.chrs).regionNum(2).send(plot)

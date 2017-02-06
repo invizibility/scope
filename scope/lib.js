@@ -384,7 +384,7 @@ snow.dataHic = {};
     H.chart = function () { //cfg chart
             var data
             var form
-            var unitInput, normInput
+            var unitInput, normInput , color1Input, color2Input
             var chart = function (selection) {
                 selection.selectAll("*").remove();
                 form = selection.append("div").classed("form-group", true)
@@ -415,11 +415,20 @@ snow.dataHic = {};
                 if (data.units.length == 1) {
                     unitInput.property("disabled", true)
                 }
+                var colorInputDiv = form.append("div")
+                colorInputDiv.append("label").text("Min")
+                color1Input = colorInputDiv.append("input").attr("type","color")
+                    .attr("value","#FFFFFF")
+                colorInputDiv.append("label").text("Max")
+                color2Input = colorInputDiv.append("input").attr("type","color")
+                        .attr("value","#FF0000")
             }
             chart.state = function () {
                 return {
                     "unit": unitInput.node().value,
-                    "norm": normInput.node().value
+                    "norm": normInput.node().value,
+                    "color1" : color1Input.node().value,
+                    "color2" : color2Input.node().value
                 }
             }
             chart.data = function (_) {
@@ -482,8 +491,8 @@ snow.dataHic = {};
                 }
             }
         }
-        var color1 = "#FFE"
-        var color2 = "#F12"
+        var color1
+        var color2
         var background = "#FFF"
         var lineColor = "#000"
         var render = function () {
@@ -493,7 +502,7 @@ snow.dataHic = {};
             var color = d3.scaleLog().domain([min + 1.0, max]).range([color1, color2]) //TODO not log scale
             var colorScale = function (d) {
                 if (isNaN(d)) {
-                    return color(0)
+                    return "#FFF"//color(0)
                 } else {
                     return color(d)
                 }
