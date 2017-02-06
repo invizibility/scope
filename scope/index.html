@@ -128,10 +128,11 @@
                 //.svg(svgdiv)
                 //.panel(panel)
                 .emit(setRegions)
+            var colorbar = S.colorBar().color1(hic.color1).color2(hic.color2).x(scope.width - 100).y(scope.height - 50)
 
-
-            canvas.call(chart)
+            canvas.call(chart).call(colorbar)
             canvas.call(bw)
+
         }
         var btns = left.append("div").classed("btn-group", true)
         var btns2 = left.append("div").classed("btn-group", true)
