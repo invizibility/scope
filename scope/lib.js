@@ -559,12 +559,45 @@ snow.dataHic = {};
             var url = "/get2dnorm/" + regionString(a) + "/" + regionString(b) + "/" + resIdx + "/" + norm + "/" + unit + "/text"
             return url
         }
-        var renderMatrix = function (ctx, xoffset, yoffset, mat, cellSize, colorScale) {
+        var renderMatrix = function (ctx, xoffset, yoffset, mat, cellSize, colorScale, region1, se1, region2,se2) {
             //var ctx = canvas.node().getContext("2d");
-            for (var x = 0; x < mat.length; x++) {
-                for (var y = 0; y < mat[0].length; y++) {
+            //inner matrix
+            var binsize = bpres[resIdx]
+            var x0 = (se1[0] -region1.start)/binsize*cellSize
+            var y0 = (se2[0] - region2.start)/binsize*cellSize
+            var h0 = cellSize + y0
+            var w0 = cellSize + x0
+            var w1 = cellSize + (region1.end-se1[1])/binsize*cellSize
+            var h1 = cellSize + (region2.end-se2[1])/binsize*cellSize
+            var nx = mat.length;
+            var ny = mat[0].length;
+            if (nx==0 || ny==0) {return}
+            ctx.fillStyle = colorScale(mat[0][0])
+            ctx.fillRect(xoffset,yoffset,w0,h0)
+            ctx.fillStyle = colorScale(mat[0][ny-1])
+            ctx.fillRect(xoffset,yoffset + y0 + cellSize * (ny-1),w0,h1)
+            ctx.fillStyle = colorScale(mat[nx-1][0])
+            ctx.fillRect(xoffset + x0 + cellSize * (nx-1),yoffset,w1,h0)
+            ctx.fillStyle = colorScale(mat[nx-1][ny-1])
+            ctx.fillRect(xoffset + x0 + cellSize * (nx-1),yoffset + y0 + cellSize * (ny-1),w1,h1)
+            for (var y=1;y<mat[0].length-1;y++){
+               var l= nx-1;
+                ctx.fillStyle = colorScale(mat[0][y]);
+                ctx.fillRect(xoffset , yoffset + y * cellSize + y0, w0, cellSize);
+                ctx.fillStyle = colorScale(mat[l][y]);
+                ctx.fillRect(xoffset + l*cellSize + x0, yoffset + y * cellSize + y0, w1, cellSize);
+            }
+            for (var x=1;x<mat.length-1;x++){
+               var l= ny-1;
+               ctx.fillStyle = colorScale(mat[x][0]);
+               ctx.fillRect(xoffset + x*cellSize + x0, yoffset, cellSize, h0);
+               ctx.fillStyle = colorScale(mat[x][l]);
+               ctx.fillRect(xoffset + x*cellSize + x0, yoffset + l * cellSize + y0, cellSize, h1);
+            }
+            for (var x = 1; x < mat.length-1; x++) {
+                for (var y = 1; y < mat[0].length-1; y++) {
                     ctx.fillStyle = colorScale(mat[x][y]);
-                    ctx.fillRect(xoffset + x * cellSize, yoffset + y * cellSize, cellSize, cellSize);
+                    ctx.fillRect(xoffset + x * cellSize + x0, yoffset + y * cellSize + y0, cellSize, cellSize);
                 }
             }
         }
@@ -591,6 +624,11 @@ snow.dataHic = {};
 
             var k = 0;
             renderAxis(ctx)
+
+            var se = [];
+            regions.forEach(function(d,i){
+              se.push(correctedPosition(d.start,d.end,resIdx))
+            })
             for (var i = 1; i < l; i++) {
                 renderLine(ctx, xoffset + offsets[i])
             }
@@ -598,13 +636,13 @@ snow.dataHic = {};
                 for (var j = i; j < l; j++) {
                     var x = offsets[i];
                     var y = offsets[j];
-                    renderMatrix(ctx, xoffset + x, yoffset + y, mats[k], cellSize, colorScale)
+                    renderMatrix(ctx, xoffset + x, yoffset + y, mats[k], cellSize, colorScale, regions[i] , se[i], regions[j],se[j])
                     k += 1;
                 }
             }
             renderResp()
             renderBrush()
-            callback({"resolution":bpres[resIdx]}) //callback to send parameters
+            callback({"resolution":bpres[resIdx],"max":max,"min":min}) //callback to send parameters
         }
         var renderAxis = function (ctx) {
                 ctx.save()
@@ -615,7 +653,7 @@ snow.dataHic = {};
                 regions.forEach(function (d, i) {
                     var h = (offsets[i + 1] || height) - offsets[i]
                     var y = d3.scaleLinear().domain([d.start, d.end]).range([0, h])
-                    yaxis(ctx, y, xoffset + width, yoffset + offsets[i], h, d.chr)
+                    yaxis(ctx, y, xoffset + width + 30, yoffset + offsets[i], h, d.chr)
 
                 })
 
@@ -827,6 +865,10 @@ snow.dataHic = {};
                 offset += cellSize * ((+d.end - d.start) / bpres[resIdx])
             })
             return resIdx
+        }
+        var correctedPosition = function(start, end, resIdx) {
+            var binsize = bpres[resIdx];
+            return [Math.floor(start/binsize)*binsize,(Math.floor((end-1)/binsize)+1)*binsize]
         }
         var loadData = function () {
             var l = regions.length
