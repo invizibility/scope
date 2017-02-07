@@ -48,11 +48,18 @@ snow.dataHic = {};
 
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color
+                var r = xscale.range();
                 if (isNaN(region[i].From) || isNaN(region[i].To)) {
                     continue; //add handle large width bug
                 }
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
+                if (x1<r[0]) {
+                  x1=r[0]
+                }
+                if (x2 > r[1]) {
+                  x2 = r[1]
+                }
                 var width = x2 - x1
                 if (width > 100) {
                     console.log("debug region", region[i])
