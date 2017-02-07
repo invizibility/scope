@@ -118,6 +118,17 @@ func AddHicHandle(router *mux.Router, hic *HiC, prefix string) {
 			io.WriteString(w, sprintMat64(m))
 		}
 	})
+	router.HandleFunc(prefix+"/corrected/{chr}：{start}-{end}/{resIdx}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		params := mux.Vars(r)
+		//chr := params["chr"]
+		start, _ := strconv.Atoi(params["start"])
+		end, _ := strconv.Atoi(params["end"])
+		resIdx, _ := strconv.Atoi(params["resIdx"])
+		s, e := hic.Corrected(start, end, resIdx)
+		j, _ := json.Marshal([]int{s, e})
+		w.Write(j)
+	})
 	router.HandleFunc(prefix+"/icon/{chr}/{format}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
