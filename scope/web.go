@@ -1,8 +1,7 @@
 package main
 
-//go:generate go-bindata-assetfs -pkg main index.html lib.js lib.css
+//go:generate go-bindata-assetfs -pkg main web/...
 import (
-	//"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -10,15 +9,23 @@ import (
 
 func AddStaticHandle(router *mux.Router) {
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		bytes, _ := Asset("index.html")
+		bytes, _ := Asset("web/index.html")
 		w.Write(bytes)
 	})
-	router.HandleFunc("/lib.css", func(w http.ResponseWriter, r *http.Request) {
-		bytes, _ := Asset("lib.css")
+	router.HandleFunc("/style0/{css}", func(w http.ResponseWriter, r *http.Request) {
+		ps := mux.Vars(r)
+		bytes, _ := Asset("web/style/" + ps["css"])
 		w.Write(bytes)
 	})
-	router.HandleFunc("/lib.js", func(w http.ResponseWriter, r *http.Request) {
-		bytes, _ := Asset("lib.js")
+	router.HandleFunc("/lib0/{js}", func(w http.ResponseWriter, r *http.Request) {
+		ps := mux.Vars(r)
+
+		bytes, _ := Asset("web/lib/" + ps["js"])
+		w.Write(bytes)
+	})
+	router.HandleFunc("/{page}.html", func(w http.ResponseWriter, r *http.Request) {
+		ps := mux.Vars(r)
+		bytes, _ := Asset("web/" + ps["page"] + ".html")
 		w.Write(bytes)
 	})
 }
