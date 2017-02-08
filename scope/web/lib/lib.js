@@ -18,6 +18,7 @@ snow.dataHic = {};
     }
     B.canvas = function () {
         var id = "default"
+        var pos = 0 //for response rect
         var height
         var width
         var regions
@@ -25,7 +26,7 @@ snow.dataHic = {};
         var y
         var URI = ""
         var barHeight = 50
-
+        var vertical = false
         var canvas
         var panel //canvas parent for add svg;
         var binsize
@@ -79,12 +80,49 @@ snow.dataHic = {};
                 ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1)
             }
         }
+
+        var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color) {
+            for (var i = 0; i < region.length; i++) {
+                ctx.fillStyle = color
+                var r = xscale.range();
+                if (isNaN(region[i].From) || isNaN(region[i].To)) {
+                    continue; //add handle large width bug
+                }
+                var x1 = xscale(region[i].From)
+                var x2 = xscale(region[i].To)
+                if (x1<r[0]) {
+                  x1=r[0]
+                }
+                if (x2 > r[1]) {
+                  x2 = r[1]
+                }
+                var width = x2 - x1
+                if (width > 100) {
+                    console.log("debug region", region[i])
+                } //debug
+                var y1 = yscale(region[i].Max) //TODO
+                var ym = yscale(region[i].Sum / region[i].Valid)
+                var y0 = yscale(0);
+                //var y1 = barHeight - height
+                if (y0 < 0) {
+                    ctx.fillRect( x + xoffset + (barHeight - y1),y + yoffset + x1, y1 -0 , width);
+                } else {
+                    if (y1 > y0) {
+                        ctx.fillRect(x + xoffset + (barHeight - y1), y + yoffset + x1, y1- y0, width);
+                    } else {
+                        ctx.fillRect(x + xoffset + (barHeight - y0), y + yoffset + x1,  y0 - y1, width);
+                    }
+                }
+                ctx.fillStyle = "#111"
+                ctx.fillRect(x + xoffset + (barHeight - ym), y + yoffset + x1, 1,width)
+            }
+        }
         var xscales, xoffsets, widths;
         var renderResp = function () {
             //add trackId TODO
-            var resp = panel.selectAll(".bwResp").data(regions)
+            var resp = panel.selectAll(".bwResp"+"_"+pos).data(regions)
             resp.enter().append("svg")
-                .classed("bwResp", true)
+                .classed("bwResp"+"_"+pos, true)
                 .merge(resp)
                 .style("position", "absolute")
                 .style("top", y)
@@ -97,7 +135,53 @@ snow.dataHic = {};
                 .attr("height", barHeight)
             resp.selectAll("rect").remove()
         }
+        var renderRespVertical = function () {
+            //add trackId TODO
+            var resp = panel.selectAll(".bwResp"+"_"+pos).data(regions)
+            resp.enter().append("svg")
+                .classed("bwResp"+"_"+pos, true)
+                .merge(resp)
+                .style("position", "absolute")
+                .style("left", x)
+                .style("top", function (d, i) {
+                    return y + xoffsets[i]
+                })
+                .attr("height", function (d, i) {
+                    return widths[i]
+                })
+                .attr("width", barHeight)
+            resp.selectAll("rect").remove()
+        }
         var res = function (selection) {
+            if (vertical) {
+              selection.each(function (d, i) {
+                  //console.log(d, i)
+                  var x = xscales[i](d.start)
+                  var l = xscales[i](d.end) - x
+                  var rect = d3.select(this).selectAll("rect")
+                      .data([{
+                          "x": x,
+                          "l": l
+                      }])
+                  rect
+                      .enter()
+                      .append("rect")
+                      .merge(rect)
+                      .attr("y", function (d) {
+                          return d.x
+                      })
+                      .attr("x", 0)
+                      .attr("width", barHeight)
+                      .attr("height", function (d) {
+                          return d.l
+                      })
+                      .attr("fill", function (d) {
+                          return "#777"
+                      })
+                      .attr("opacity", 0.2)
+              })
+
+            }  else {
             selection.each(function (d, i) {
                 console.log(d, i)
                 var x = xscales[i](d.start)
@@ -124,15 +208,17 @@ snow.dataHic = {};
                     })
                     .attr("opacity", 0.2)
             })
+          }
         }
         var response = function (e) {
             //console.log(e)
-            panel.selectAll(".bwResp") //need to add trackId
+            panel.selectAll(".bwResp"+"_"+pos) //need to add trackId
                 .data(e)
                 .call(res)
 
         }
         var _render_ = function (error, results) {
+
             var min = Infinity;
             var max = -Infinity;
             xscales = []
@@ -149,7 +235,7 @@ snow.dataHic = {};
                 offset += w
                 widths.push(w)
             })
-            renderResp();
+
             results.forEach(function (arr) {
                 arr.forEach(function (d) {
                     if (d.Max > max) {
@@ -163,13 +249,24 @@ snow.dataHic = {};
             var yscale = d3.scaleLinear().domain([min, max]).range([0, barHeight])
             var color = d3.scaleOrdinal(d3.schemeCategory10);
             var background = "#EFE"
-            var ctx = canvas.node().getContext("2d");
-            ctx.fillStyle = background
-            ctx.fillRect(x, y, width, barHeight)
-            console.log(x, y, width, barHeight)
-            results.forEach(function (region, i) {
-                renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
-            })
+            if (vertical) {
+              renderRespVertical();//TODO
+              var ctx = canvas.node().getContext("2d");
+              ctx.fillStyle = background
+              ctx.fillRect(x, y, barHeight, width)
+              results.forEach(function (region, i) {
+                  renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+              })
+            } else {
+              renderResp();
+              var ctx = canvas.node().getContext("2d");
+              ctx.fillStyle = background
+              ctx.fillRect(x, y, width, barHeight)
+              results.forEach(function (region, i) {
+                  renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+              })
+            }
+
 
         }
         var _render = function () {
@@ -221,6 +318,8 @@ snow.dataHic = {};
             response(e)
         }
         chart.id = function(_) { return arguments.length ? (id= _, chart) : id; }
+        chart.vertical = function(_) { return arguments.length ? (vertical= _, chart) : vertical; }
+        chart.pos = function(_) { return arguments.length ? (pos= _, chart) : pos; }
         return chart
     }
     B.form = function() {
@@ -662,7 +761,7 @@ snow.dataHic = {};
               se.push(correctedPosition(d.start,d.end,resIdx))
             })
             for (var i = 1; i < l; i++) {
-                renderLine(ctx, xoffset + offsets[i])
+                renderLine(ctx, offsets[i])
             }
             for (var i = 0; i < l; i++) {
                 for (var j = i; j < l; j++) {
@@ -844,9 +943,10 @@ snow.dataHic = {};
         }
         var renderLine = function (ctx, offset) {
             ctx.fillStyle = lineColor;
-            ctx.fillRect(offset, yoffset, 1, height);
-            ctx.fillRect(xoffset, offset, width, 1);
+            ctx.fillRect(offset + xoffset, yoffset, 1, height);
+            ctx.fillRect(xoffset, yoffset + offset, width, 1);
         }
+
         var callback = function(d) {
           console.log(d)
         }
