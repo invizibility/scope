@@ -30,9 +30,7 @@
         var H = S.dataHic;
         var B = S.dataBigwig;
         var body = d3.select("body")
-        var scope = {
-                "bigwigId": "default"
-            } //TODO
+        var scope = {} //TODO
         var top = body.append("div").attr("id", "top")
             .classed("container", true)
         var main = body.append("div").attr("id", "main")
@@ -110,11 +108,22 @@
             var bw = B.canvas()
                 .URI("/bw")
                 .id(bigwig.track)
-                .x(20)
+                .x(80)
                 .y(scope.height - 60)
                 .width(edge)
                 .regions(addChrPrefix(regions))
                 .panel(panel)
+                .pos(1)
+            var bw4 = B.canvas()
+                .URI("/bw")
+                .id(bigwig.track)
+                .x(10)
+                .y(20)
+                .width(edge)
+                .regions(addChrPrefix(regions))
+                .panel(panel)
+                .vertical(true)
+                .pos(4)
             var setRegions = function(e) {
                 var regions = regionCtrl.regions();
                 regions.forEach(function(d, i) {
@@ -123,6 +132,7 @@
                 })
                 regionCtrl.regions(regions)
                 bw.response(regions)
+                bw4.response(regions)
                 console.log(regions)
             }
             var showPara = function(d) {
@@ -134,7 +144,7 @@
                 .norm(hic.norm)
                 .unit(hic.unit)
                 .bpres(hicOpts.bpres)
-                .xoffset(20)
+                .xoffset(80)
                 .yoffset(20)
                 .width(edge)
                 .height(edge)
@@ -150,6 +160,7 @@
 
             canvas.call(chart).call(colorbar)
             canvas.call(bw)
+            canvas.call(bw4)
 
         }
         var btns = left.append("div").classed("btn-group", true)
