@@ -1,5 +1,5 @@
 #left {
-    width: 200px;
+    width: 220px;
     position: absolute;
     left: 0;
     top: 25;
@@ -10,7 +10,7 @@
 #main {
     min-height: 700px;
     background-color: #EEE;
-    margin-left: 200px;
+    margin-left: 220px;
     position: relative;
     /* Same as left's width */
 }

@@ -7,18 +7,14 @@ snow.dataHic = {};
 (function (B) {
     B.Get = function (URI, callback) {
         var config = {}
-        var id = "default"
         var ready = function (error, results) {
             config.URI = URI
-            config.chrs = results[0]
-            config.binsizes = results[1]
+            config.trackIds = results[0]
             callback(config)
         }
         d3_queue.queue(2)
-            .defer(d3.json, URI + "/list" + "/" + id)
-            .defer(d3.json, URI + "/binsizes" + "/" + id)
+            .defer(d3.json, URI + "/list")
             .awaitAll(ready);
-        //TODO set up id or add id in function.
     }
     B.canvas = function () {
         var id = "default"
@@ -226,6 +222,32 @@ snow.dataHic = {};
         }
         chart.id = function(_) { return arguments.length ? (id= _, chart) : id; }
         return chart
+    }
+    B.form = function() {
+      var data
+      var chart = function(selection){
+        selection.selectAll("*").remove();
+        form = selection.append("div").classed("form-group", true)
+        form.append("label").text("Track")
+        trackInput = form.append("select").classed("form-control", true)
+        trackInput.selectAll("option")
+            .data(data.trackIds)
+            .enter()
+            .append("option")
+            .attr("value", function (d, i) {
+                return d
+            })
+            .text(function (d, i) {
+                return d
+            })
+      }
+      chart.state = function () {
+          return {
+              "track": trackInput.node().value,
+          }
+      }
+      chart.data = function(_) { return arguments.length ? (data= _, chart) : data; }
+      return chart
     }
 }(snow.dataBigwig));
 
