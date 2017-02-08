@@ -30,7 +30,9 @@
         var H = S.dataHic;
         var B = S.dataBigwig;
         var body = d3.select("body")
-        var scope = {}
+        var scope = {
+                "bigwigId": "default"
+            } //TODO
         var top = body.append("div").attr("id", "top")
             .classed("container", true)
         var main = body.append("div").attr("id", "main")
@@ -66,10 +68,18 @@
         }
         resize()
         var URI = "/hic"
-        var hicCtrl, regionCtrl, paraMonitor;
+        var hicCtrl, regionCtrl, bigwigCtrl, paraMonitor;
         var hicOpts = {}
-        var hicCtrlDiv = left.append("div")
-        var regionCtrlDiv = left.append("div")
+        var hicCtrlPanel = left.append("div").classed("panel", true)
+            //hicCtrlPanel.append("div").classed("panel-heading", true).append("h3").classed("panel-title", true).text("HiC Ctrl")
+        var hicCtrlDiv = hicCtrlPanel.append("div").classed("panel-body", true)
+        var regionCtrlPanel = left.append("div").classed("panel", true)
+            //regionCtrlPanel.append("div").classed("panel-heading", true).text("Regions Ctrl")
+        var regionCtrlDiv = regionCtrlPanel.append("div").classed("panel-body", true)
+        var bigwigCtrlPanel = left.append("div").classed("panel", true)
+            //bigwigCtrlPanel.append("div").classed("panel-heading", true).text("Track Ctrl")
+        var bigwigCtrlDiv = bigwigCtrlPanel.append("div").classed("panel-body", true)
+
 
         var addChrPrefix = function(r) { //TODO fix using idx , XY bug
                 var s = []
@@ -89,14 +99,17 @@
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
             ctx.fillRect(0, 0, scope.width, scope.height)
-            console.log(hicCtrl.state())
-            console.log(regionCtrl.regions())
+                //  console.log(hicCtrl.state())
+                //  console.log(regionCtrl.regions())
             var hic = hicCtrl.state()
+            var bigwig = bigwigCtrl.state()
             var regions = d || regionCtrl.regions() //TODO
 
             var edge = Math.min(scope.height - 100, scope.width - 40)
+
             var bw = B.canvas()
                 .URI("/bw")
+                .id(bigwig.track)
                 .x(20)
                 .y(scope.height - 60)
                 .width(edge)
@@ -237,8 +250,12 @@
             regionCtrl = S.regionForm().chrs(data.chrs).regionNum(2).send(plot)
             regionCtrlDiv.call(regionCtrl)
         }
+        var renderBwCtrlPanel = function(data) {
+            bigwigCtrl = S.dataBigwig.form().data(data)
+            bigwigCtrlDiv.call(bigwigCtrl)
+        }
         H.Get(URI, renderHicCtrlPanel)
-        B.Get("", console.log)
+        B.Get("/bw", renderBwCtrlPanel)
     }(d3, jQuery, snow));
 </script>
 
