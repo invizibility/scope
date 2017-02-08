@@ -3,13 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"github.com/gonum/matrix/mat64"
 )
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 }
 func sprintMat64(t mat64.Matrix) string {

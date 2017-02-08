@@ -7,6 +7,7 @@ snow.dataHic = {};
 (function (B) {
     B.Get = function (URI, callback) {
         var config = {}
+        var id = "default"
         var ready = function (error, results) {
             config.URI = URI
             config.chrs = results[0]
@@ -14,12 +15,13 @@ snow.dataHic = {};
             callback(config)
         }
         d3_queue.queue(2)
-            .defer(d3.json, URI + "/list")
-            .defer(d3.json, URI + "/binsizes")
+            .defer(d3.json, URI + "/list" + "/" + id)
+            .defer(d3.json, URI + "/binsizes" + "/" + id)
             .awaitAll(ready);
+        //TODO set up id or add id in function.
     }
     B.canvas = function () {
-
+        var id = "default"
         var height
         var width
         var regions
@@ -177,13 +179,13 @@ snow.dataHic = {};
         var _render = function () {
             var q = d3_queue.queue(2)
             regions.forEach(function (d) {
-                q.defer(d3.json, URI + "/getbin/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
+                q.defer(d3.json, URI + "/getbin/" + id + "/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
             })
             q.awaitAll(_render_)
         }
         var render = function () {
             var length = totalLength(regions)
-            var url = URI + "/binsize/" + length + "/" + width
+            var url = URI + "/binsize/" + id + "/" + length + "/" + width
             console.log("URL", url)
             d3.json(url, function (d) {
                 binsize = d;
@@ -222,6 +224,7 @@ snow.dataHic = {};
         chart.response = function (e) {
             response(e)
         }
+        chart.id = function(_) { return arguments.length ? (id= _, chart) : id; }
         return chart
     }
 }(snow.dataBigwig));
