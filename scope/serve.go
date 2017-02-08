@@ -26,11 +26,15 @@ func CmdServe(c *cli.Context) error {
 	AddStaticHandle(router)
 	reader, err := stream.NewSeekableStreamReader(bwURI)
 	checkErr(err)
+	/* TODO Multi Tracks */
 	bwf := NewBbiReader(reader)
 	bwf.InitIndex()
 	log.Println("in reading idx")
 	bw := NewBigWigReader(bwf)
-	AddBwHandle(router, bw, "")
+	bwmap := make(map[string]*BigWigReader)
+	bwmap["default"] = bw
+	/* End of Test */
+	AddBwsHandle(router, bwmap, "/bw")
 	hicreader, err := stream.NewSeekableStreamReader(hicURI)
 	hic, err := HiC.DataReader(hicreader)
 	checkErr(err)
