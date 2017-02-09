@@ -78,6 +78,32 @@
         var btns = left.append("div").classed("btn-group", true)
         var btns2 = left.append("div").classed("btn-group", true)
         var entry = "/bw"
+        var plot = function(d) {
+            var regions = d;
+            var bigwig = bigwigCtrl.state();
+            var edge = Math.min(scope.height - 100, scope.width - 40)
+            var bw = B.canvas()
+                .URI("/bw")
+                .id(bigwig[1].track)
+                .x(10)
+                .y(scope.height - 60)
+                .width(edge)
+                .regions(regions)
+                .panel(panel)
+                .pos(1)
+            var bw4 = B.canvas()
+                .URI("/bw")
+                .id(bigwig[0].track)
+                .x(10)
+                .y(20)
+                .width(edge)
+                .regions(regions)
+                .panel(panel)
+                //.vertical(true)
+                .pos(4)
+            canvas.call(bw)
+                .call(bw4)
+        }
         var renderCtrlPanel = function(d) {
             console.log(d)
             d3.json(entry + "/list/" + d.trackIds[0], function(c) {
@@ -89,6 +115,7 @@
             CtrlDiv.call(bigwigCtrl)
 
         }
+
         B.Get(entry, renderCtrlPanel)
     }(d3, jQuery, snow));
 </script>
