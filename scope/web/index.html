@@ -107,7 +107,7 @@
 
             var bw = B.canvas()
                 .URI("/bw")
-                .id(bigwig.track)
+                .id(bigwig[1].track)
                 .x(80)
                 .y(scope.height - 60)
                 .width(edge)
@@ -116,7 +116,7 @@
                 .pos(1)
             var bw4 = B.canvas()
                 .URI("/bw")
-                .id(bigwig.track)
+                .id(bigwig[0].track)
                 .x(10)
                 .y(20)
                 .width(edge)
@@ -262,7 +262,7 @@
             regionCtrlDiv.call(regionCtrl)
         }
         var renderBwCtrlPanel = function(data) {
-            bigwigCtrl = S.dataBigwig.form().data(data)
+            bigwigCtrl = S.dataBigwig.form().data(data).number(2)
             bigwigCtrlDiv.call(bigwigCtrl)
         }
         H.Get(URI, renderHicCtrlPanel)

@@ -105,16 +105,16 @@ snow.dataHic = {};
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
-                    ctx.fillRect( x + xoffset + (barHeight - y1),y + yoffset + x1, y1 -0 , width);
+                    ctx.fillRect( x + xoffset ,y + yoffset + x1, y1 -0 , width);
                 } else {
                     if (y1 > y0) {
-                        ctx.fillRect(x + xoffset + (barHeight - y1), y + yoffset + x1, y1- y0, width);
+                        ctx.fillRect(x + xoffset + y0, y + yoffset + x1, y1- y0, width);
                     } else {
-                        ctx.fillRect(x + xoffset + (barHeight - y0), y + yoffset + x1,  y0 - y1, width);
+                        ctx.fillRect(x + xoffset + y1, y + yoffset + x1,  y0 - y1, width);
                     }
                 }
                 ctx.fillStyle = "#111"
-                ctx.fillRect(x + xoffset + (barHeight - ym), y + yoffset + x1, 1,width)
+                ctx.fillRect(x + xoffset + ym, y + yoffset + x1, 1,width)
             }
         }
         var xscales, xoffsets, widths;
@@ -135,8 +135,7 @@ snow.dataHic = {};
                 .attr("height", barHeight)
             resp.selectAll("rect").remove()
         }
-        var renderRespVertical = function () {
-            //add trackId TODO
+        var renderRespVertical = function () { //TODO merge function to renderRes
             var resp = panel.selectAll(".bwResp"+"_"+pos).data(regions)
             resp.enter().append("svg")
                 .classed("bwResp"+"_"+pos, true)
@@ -324,12 +323,15 @@ snow.dataHic = {};
     }
     B.form = function() {
       var data
+      var number = 1
+      var trackInputs = []
       var chart = function(selection){
         selection.selectAll("*").remove();
         form = selection.append("div").classed("form-group", true)
         form.append("label").text("Track")
-        trackInput = form.append("select").classed("form-control", true)
-        trackInput.selectAll("option")
+        for (var i=0;i<number;i++){
+        trackInputs.push(form.append("select").classed("form-control", true))
+        trackInputs[i].selectAll("option")
             .data(data.trackIds)
             .enter()
             .append("option")
@@ -339,12 +341,22 @@ snow.dataHic = {};
             .text(function (d, i) {
                 return d
             })
-      }
-      chart.state = function () {
-          return {
-              "track": trackInput.node().value,
           }
       }
+      chart.state = function () {
+          if (number==1) {
+              return {
+              "track": trackInputs[0].node().value
+              }
+          } else {
+            var v=[];
+            trackInputs.forEach(function(d){
+              v.push({"track":d.node().value})
+            })
+            return v;
+          }
+      }
+      chart.number  = function(_) { return arguments.length ? (number = _, chart) : number ; }
       chart.data = function(_) { return arguments.length ? (data= _, chart) : data; }
       return chart
     }
