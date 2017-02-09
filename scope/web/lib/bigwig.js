@@ -1,6 +1,6 @@
 var snow = snow || {};
 snow.dataBigwig = snow.dataBigwig || {};
-(function (B) {
+(function (S,B) {
     B.Get = function (URI, callback) {
         var config = {}
         var ready = function (error, results) {
@@ -26,6 +26,10 @@ snow.dataBigwig = snow.dataBigwig || {};
         var canvas
         var panel //canvas parent for add svg;
         var binsize
+        var scale
+        var callback = function (d) {
+            console.log("callback", d)
+        }
 
 
         var totalLength = function (regions) {
@@ -49,11 +53,11 @@ snow.dataBigwig = snow.dataBigwig || {};
                 }
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
-                if (x1<r[0]) {
-                  x1=r[0]
+                if (x1 < r[0]) {
+                    x1 = r[0]
                 }
                 if (x2 > r[1]) {
-                  x2 = r[1]
+                    x2 = r[1]
                 }
                 var width = x2 - x1
                 if (width > 100) {
@@ -86,11 +90,11 @@ snow.dataBigwig = snow.dataBigwig || {};
                 }
                 var x1 = xscale(region[i].From)
                 var x2 = xscale(region[i].To)
-                if (x1<r[0]) {
-                  x1=r[0]
+                if (x1 < r[0]) {
+                    x1 = r[0]
                 }
                 if (x2 > r[1]) {
-                  x2 = r[1]
+                    x2 = r[1]
                 }
                 var width = x2 - x1
                 if (width > 100) {
@@ -101,24 +105,24 @@ snow.dataBigwig = snow.dataBigwig || {};
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
-                    ctx.fillRect( x + xoffset ,y + yoffset + x1, y1 -0 , width);
+                    ctx.fillRect(x + xoffset, y + yoffset + x1, y1 - 0, width);
                 } else {
                     if (y1 > y0) {
-                        ctx.fillRect(x + xoffset + y0, y + yoffset + x1, y1- y0, width);
+                        ctx.fillRect(x + xoffset + y0, y + yoffset + x1, y1 - y0, width);
                     } else {
-                        ctx.fillRect(x + xoffset + y1, y + yoffset + x1,  y0 - y1, width);
+                        ctx.fillRect(x + xoffset + y1, y + yoffset + x1, y0 - y1, width);
                     }
                 }
                 ctx.fillStyle = "#111"
-                ctx.fillRect(x + xoffset + ym, y + yoffset + x1, 1,width)
+                ctx.fillRect(x + xoffset + ym, y + yoffset + x1, 1, width)
             }
         }
         var xscales, xoffsets, widths;
         var renderResp = function () {
             //add trackId TODO
-            var resp = panel.selectAll(".bwResp"+"_"+pos).data(regions)
+            var resp = panel.selectAll(".bwResp" + "_" + pos).data(regions)
             resp.enter().append("svg")
-                .classed("bwResp"+"_"+pos, true)
+                .classed("bwResp" + "_" + pos, true)
                 .merge(resp)
                 .style("position", "absolute")
                 .style("top", y)
@@ -132,9 +136,9 @@ snow.dataBigwig = snow.dataBigwig || {};
             resp.selectAll("rect").remove()
         }
         var renderRespVertical = function () { //TODO merge function to renderRes
-            var resp = panel.selectAll(".bwResp"+"_"+pos).data(regions)
+            var resp = panel.selectAll(".bwResp" + "_" + pos).data(regions)
             resp.enter().append("svg")
-                .classed("bwResp"+"_"+pos, true)
+                .classed("bwResp" + "_" + pos, true)
                 .merge(resp)
                 .style("position", "absolute")
                 .style("left", x)
@@ -149,71 +153,70 @@ snow.dataBigwig = snow.dataBigwig || {};
         }
         var res = function (selection) {
             if (vertical) {
-              selection.each(function (d, i) {
-                  //console.log(d, i)
-                  var x = xscales[i](d.start)
-                  var l = xscales[i](d.end) - x
-                  var rect = d3.select(this).selectAll("rect")
-                      .data([{
-                          "x": x,
-                          "l": l
-                      }])
-                  rect
-                      .enter()
-                      .append("rect")
-                      .merge(rect)
-                      .attr("y", function (d) {
-                          return d.x
-                      })
-                      .attr("x", 0)
-                      .attr("width", barHeight)
-                      .attr("height", function (d) {
-                          return d.l
-                      })
-                      .attr("fill", function (d) {
-                          return "#777"
-                      })
-                      .attr("opacity", 0.2)
-              })
+                selection.each(function (d, i) {
+                    //console.log(d, i)
+                    var x = xscales[i](d.start)
+                    var l = xscales[i](d.end) - x
+                    var rect = d3.select(this).selectAll("rect")
+                        .data([{
+                            "x": x,
+                            "l": l
+                        }])
+                    rect
+                        .enter()
+                        .append("rect")
+                        .merge(rect)
+                        .attr("y", function (d) {
+                            return d.x
+                        })
+                        .attr("x", 0)
+                        .attr("width", barHeight)
+                        .attr("height", function (d) {
+                            return d.l
+                        })
+                        .attr("fill", function (d) {
+                            return "#777"
+                        })
+                        .attr("opacity", 0.2)
+                })
 
-            }  else {
-            selection.each(function (d, i) {
-                console.log(d, i)
-                var x = xscales[i](d.start)
-                var l = xscales[i](d.end) - x
-                var rect = d3.select(this).selectAll("rect")
-                    .data([{
-                        "x": x,
-                        "l": l
-                    }])
-                rect
-                    .enter()
-                    .append("rect")
-                    .merge(rect)
-                    .attr("x", function (d) {
-                        return d.x
-                    })
-                    .attr("y", 0)
-                    .attr("height", barHeight)
-                    .attr("width", function (d) {
-                        return d.l
-                    })
-                    .attr("fill", function (d) {
-                        return "#777"
-                    })
-                    .attr("opacity", 0.2)
-            })
-          }
+            } else {
+                selection.each(function (d, i) {
+                    console.log(d, i)
+                    var x = xscales[i](d.start)
+                    var l = xscales[i](d.end) - x
+                    var rect = d3.select(this).selectAll("rect")
+                        .data([{
+                            "x": x,
+                            "l": l
+                        }])
+                    rect
+                        .enter()
+                        .append("rect")
+                        .merge(rect)
+                        .attr("x", function (d) {
+                            return d.x
+                        })
+                        .attr("y", 0)
+                        .attr("height", barHeight)
+                        .attr("width", function (d) {
+                            return d.l
+                        })
+                        .attr("fill", function (d) {
+                            return "#777"
+                        })
+                        .attr("opacity", 0.2)
+                })
+            }
         }
         var response = function (e) {
             //console.log(e)
-            panel.selectAll(".bwResp"+"_"+pos) //need to add trackId
+            panel.selectAll(".bwResp" + "_" + pos) //need to add trackId
                 .data(e)
                 .call(res)
 
         }
         var _render_ = function (error, results) {
-
             var min = Infinity;
             var max = -Infinity;
             xscales = []
@@ -242,27 +245,34 @@ snow.dataBigwig = snow.dataBigwig || {};
                 })
             })
             var yscale = d3.scaleLinear().domain([min, max]).range([0, barHeight])
+            scale = yscale;
+            var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight,0])
             var color = d3.scaleOrdinal(d3.schemeCategory10);
             var background = "#EFE"
             if (vertical) {
-              renderRespVertical();//TODO
-              var ctx = canvas.node().getContext("2d");
-              ctx.fillStyle = background
-              ctx.fillRect(x, y, barHeight, width)
-              results.forEach(function (region, i) {
-                  renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
-              })
+                renderRespVertical(); //TODO
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = background
+                ctx.fillRect(x, y, barHeight, width)
+                results.forEach(function (region, i) {
+                    renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+                })
+                S.canvasToolXAxis(ctx, axisScale,x,y+width,barHeight,id)
             } else {
-              renderResp();
-              var ctx = canvas.node().getContext("2d");
-              ctx.fillStyle = background
-              ctx.fillRect(x, y, width, barHeight)
-              results.forEach(function (region, i) {
-                  renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
-              })
+                renderResp();
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = background
+                ctx.fillRect(x, y, width, barHeight)
+                results.forEach(function (region, i) {
+                    renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+                })
+
+                S.canvasToolYAxis(ctx,axisScale,x+width,y,barHeight,id)
             }
-
-
+            callback({
+                "min": min,
+                "max": max
+            })
         }
         var _render = function () {
             var q = d3_queue.queue(2)
@@ -284,6 +294,9 @@ snow.dataBigwig = snow.dataBigwig || {};
         chart = function (selection) { //selection is canvas;
             canvas = selection;
             render();
+        }
+        chart.callback = function (_) {
+            return arguments.length ? (callback = _, chart) : callback;
         }
         chart.panel = function (_) {
             return arguments.length ? (panel = _, chart) : panel;
@@ -312,48 +325,63 @@ snow.dataBigwig = snow.dataBigwig || {};
         chart.response = function (e) {
             response(e)
         }
-        chart.id = function(_) { return arguments.length ? (id= _, chart) : id; }
-        chart.vertical = function(_) { return arguments.length ? (vertical= _, chart) : vertical; }
-        chart.pos = function(_) { return arguments.length ? (pos= _, chart) : pos; }
+        chart.id = function (_) {
+            return arguments.length ? (id = _, chart) : id;
+        }
+        chart.vertical = function (_) {
+            return arguments.length ? (vertical = _, chart) : vertical;
+        }
+        chart.pos = function (_) {
+            return arguments.length ? (pos = _, chart) : pos;
+        }
+        chart.scale = function (_) {
+            return arguments.length ? (scale = _, chart) : scale;
+        }
         return chart
     }
-    B.form = function() {
-      var data
-      var number = 1
-      var trackInputs = []
-      var chart = function(selection){
-        selection.selectAll("*").remove();
-        form = selection.append("div").classed("form-group", true)
-        form.append("label").text("Track")
-        for (var i=0;i<number;i++){
-        trackInputs.push(form.append("select").classed("form-control", true))
-        trackInputs[i].selectAll("option")
-            .data(data.trackIds)
-            .enter()
-            .append("option")
-            .attr("value", function (d, i) {
-                return d
-            })
-            .text(function (d, i) {
-                return d
-            })
-          }
-      }
-      chart.state = function () {
-          if (number==1) {
-              return {
-              "track": trackInputs[0].node().value
-              }
-          } else {
-            var v=[];
-            trackInputs.forEach(function(d){
-              v.push({"track":d.node().value})
-            })
-            return v;
-          }
-      }
-      chart.number  = function(_) { return arguments.length ? (number = _, chart) : number ; }
-      chart.data = function(_) { return arguments.length ? (data= _, chart) : data; }
-      return chart
+    B.form = function () {
+        var data
+        var number = 1
+        var trackInputs = []
+        var chart = function (selection) {
+            selection.selectAll("*").remove();
+            form = selection.append("div").classed("form-group", true)
+            form.append("label").text("Track")
+            for (var i = 0; i < number; i++) {
+                trackInputs.push(form.append("select").classed("form-control", true))
+                trackInputs[i].selectAll("option")
+                    .data(data.trackIds)
+                    .enter()
+                    .append("option")
+                    .attr("value", function (d, i) {
+                        return d
+                    })
+                    .text(function (d, i) {
+                        return d
+                    })
+            }
+        }
+        chart.state = function () {
+            if (number == 1) {
+                return {
+                    "track": trackInputs[0].node().value
+                }
+            } else {
+                var v = [];
+                trackInputs.forEach(function (d) {
+                    v.push({
+                        "track": d.node().value
+                    })
+                })
+                return v;
+            }
+        }
+        chart.number = function (_) {
+            return arguments.length ? (number = _, chart) : number;
+        }
+        chart.data = function (_) {
+            return arguments.length ? (data = _, chart) : data;
+        }
+        return chart
     }
-}(snow.dataBigwig));
+}(snow,snow.dataBigwig));
