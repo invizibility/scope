@@ -28,4 +28,9 @@ func AddStaticHandle(router *mux.Router) {
 		bytes, _ := Asset("web/" + ps["page"] + ".html")
 		w.Write(bytes)
 	})
+	router.HandleFunc("/dev/{page}.html", func(w http.ResponseWriter, r *http.Request) {
+		ps := mux.Vars(r)
+		bytes, _ := Asset("web/dev/" + ps["page"] + ".html")
+		w.Write(bytes)
+	})
 }

@@ -1,0 +1,34 @@
+<html>
+
+<head>
+    <title>Genome Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/lib0/brush.js"></script>
+
+</head>
+
+<body>
+
+    <div id="top" class="menu">
+        <label for="width"> width </label> <span id="width"></span>
+        <label for="height"> height </label> <span id="height"></span>
+    </div>
+    <div id="left" class="container">
+    </div>
+    <div id="main" class="container">
+        <svg width=500 height=500>
+        </svg>
+    </div>
+</body>
+<script>
+    (function(S) {
+        var b = S.brush().theta(Math.PI / 8)
+        d3.select("svg").call(b)
+    }(snow))
+</script>
+
+</html>
