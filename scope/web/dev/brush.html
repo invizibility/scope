@@ -8,6 +8,7 @@
     <script type="text/javascript" src="/lib/jquery.min.js"></script>
     <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
     <script type="text/javascript" src="/lib0/brush.js"></script>
+    <script type="text/javascript" src="/lib0/axis.js"></script>
 
 </head>
 
@@ -20,14 +21,44 @@
     <div id="left" class="container">
     </div>
     <div id="main" class="container">
-        <svg width=500 height=500>
+        <svg width=600 height=600 transform="translate(10,10)">
         </svg>
     </div>
 </body>
 <script>
     (function(S) {
-        var b = S.brush().theta(Math.PI / 8)
-        d3.select("svg").call(b)
+        var dispatch = d3.dispatch("new")
+        var scale1 = d3.scaleLinear().domain([0, 200]).range([0, 200])
+        var scale2 = d3.scaleLinear().domain([0, 300]).range([0, 300])
+        var b = S.brush().theta(Math.PI / 4).on("brush", function(d) {
+            dispatch.call("new", this, d)
+        })
+        var svg = d3.select("svg")
+        var axis1 = S.axis().x(0).y(500 / Math.sqrt(2)).scale(scale1)
+        var axis2 = S.axis().x(200).y(500 / Math.sqrt(2)).scale(scale2)
+        svg.call(axis1)
+        svg.call(axis2)
+        svg.call(b)
+        var t1 = function(d) {
+            return d
+        }
+        var t2 = function(d) {
+            return d - 200
+        }
+        dispatch.on("new", function(d) {
+            console.log(d)
+            axis1.response({
+                "start": t1(d[0][1]),
+                "end": t1(d[1][1])
+            })
+            axis2.response({
+                "start": t2(d[0][0]),
+                "end": t2(d[1][0])
+            })
+        })
+
+
+
     }(snow))
 </script>
 
