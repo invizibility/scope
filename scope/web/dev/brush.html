@@ -30,9 +30,19 @@
         var dispatch = d3.dispatch("new")
         var scale1 = d3.scaleLinear().domain([0, 200]).range([0, 200])
         var scale2 = d3.scaleLinear().domain([0, 300]).range([0, 300])
-        var b = S.brush().theta(Math.PI / 4).on("brush", function(d) {
-            dispatch.call("new", this, d)
-        })
+        var b = S.brush()
+            .x(200)
+            .y(150)
+            .theta(Math.PI / 4)
+            //.theta(0)
+            .range([
+                [100, 150],
+                [300, 300]
+            ])
+            .on("brush", function(d) {
+                dispatch.call("new", this, d)
+            })
+
         var svg = d3.select("svg")
         var axis1 = S.axis().x(0).y(500 / Math.sqrt(2)).scale(scale1)
         var axis2 = S.axis().x(200).y(500 / Math.sqrt(2)).scale(scale2)
