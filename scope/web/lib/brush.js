@@ -1,7 +1,7 @@
 var snow = snow || {};
 (function(d3,S){
 S.brush = function() {
-   var range  =[[0,0],[500,500]]//[x,y]
+   var border  =[[0,0],[500,500]]//[x,y]
    var x0, y0, x1, y1, xf, yf,width,height
    var xi = 0, yi = 0
    var x=0,y=0; //x,y is the coord system start point?
@@ -14,15 +14,13 @@ S.brush = function() {
        .on("drag", dragged)
        .on("end", dragended)
      )
-
-
      var G = selection.append("g").attr("transform", "translate("+x+","+y+") rotate(" + theta / Math.PI * 180 + ")")
-     if (range!=undefined) {
+     if (border!=undefined) {
        G.append("rect")
-             .attr("x",range[0][0])
-             .attr("y",range[0][1])
-             .attr("width",range[1][0]-range[0][0])
-             .attr("height",range[1][1]-range[0][1])
+             .attr("x",border[0][0])
+             .attr("y",border[0][1])
+             .attr("width",border[1][0]-border[0][0])
+             .attr("height",border[1][1]-border[0][1])
              .attr("fill","aliceblue")
 
 
@@ -33,8 +31,8 @@ S.brush = function() {
      rect.call(d3.drag().on("drag", move).on("start", start).on("end", end))
      var fix = function(x,y){
        var r = rotate([x, y], theta)
-       r[0] = Math.max(range[0][0],Math.min(range[1][0]-width,r[0]))
-       r[1] = Math.max(range[0][1],Math.min(range[1][1]-height,r[1]))
+       r[0] = Math.max(border[0][0],Math.min(border[1][0]-width,r[0]))
+       r[1] = Math.max(border[0][1],Math.min(border[1][1]-height,r[1]))
        var retv = rotate(r,-theta)
        return retv //TODO
      }
@@ -49,7 +47,7 @@ S.brush = function() {
      function move(d) {
        xi = d3.event.x + xi - xf
        yi = d3.event.y + yi - yf
-       if (range!=undefined) {
+       if (border!=undefined) {
          var r = fix(xi,yi)
          xi=r[0]
          yi=r[1]
@@ -84,11 +82,11 @@ S.brush = function() {
        y1 = d3.event.y - y
        r0 = rotate([x0, y0], theta)
        r1 = rotate([x1, y1], theta)
-       if (range != undefined) {
-         r0[0] = Math.max(range[0][0],Math.min(r0[0],range[1][0]))
-         r0[1] = Math.max(range[0][1],Math.min(r0[1],range[1][1]))
-         r1[0] = Math.max(range[0][0],Math.min(r1[0],range[1][0]))
-         r1[1] = Math.max(range[0][1],Math.min(r1[1],range[1][1]))
+       if (border != undefined) {
+         r0[0] = Math.max(border[0][0],Math.min(r0[0],border[1][0]))
+         r0[1] = Math.max(border[0][1],Math.min(r0[1],border[1][1]))
+         r1[0] = Math.max(border[0][0],Math.min(r1[0],border[1][0]))
+         r1[1] = Math.max(border[0][1],Math.min(r1[1],border[1][1]))
        }
        var p = [Math.min(r0[0], r1[0]), Math.min(r1[1], r0[1])]
        var a = rotate(p, -theta)
@@ -106,11 +104,13 @@ S.brush = function() {
      }
    }
    var listeners = d3.dispatch(brush, "start","brush","end")
+   /* TO FIX
    brush.extent = function() {
      return [[xi,yi],[xi+width,yi+height]]
    }
+   */
    brush.theta = function(_) { return arguments.length ? (theta= _, brush) : theta; }
-   brush.range = function(_) { return arguments.length ? (range= _, brush) : range; }
+   brush.border = function(_) { return arguments.length ? (border= _, brush) : border; }
    brush.on = function() {
     var value = listeners.on.apply(listeners, arguments);
     return value === listeners ? brush : value;
