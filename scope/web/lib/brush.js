@@ -89,6 +89,7 @@ S.brush = function() {
          r1[1] = Math.max(border[0][1],Math.min(r1[1],border[1][1]))
        }
        var p = [Math.min(r0[0], r1[0]), Math.min(r1[1], r0[1])]
+       console.log("p",p)
        var a = rotate(p, -theta)
        xi = a[0]
        yi = a[1]
@@ -96,11 +97,11 @@ S.brush = function() {
        height = Math.abs(r0[1] - r1[1])
        g.attr("transform", "translate(" + p[0] + "," + p[1] + ")")
        rect.attr("height", height).attr("width", width)
-       listeners.call("brush", this, [[xi,yi],[xi+width,yi+height]]);
+       listeners.call("brush", this, [[p[0],p[1]],[p[0]+width,p[1]+height]]);
      }
      function dragended(d) {
        if (d3.event.defaultPrevented) return;
-       listeners.call("end", this, [[xi,yi],[xi+width,yi+height]]);
+       //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
      }
    }
    var listeners = d3.dispatch(brush, "start","brush","end")
