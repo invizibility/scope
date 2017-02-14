@@ -6,7 +6,7 @@ var snow = snow || {};
 (function(S,d3){
   S.axis = function(){
     //var dispatcher = d3.dispatch(chart,"")
-    var scale = d3.scaleLinear().domain([0,1000]).range([1,500])
+    var scale = d3.scaleLinear().domain([0,1000]).range([0,500])
     var el,rect;
     var x=0,y=0;
     var height = 50;
@@ -20,8 +20,8 @@ var snow = snow || {};
         el.call(axisX)
     }
     var response = function(e) {
-      var x0 = scale.invert(e.start) || scale.invert(e[0])
-      var x1 = scale.invert(e.end) || scale.invert(e[1])
+      var x0 = scale.invert(e.start) || scale.invert(e[0]) || 0
+      var x1 = scale.invert(e.end) || scale.invert(e[1]) || 0
       console.log(x0,x1)
       rect.attr("x",Math.min(x0,x1)).attr("width",Math.abs(x0-x1))
     }
