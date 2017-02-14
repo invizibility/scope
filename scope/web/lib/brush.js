@@ -9,26 +9,25 @@ S.brush = function() {
    var xscale = d3.scaleLinear().range([0,500]).domain([0,500])
    var yscale = d3.scaleLinear().range([0,500]).domain([0,500])
    var brush = function(selection) {
-
-     selection.call(
-       d3.drag()
-       .on("start", dragstarted)
-       .on("drag", dragged)
-       .on("end", dragended)
-     )
      var G = selection.append("g").attr("transform", "translate("+x+","+y+") rotate(" + theta / Math.PI * 180 + ")")
      if (border!=undefined) {
-       G.append("rect")
+       var bg = G.append("rect")
              .attr("x",border[0][0])
              .attr("y",border[0][1])
              .attr("width",border[1][0]-border[0][0])
              .attr("height",border[1][1]-border[0][1])
              .attr("fill","aliceblue")
 
+        bg.call(
+          d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+        )
+
 
      }
-      var g = G.append("g")
-
+     var g = G.append("g")
      var rect = g.append("rect").classed("brush",true).attr("opacity",0.2)
      rect.call(d3.drag().on("drag", move).on("start", start)
        .on("end", end))
@@ -36,11 +35,10 @@ S.brush = function() {
        listeners.call("click")
      })
      var fix = function(x,y){
-       var r = rotate([x, y], theta)
+       var r = [x,y]
        r[0] = Math.max(border[0][0],Math.min(border[1][0]-width,r[0]))
        r[1] = Math.max(border[0][1],Math.min(border[1][1]-height,r[1]))
-       var retv = rotate(r,-theta)
-       return retv //TODO
+       return r
      }
      function invert(d) {
       var lx1 = xscale.invert(d[0][0])
@@ -59,15 +57,10 @@ S.brush = function() {
      function move(d) {
        xi = d3.event.x + xi - xf
        yi = d3.event.y + yi - yf
-       if (border!=undefined) {
-         var r = fix(xi,yi)
-         xi=r[0]
-         yi=r[1]
-       }
-       var r = rotate([xi,yi],theta)
+
+       var r = fix(xi,yi)
        //TODO fit the border for xi,yi???
        g.attr("transform", "translate(" + r[0] + "," + r[1] + ")")
-       console.log(r,width,height,"start x,y")
 
        listeners.call("brush", this, invert([[r[0],r[1]],[r[0]+width,r[1]+height]]));
      }
@@ -83,18 +76,17 @@ S.brush = function() {
 
      function dragstarted(d) {
        if (d3.event.defaultPrevented) return;
-       x0 = d3.event.x - x
-       y0 = d3.event.y - y
-         //attr("transform","translate("+x0+","+y0+") rotate(45)")
+       x0 = d3.event.x
+       y0 = d3.event.y
        listeners.call("start", this, [x0,y0]);
      }
 
      function dragged(d) {
        if (d3.event.defaultPrevented) return;
-       x1 = d3.event.x - x
-       y1 = d3.event.y - y
-       r0 = rotate([x0, y0], theta)
-       r1 = rotate([x1, y1], theta)
+       x1 = d3.event.x
+       y1 = d3.event.y
+       r0 = [x0, y0]
+       r1 = [x1, y1]
        if (border != undefined) {
          r0[0] = Math.max(border[0][0],Math.min(r0[0],border[1][0]))
          r0[1] = Math.max(border[0][1],Math.min(r0[1],border[1][1]))
@@ -102,10 +94,8 @@ S.brush = function() {
          r1[1] = Math.max(border[0][1],Math.min(r1[1],border[1][1]))
        }
        var p = [Math.min(r0[0], r1[0]), Math.min(r1[1], r0[1])]
-       console.log("p",p)
-       var a = rotate(p, -theta)
-       xi = a[0]
-       yi = a[1]
+       xi = p[0]
+       yi = p[1]
        width = Math.abs(r0[0] - r1[0])
        height = Math.abs(r0[1] - r1[1])
        g.attr("transform", "translate(" + p[0] + "," + p[1] + ")")
