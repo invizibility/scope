@@ -11,7 +11,9 @@ var snow = snow || {};
     var x=0,y=0;
     var height = 50;
     var chart = function(selection){
-        var axisX = d3.axisBottom(scale)
+        var tickCount = 5
+        var tickFormat = scale.tickFormat(tickCount, "s");
+        var axisX = d3.axisBottom(scale).tickFormat(tickFormat)
         el = selection.append("g")
              .attr("transform","translate("+x+","+y+")")
         rect = el.append("rect").attr("x",0).attr("y",0).attr("height",height).attr("width",0)
