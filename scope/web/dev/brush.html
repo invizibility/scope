@@ -31,39 +31,39 @@
         var scale1 = d3.scaleLinear().domain([0, 200]).range([0, 200])
         var scale2 = d3.scaleLinear().domain([0, 300]).range([0, 300])
         var b = S.brush()
-            .x(200)
-            .y(150)
+            .x(250)
+            .y(0)
             .theta(Math.PI / 4)
             //.theta(0)
-            .range([
-                [100, 150],
-                [300, 300]
+            .border([
+                [0, 0],
+                [200 / Math.SQRT2, 300 / Math.SQRT2]
             ])
             .on("brush", function(d) {
                 dispatch.call("new", this, d)
             })
 
         var svg = d3.select("svg")
-        var axis1 = S.axis().x(0).y(500 / Math.sqrt(2)).scale(scale1)
-        var axis2 = S.axis().x(200).y(500 / Math.sqrt(2)).scale(scale2)
+        var axis1 = S.axis().x(0).y(250).scale(scale1)
+        var axis2 = S.axis().x(200).y(250).scale(scale2)
         svg.call(axis1)
         svg.call(axis2)
         svg.call(b)
         var t1 = function(d) {
-            return d
+            return d * Math.SQRT2
         }
         var t2 = function(d) {
-            return d - 200
+            return 300 - d * Math.SQRT2
         }
         dispatch.on("new", function(d) {
             console.log(d)
-            axis1.response({
-                "start": t1(d[0][1]),
-                "end": t1(d[1][1])
-            })
             axis2.response({
-                "start": t2(d[0][0]),
-                "end": t2(d[1][0])
+                "start": t2(d[1][1]),
+                "end": t2(d[0][1])
+            })
+            axis1.response({
+                "start": t1(d[0][0]),
+                "end": t1(d[1][0])
             })
         })
 
