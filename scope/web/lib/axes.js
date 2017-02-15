@@ -68,6 +68,23 @@ var snow = snow || {};
 
         var chart = function (selection) {
             var svg = selection
+            var buttonG = selection.append("g")
+
+            var btns = buttonG.selectAll(".btn").data([d3.symbolCross,d3.symbolCross])
+            btns.enter().append("g").classed("btn",true)
+            .merge(buttonG)
+            .attr("transform",function(d,i){
+              console.log(d)
+              return "translate("+(i*10+10)+",10)"
+            })
+              .append("path")
+              .attr("d",d3.symbol().type(d3.symbolCross))
+              .style("fill", "black")
+              .style("opacity", 0.7)
+              .on("click",function(d){
+                console.log("TODO zoom in")
+               })
+
             var self = this;
             var length = 0;
             regions.forEach(function (d) {
@@ -107,9 +124,8 @@ var snow = snow || {};
                         .y(0)
                         .theta(Math.PI / 4)
                         .on("brush", function (d) {
-                            console.log("brush", d)
                             buffer = d;
-                            listeners.call("new", this, d)
+                            listeners.call("lbrush", this, d)
                         })
                         .on("click", function (e) {
                             //console.log("submit",d,buffer)
@@ -118,7 +134,7 @@ var snow = snow || {};
                             regions[0].end = Math.round(d[1][0])
                             regions[1].start = Math.round(d[0][1])
                             regions[1].end = Math.round(d[1][1])
-                            
+
                             listeners.call("submit",this,regions)
                         })
                         .xscale(xscale)
@@ -126,7 +142,7 @@ var snow = snow || {};
                     selection.call(b)
                 }
             }
-            listeners.on("new", function (d) {
+            listeners.on("lbrush", function (d) {
                 axes[1].response({
                     "start": d[0][1],
                     "end": d[1][1]
@@ -143,9 +159,15 @@ var snow = snow || {};
                     "start": d[0][0],
                     "end": d[1][0]
                 })
+                var r = [
+                  {"chr":regions[0].chr,"start":Math.round(d[0][0]),"end":Math.round(d[1][0])},
+                  {"chr":regions[1].chr,"start":Math.round(d[0][1]),"end":Math.round(d[1][1])}
+                ]
+                console.log("calling brush",r)
+                listeners.call("brush",this,r)
             })
         }
-        var listeners = d3.dispatch(chart,"new","submit")
+        var listeners = d3.dispatch(chart,"brush","submit","lbrush")
 
         chart.regions = function (_) {
             return arguments.length ? (regions = _, chart) : regions;
