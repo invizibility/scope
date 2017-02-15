@@ -28,7 +28,22 @@
 </body>
 <script>
     (function(S) {
-        d3.select("svg").call(S.axes())
+        var render = function(regions) {
+            d3.select("svg").selectAll("*").remove(); //TODO
+            d3.select("svg").call(S.axes().regions(regions).on("submit", function(d) {
+                render(d)
+            }))
+        }
+        render([{
+            "chr": "chr1",
+            "start": 100,
+            "end": 10000
+        }, {
+            "chr": "chr2",
+            "start": 10000,
+            "end": 30000
+        }])
+
 
 
 
