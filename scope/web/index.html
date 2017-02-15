@@ -45,8 +45,8 @@
         var height = top.append("span").attr("id", "height")
         var panel = main.append("div").style("position", "relative")
         var canvas = panel.append("canvas").style("postion", "absolute")
-            //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
-            //var svg = svgdiv.append("svg") //design for brushes.
+        //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
+        //var svg = svgdiv.append("svg") //design for brushes.
         var background = "#BBB"
 
         $(window).resize(function() {
@@ -57,13 +57,13 @@
             scope.width = $(window).width() - 200
             scope.height = $(window).height() - 30
             canvas.attr("width", scope.width).attr("height", scope.height)
-                //svg.attr("width", scope.width).attr("height", scope.height)
+            //svg.attr("width", scope.width).attr("height", scope.height)
             main.style("height", scope.height + "px")
             main.style("width", scope.width + "px")
             width.text(scope.width)
             height.text(scope.height)
-                //var b = svg.append("g").attr("class", "brush")
-                //b.call(brush)
+            //var b = svg.append("g").attr("class", "brush")
+            //b.call(brush)
 
         }
         resize()
@@ -71,36 +71,36 @@
         var hicCtrl, regionCtrl, bigwigCtrl, paraMonitor;
         var hicOpts = {}
         var hicCtrlPanel = left.append("div").classed("panel", true)
-            //hicCtrlPanel.append("div").classed("panel-heading", true).append("h3").classed("panel-title", true).text("HiC Ctrl")
+        //hicCtrlPanel.append("div").classed("panel-heading", true).append("h3").classed("panel-title", true).text("HiC Ctrl")
         var hicCtrlDiv = hicCtrlPanel.append("div").classed("panel-body", true)
         var regionCtrlPanel = left.append("div").classed("panel", true)
-            //regionCtrlPanel.append("div").classed("panel-heading", true).text("Regions Ctrl")
+        //regionCtrlPanel.append("div").classed("panel-heading", true).text("Regions Ctrl")
         var regionCtrlDiv = regionCtrlPanel.append("div").classed("panel-body", true)
         var bigwigCtrlPanel = left.append("div").classed("panel", true)
-            //bigwigCtrlPanel.append("div").classed("panel-heading", true).text("Track Ctrl")
+        //bigwigCtrlPanel.append("div").classed("panel-heading", true).text("Track Ctrl")
         var bigwigCtrlDiv = bigwigCtrlPanel.append("div").classed("panel-body", true)
 
 
         var addChrPrefix = function(r) { //TODO fix using idx , XY bug
-                var s = []
-                r.forEach(function(d) {
-                    s.push({
-                        "start": d.start,
-                        "end": d.end,
-                        "chr": "chr" + d.chr
-                    })
+            var s = []
+            r.forEach(function(d) {
+                s.push({
+                    "start": d.start,
+                    "end": d.end,
+                    "chr": "chr" + d.chr
                 })
-                console.log(s)
-                return s
-            }
-            /* get parameters of regions and hic , then render */
+            })
+            console.log(s)
+            return s
+        }
+        /* get parameters of regions and hic , then render */
 
         var plot = function(d) {
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
             ctx.fillRect(0, 0, scope.width, scope.height)
-                //  console.log(hicCtrl.state())
-                //  console.log(regionCtrl.regions())
+            //  console.log(hicCtrl.state())
+            //  console.log(regionCtrl.regions())
             var hic = hicCtrl.state()
             var bigwig = bigwigCtrl.state()
             var regions = d || regionCtrl.regions() //TODO
@@ -113,6 +113,7 @@
                 .x(80)
                 .y(scope.height - 60)
                 .width(edge)
+                .gap(0) //TODO REMV
                 .regions(addChrPrefix(regions))
                 .panel(panel)
                 .pos(1)
@@ -122,6 +123,7 @@
                 .x(10)
                 .y(20)
                 .width(edge)
+                .gap(0)
                 .regions(addChrPrefix(regions))
                 .panel(panel)
                 .vertical(true)

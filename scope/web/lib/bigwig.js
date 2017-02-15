@@ -27,6 +27,7 @@ snow.dataBigwig = snow.dataBigwig || {};
         var panel //canvas parent for add svg;
         var binsize
         var scale
+        var gap = 0 //TODO for gap axis
         var callback = function (d) {
             console.log("callback", d)
         }
@@ -225,12 +226,13 @@ snow.dataBigwig = snow.dataBigwig || {};
             var yoffset = 0
             var offset = 0
             var totalLen = totalLength(regions)
+            var effectWidth = width-(regions.length-1)*gap
             regions.forEach(function (d) {
-                var w = (+(d.end) - (+d.start)) * width / totalLen
+                var w = (+(d.end) - (+d.start)) * effectWidth / totalLen
                 var scale = d3.scaleLinear().domain([+(d.start), +(d.end)]).range([0, w])
                 xscales.push(scale)
                 xoffsets.push(offset)
-                offset += w
+                offset += w + gap
                 widths.push(w)
             })
 
@@ -337,6 +339,7 @@ snow.dataBigwig = snow.dataBigwig || {};
         chart.scale = function (_) {
             return arguments.length ? (scale = _, chart) : scale;
         }
+        chart.gap = function(_) { return arguments.length ? (gap= _, chart) : gap; }
         return chart
     }
     B.form = function () {
