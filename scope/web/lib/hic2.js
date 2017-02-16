@@ -192,7 +192,7 @@ snow.dataHic = snow.dataHic || {};
             for (var y = 1; y < mat[0].length - 1; y++) {
                 var l = nx - 1;
                 ctx.fillStyle = colorScale(mat[0][y]);
-                ctx.fillRect( y * cellSize + y0, 0, w0, cellSize); //TODO fix size?
+                ctx.fillRect( y * cellSize + y0, 0, cellSize,w0); //TODO fix size?
                 /*
                 ctx.fillStyle = colorScale(mat[l][y]);
                 ctx.fillRect( y * cellSize + y0,l * cellSize + x0,  w1, cellSize);
@@ -205,7 +205,7 @@ snow.dataHic = snow.dataHic || {};
                 ctx.fillRect( 0,x * cellSize + x0, cellSize, h0);
                 */
                 ctx.fillStyle = colorScale(mat[x][l]);
-                ctx.fillRect( l * cellSize + y0, x * cellSize + x0,  cellSize, h1);
+                ctx.fillRect( l * cellSize + y0, x * cellSize + x0,  h1, cellSize);
 
             }
             ctx.restore()
@@ -245,16 +245,16 @@ snow.dataHic = snow.dataHic || {};
             for (var y = 1; y < mat[0].length - 1; y++) {
                 var l = nx - 1;
                 ctx.fillStyle = colorScale(mat[0][y]);
-                ctx.fillRect( y * cellSize + y0, 0, w0, cellSize); //TODO fix size?
+                ctx.fillRect( y * cellSize + y0, 0, cellSize, w0); //TODO fix size?
                 ctx.fillStyle = colorScale(mat[l][y]);
-                ctx.fillRect( y * cellSize + y0,l * cellSize + x0,  w1, cellSize);
+                ctx.fillRect( y * cellSize + y0,l * cellSize + x0,  cellSize, w1);
             }
             for (var x = 1; x < mat.length - 1; x++) {
                 var l = ny - 1;
                 ctx.fillStyle = colorScale(mat[x][0]);
-                ctx.fillRect( 0,x * cellSize + x0, cellSize, h0);
+                ctx.fillRect( 0,x * cellSize + x0, h0, cellSize);
                 ctx.fillStyle = colorScale(mat[x][l]);
-                ctx.fillRect( l * cellSize + y0, x * cellSize + x0,  cellSize, h1);
+                ctx.fillRect( l * cellSize + y0, x * cellSize + x0,   h1, cellSize);
             }
 
             for (var x = 1; x < mat.length - 1; x++) {
