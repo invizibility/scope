@@ -17,6 +17,7 @@ S.brush = function() {
              .attr("width",border[1][0]-border[0][0])
              .attr("height",border[1][1]-border[0][1])
              .attr("fill","aliceblue")
+             .attr("opacity",0.2)
 
         bg.call(
           d3.drag()
