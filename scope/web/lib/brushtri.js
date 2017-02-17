@@ -19,8 +19,9 @@ var snow = snow || {};
         var theta = 0
         var scale = d3.scaleLinear().range([0, 500]).domain([0, 500])
         var yscale = d3.scaleLinear().range([0,500]).domain([500,0]) //domain reverse.
+        var G
         var brush = function (selection) {
-            var G = selection.append("g").attr("transform", "translate(" + x + "," + y + ") rotate(" + theta / Math.PI * 180 + ")")
+            G = selection.append("g").attr("transform", "translate(" + x + "," + y + ") rotate(" + theta / Math.PI * 180 + ")")
             var tri = G.append("path")
                 .attr("d", d3.symbol().type(S.symbolFlag).size(edge))
                 .style("fill", "red")
@@ -39,6 +40,7 @@ var snow = snow || {};
             rect.on("click", function (e) {
                 listeners.call("click")
             })
+
             var fix = function (x, y) {
                 if (x + y + width + height > edge) {
                     x = edge - width - height - y
@@ -71,7 +73,7 @@ var snow = snow || {};
                 yi = d3.event.y + yi - yf
                 var r = fix(xi, yi)
                 g.attr("transform", "translate(" + r[0] + "," + r[1] + ")")
-                listeners.call("brush", this, invert([
+                listeners.call("lbrush", this, invert([
                     [r[0], r[1]],
                     [r[0] + width, r[1] + height]
                 ]));
@@ -111,7 +113,7 @@ var snow = snow || {};
                 height = Math.abs(y1 - y0)
                 g.attr("transform", "translate(" + Math.min(x0, x1) + "," + Math.min(y0, y1) + ")")
                 rect.attr("height", height).attr("width", width)
-                listeners.call("brush", this, invert([
+                listeners.call("lbrush", this, invert([
                     [x0, y0],
                     [x0 + width, y0 + height]
                 ]));
@@ -122,7 +124,43 @@ var snow = snow || {};
                 //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
             }
         }
-        var listeners = d3.dispatch(brush, "start", "brush", "end", "click")
+        var listeners = d3.dispatch(brush, "start", "brush", "end", "click","lbrush")
+        listeners.on("lbrush",function(d){
+
+          var flag = function(selection) {
+            selection.each(function(d){
+              d3.select(this)
+                .attr("transform",function(d){return "translate("+d.x+","+d.y+")"})
+              var path = d3.select(this).selectAll(".flag")
+              .data([d])
+              path.enter().append("path").classed("flag",true)
+              .merge(path)
+              .attr("d", d3.symbol().type(S.symbolFlag).size(d.size))
+              .style("fill","blue")
+              .style("opacity",0.2)
+            })
+          }
+        var data =
+          [{"x":scale(d[0][0]),"y":yscale(d[1][0]),"size":scale(d[1][0])-scale(d[0][0])},
+           {"x":scale(d[0][1]),"y":yscale(d[1][1]),"size":scale(d[1][1])-scale(d[0][1])}
+         ]
+
+         var b = G.selectAll(".hLite").data(data)
+          b.enter().append("g").classed("hLite",true)
+          .merge(b)
+          .call(flag)
+          /*
+          .call(flag)
+
+          .append("path")
+          .attr("d", d3.symbol().type(S.symbolFlag).size(edge))
+          .style("fill", "red")
+          .style("opacity", 0.1)
+          */
+          b.remove().exit()
+
+          listeners.call("brush",this,d)
+        })
         brush.theta = function (_) {
             return arguments.length ? (theta = _, brush) : theta;
         }
