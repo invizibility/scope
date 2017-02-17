@@ -1,0 +1,81 @@
+<html>
+
+<head>
+    <title>Genome Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/lib0/brushtri.js"></script>
+    <script type="text/javascript" src="/lib0/axis.js"></script>
+    <script type="text/javascript" src="/lib0/axes.js"></script>
+
+
+</head>
+
+<body>
+
+    <div id="top" class="menu">
+        <label for="width"> width </label> <span id="width"></span>
+        <label for="height"> height </label> <span id="height"></span>
+    </div>
+    <div id="left" class="container">
+    </div>
+    <div id="main" class="container">
+        <svg width=600 height=600 transform="translate(10,10)">
+        </svg>
+    </div>
+</body>
+<script>
+    (function(S) {
+
+        var dispatch = d3.dispatch("new")
+        var scale1 = d3.scaleLinear().domain([0, 200]).range([0, 300])
+        var scale = d3.scaleLinear().domain([0, 200])
+
+
+
+        var svg = d3.select("svg")
+        var b = S.brushTri()
+            .x(0)
+            .y(0)
+            //.theta(Math.PI / 4)
+            .on("brush", function(d) {
+                console.log("brush", d)
+                dispatch.call("new", this, d)
+            })
+            .on("click", function(d) {
+                console.log("click brush")
+            })
+            .scale(scale)
+            .edge(300 / Math.SQRT2)
+
+
+
+
+        var axis1 = S.axis().x(50).y(250).scale(scale1)
+
+        svg.call(axis1)
+
+
+        var g = svg.append("g").attr("transform", "translate(200,50) rotate(45)")
+        g.call(b) //change this
+
+        dispatch.on("new", function(d) {
+            console.log(d)
+            axis1.response([{
+                "start": d[0][0],
+                "end": d[1][0]
+            }, {
+                "start": d[0][1],
+                "end": d[1][1]
+            }])
+        })
+
+
+
+    }(snow))
+</script>
+
+</html>
