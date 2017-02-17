@@ -136,7 +136,7 @@ var snow = snow || {};
               path.enter().append("path").classed("flag",true)
               .merge(path)
               .attr("d", d3.symbol().type(S.symbolFlag).size(d.size))
-              .style("fill","blue")
+              .style("fill","black")
               .style("opacity",0.2)
             })
           }
@@ -157,7 +157,7 @@ var snow = snow || {};
           .style("fill", "red")
           .style("opacity", 0.1)
           */
-          b.remove().exit()
+          //b.remove().exit()
 
           listeners.call("brush",this,d)
         })
