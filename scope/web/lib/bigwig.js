@@ -64,8 +64,8 @@ snow.dataBigwig = snow.dataBigwig || {};
                 if (width > 100) {
                     console.log("debug region", region[i])
                 } //debug
-                var y1 = yscale(region[i].Max) //TODO
-                var ym = yscale(region[i].Sum / region[i].Valid)
+                var y1 = yscale(region[i].Max || region[i].Value) //TODO
+                var ym = yscale(region[i].Sum / region[i].Valid || region[i].Value)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
@@ -101,8 +101,8 @@ snow.dataBigwig = snow.dataBigwig || {};
                 if (width > 100) {
                     console.log("debug region", region[i])
                 } //debug
-                var y1 = yscale(region[i].Max) //TODO
-                var ym = yscale(region[i].Sum / region[i].Valid)
+                var y1 = yscale(region[i].Max || region[i].Value) //TODO
+                var ym = yscale(region[i].Sum / region[i].Valid || region[i].Value)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
@@ -238,11 +238,12 @@ snow.dataBigwig = snow.dataBigwig || {};
 
             results.forEach(function (arr) {
                 arr.forEach(function (d) {
-                    if (d.Max > max) {
-                        max = d.Max
+                   var v = d.Max || d.Value
+                    if (v > max) {
+                        max = v
                     }
-                    if (d.Max < min) {
-                        min = d.Max
+                    if (v < min) {
+                        min = v
                     }
                 })
             })
@@ -276,11 +277,20 @@ snow.dataBigwig = snow.dataBigwig || {};
                 "max": max
             })
         }
+        var rawdata = false;
         var _render = function () {
             var q = d3_queue.queue(2)
+            if (binsize != -1) {
+            rawdata = false;
             regions.forEach(function (d) {
                 q.defer(d3.json, URI + "/getbin/" + id + "/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
             })
+          } else {
+            rawdata = true;
+            regions.forEach(function (d) {
+                q.defer(d3.json, URI + "/get/" + id + "/" + d.chr + ":" + d.start + "-" + d.end )
+            })
+           }
             q.awaitAll(_render_)
         }
         var render = function () {
