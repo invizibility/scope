@@ -64,8 +64,10 @@ snow.dataBigwig = snow.dataBigwig || {};
                 if (width > 100) {
                     console.log("debug region", region[i])
                 } //debug
-                var y1 = yscale(region[i].Max || region[i].Value) //TODO
-                var ym = yscale(region[i].Sum / region[i].Valid || region[i].Value)
+                var yv = region[i].Max || region[i].Value
+                var ymean = region[i].Sum/region[i].Valid || region[i].Value
+                var y1 = yscale(yv) //TODO
+                var ym = yscale(ymean)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
@@ -101,8 +103,10 @@ snow.dataBigwig = snow.dataBigwig || {};
                 if (width > 100) {
                     console.log("debug region", region[i])
                 } //debug
-                var y1 = yscale(region[i].Max || region[i].Value) //TODO
-                var ym = yscale(region[i].Sum / region[i].Valid || region[i].Value)
+                var yv = region[i].Max || region[i].Value
+                var ymean = region[i].Sum/region[i].Valid || region[i].Value
+                var y1 = yscale(yv) //TODO
+                var ym = yscale(ymean)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
