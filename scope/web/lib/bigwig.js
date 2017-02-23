@@ -286,6 +286,7 @@ snow.dataBigwig = snow.dataBigwig || {};
             var q = d3_queue.queue(2)
             if (binsize != -1) {
             rawdata = false;
+            if (binsize == undefined) {binsize=1}
             regions.forEach(function (d) {
                 q.defer(d3.json, URI + "/getbin/" + id + "/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
             })
