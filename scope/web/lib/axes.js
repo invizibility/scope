@@ -69,7 +69,7 @@ var snow = snow || {};
         var chart = function (selection) {
             var svg = selection
             var buttonG = selection.append("g")
-
+            /*
             var btns = buttonG.selectAll(".btn").data([d3.symbolCross,d3.symbolCross])
             btns.enter().append("g").classed("btn",true)
             .merge(buttonG)
@@ -84,6 +84,7 @@ var snow = snow || {};
               .on("click",function(d){
                 console.log("TODO zoom in")
                })
+            */
 
             var self = this;
             var length = 0;

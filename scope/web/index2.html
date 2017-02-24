@@ -25,25 +25,10 @@
   -->
 </body>
 <script type="text/javascript" src="/lib0/lib.js"></script>
-<script type="text/javascript" src="/lib0/axis.js"></script>
-<script type="text/javascript" src="/lib0/axes.js"></script>
-<script type="text/javascript" src="/lib0/brush.js"></script>
-<script type="text/javascript" src="/lib0/hic2.js"></script>
+<script type="text/javascript" src="/lib0/hic.js"></script>
 <script type="text/javascript" src="/lib0/bigwig.js"></script>
 <script>
     (function(d3, $, S) {
-        var trimChr = function(regions) {
-            var a = []
-            regions.forEach(function(d) {
-                a.push({
-                    "chr": d.chr.replace("chr", ""),
-                    "start": d.start,
-                    "end": d.end
-                })
-            })
-            return a
-        }
-
         var H = S.dataHic;
         var B = S.dataBigwig;
         var body = d3.select("body")
@@ -60,9 +45,6 @@
         var height = top.append("span").attr("id", "height")
         var panel = main.append("div").style("position", "relative")
         var canvas = panel.append("canvas").style("postion", "absolute")
-        var svg = panel.append("svg").style("position", "absolute")
-        var axesG = svg.append("g").attr("transform", "translate(80,0)")
-
         //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
         //var svg = svgdiv.append("svg") //design for brushes.
         var background = "#BBB"
@@ -70,14 +52,12 @@
         $(window).resize(function() {
             resize()
         })
-
         var resize = function() {
             //var canvasdiv = d3.select("#canvasdiv")
             scope.width = $(window).width() - 200
             scope.height = $(window).height() - 30
             canvas.attr("width", scope.width).attr("height", scope.height)
-            svg.attr("width", scope.width).attr("height", scope.height)
-
+            //svg.attr("width", scope.width).attr("height", scope.height)
             main.style("height", scope.height + "px")
             main.style("width", scope.width + "px")
             width.text(scope.width)
@@ -131,22 +111,22 @@
                 .URI("/bw")
                 .id(bigwig[1].track)
                 .x(80)
-                .y(edge / 2 + 40)
+                .y(scope.height - 60)
                 .width(edge)
-                .gap(20) //TODO REMV
+                .gap(0) //TODO REMV
                 .regions(addChrPrefix(regions))
                 .panel(panel)
                 .pos(1)
             var bw4 = B.canvas()
                 .URI("/bw")
                 .id(bigwig[0].track)
-                .x(80)
-                .y(edge / 2 + 120)
+                .x(10)
+                .y(20)
                 .width(edge)
-                .gap(20)
+                .gap(0)
                 .regions(addChrPrefix(regions))
                 .panel(panel)
-                //.vertical(true)
+                .vertical(true)
                 .pos(4)
             var setRegions = function(e) {
                 var regions = regionCtrl.regions();
@@ -163,17 +143,13 @@
                 var paratable = S.paraTable().data(d)
                 paraMonitor.call(paratable)
             }
-
-
-
-
             var chart = H.canvas()
                 .URI(URI)
                 .norm(hic.norm)
                 .unit(hic.unit)
                 .bpres(hicOpts.bpres)
                 .xoffset(80)
-                .yoffset(edge * 0.5)
+                .yoffset(20)
                 .width(edge)
                 .height(edge)
                 .regions(regions)
@@ -189,14 +165,6 @@
             canvas.call(chart).call(colorbar)
             canvas.call(bw)
             canvas.call(bw4)
-            axesG.selectAll("*").remove()
-            axesG.call(S.axes().regions(regions).width(edge).on("submit", function(d) {
-                console.log("submit", d)
-                plot(d)
-            }).on("brush", function(d) {
-                console.log("resp", d)
-                setRegions(d)
-            }))
 
         }
         var btns = left.append("div").classed("btn-group", true)
