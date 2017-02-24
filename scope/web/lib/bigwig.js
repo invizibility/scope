@@ -1,6 +1,6 @@
 var snow = snow || {};
 snow.dataBigwig = snow.dataBigwig || {};
-(function (S,B) {
+(function (S, B) {
     B.Get = function (URI, callback) {
         var config = {}
         var ready = function (error, results) {
@@ -64,14 +64,16 @@ snow.dataBigwig = snow.dataBigwig || {};
                 if (width > 100) {
                     console.log("debug region", region[i])
                 } //debug
-                var yv = region[i].Max || region[i].Value
-                var ymean = region[i].Sum/region[i].Valid || region[i].Value
-                var y1 = yscale(yv) //TODO
-                var ym = yscale(ymean)
+                var ymax = region[i].Max || region[i].Value
+                var ymin = region[i].Min || region[i].Value
+                var yv = region[i].Sum / region[i].Valid || region[i].Value
+                var y1 = yscale(yv)
+                var ym = yv < 0 ? yscale(ymin) : yscale(ymax)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
                     ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
+                    //ctx.fillRect(x + xoffset + x1, y + yoffset , width, y1);
                 } else {
                     if (y1 > y0) {
                         ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
@@ -103,10 +105,12 @@ snow.dataBigwig = snow.dataBigwig || {};
                 if (width > 100) {
                     console.log("debug region", region[i])
                 } //debug
-                var yv = region[i].Max || region[i].Value
-                var ymean = region[i].Sum/region[i].Valid || region[i].Value
-                var y1 = yscale(yv) //TODO
-                var ym = yscale(ymean)
+                var ymax = region[i].Max || region[i].Value
+                var ymin = region[i].Min || region[i].Value
+                var yv = region[i].Sum / region[i].Valid || region[i].Value
+                var y1 = yscale(yv)
+                var ym = yv < 0 ? yscale(ymin) : yscale(ymax)
+
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
                 if (y0 < 0) {
@@ -230,7 +234,7 @@ snow.dataBigwig = snow.dataBigwig || {};
             var yoffset = 0
             var offset = 0
             var totalLen = totalLength(regions)
-            var effectWidth = width-(regions.length-1)*gap
+            var effectWidth = width - (regions.length - 1) * gap
             regions.forEach(function (d) {
                 var w = (+(d.end) - (+d.start)) * effectWidth / totalLen
                 var scale = d3.scaleLinear().domain([+(d.start), +(d.end)]).range([0, w])
@@ -242,18 +246,19 @@ snow.dataBigwig = snow.dataBigwig || {};
 
             results.forEach(function (arr) {
                 arr.forEach(function (d) {
-                   var v = d.Max || d.Value
+                    var v = d.Max || d.Value
+                    var vmin = d.Min || d.Value
                     if (v > max) {
                         max = v
                     }
-                    if (v < min) {
-                        min = v
+                    if (vmin < min) {
+                        min = vmin
                     }
                 })
             })
-            var yscale = d3.scaleLinear().domain([min, max]).range([0, barHeight])
+            var yscale = d3.scaleLinear().domain([Math.min(0, min), Math.max(max, 0)]).range([0, barHeight]) //TODO?
             scale = yscale;
-            var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight,0])
+            var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0])
             var color = d3.scaleOrdinal(d3.schemeCategory10);
             var background = "#EFE"
             if (vertical) {
@@ -264,7 +269,7 @@ snow.dataBigwig = snow.dataBigwig || {};
                 results.forEach(function (region, i) {
                     renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
                 })
-                S.canvasToolXAxis(ctx, axisScale,x,y+width,barHeight,id)
+                S.canvasToolXAxis(ctx, axisScale, x, y + width, barHeight, id)
             } else {
                 renderResp();
                 var ctx = canvas.node().getContext("2d");
@@ -274,7 +279,7 @@ snow.dataBigwig = snow.dataBigwig || {};
                     renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
                 })
 
-                S.canvasToolYAxis(ctx,axisScale,x+width,y,barHeight,id)
+                S.canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id)
             }
             callback({
                 "min": min,
@@ -285,17 +290,19 @@ snow.dataBigwig = snow.dataBigwig || {};
         var _render = function () {
             var q = d3_queue.queue(2)
             if (binsize != -1) {
-            rawdata = false;
-            if (binsize == undefined) {binsize=1}
-            regions.forEach(function (d) {
-                q.defer(d3.json, URI + "/getbin/" + id + "/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
-            })
-          } else {
-            rawdata = true;
-            regions.forEach(function (d) {
-                q.defer(d3.json, URI + "/get/" + id + "/" + d.chr + ":" + d.start + "-" + d.end )
-            })
-           }
+                rawdata = false;
+                if (binsize == undefined) {
+                    binsize = 1
+                }
+                regions.forEach(function (d) {
+                    q.defer(d3.json, URI + "/getbin/" + id + "/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize)
+                })
+            } else {
+                rawdata = true;
+                regions.forEach(function (d) {
+                    q.defer(d3.json, URI + "/get/" + id + "/" + d.chr + ":" + d.start + "-" + d.end)
+                })
+            }
             q.awaitAll(_render_)
         }
         var render = function () {
@@ -354,7 +361,9 @@ snow.dataBigwig = snow.dataBigwig || {};
         chart.scale = function (_) {
             return arguments.length ? (scale = _, chart) : scale;
         }
-        chart.gap = function(_) { return arguments.length ? (gap= _, chart) : gap; }
+        chart.gap = function (_) {
+            return arguments.length ? (gap = _, chart) : gap;
+        }
         return chart
     }
     B.form = function () {
@@ -402,4 +411,4 @@ snow.dataBigwig = snow.dataBigwig || {};
         }
         return chart
     }
-}(snow,snow.dataBigwig));
+}(snow, snow.dataBigwig));
