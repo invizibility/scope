@@ -35,14 +35,21 @@
         var scope = {} //TODO
         var top = body.append("div").attr("id", "top")
             .classed("container", true)
+        var nav = top.append("nav").classed("navbar", true).classed("navbar-default", true)
+        var navl = nav.append("div").classed("navbar-inner-sm", true).append("ul").classed("nav", true).classed("navbar-nav", true)
+        navl.append("li").append("a").attr("href", "/index.html").text("Modern")
+        navl.append("li").classed("active", true).append("a").attr("href", "#").text("Classic")
         var main = body.append("div").attr("id", "main")
             .classed("container", true)
         var left = body.append("div").attr("id", "left")
             .classed("container", true)
-        top.append("label").attr("for", "width").text("width")
-        var width = top.append("span").attr("id", "width")
-        top.append("label").attr("for", "height").text("height")
-        var height = top.append("span").attr("id", "height")
+
+        var navr = nav.append("div").style("text-align", "right")
+        navr.append("label").attr("for", "width").text("width")
+        var width = navr.append("span").attr("id", "width")
+        navr.append("label").attr("for", "height").text("height")
+        var height = navr.append("span").attr("id", "height")
+
         var panel = main.append("div").style("position", "relative")
         var canvas = panel.append("canvas").style("postion", "absolute")
         //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
