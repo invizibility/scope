@@ -16,9 +16,11 @@
 }
 
 #top {
-    min-height: 25px;
+    height: 25px;
+    /*
     background-color: #265EB7;
     color:#EEE;
+    */
     width: 100%;
     vertical-align: middle;
     text-align: right;
@@ -35,4 +37,10 @@ svg {
 }
 canvas {
   position: absolute;
+}
+
+
+.navbar-nav > li > a {padding-top:2px !important; padding-bottom:2px !important;}
+.navbar {
+  min-height:20px !important;
 }
