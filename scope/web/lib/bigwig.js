@@ -28,6 +28,7 @@ snow.dataBigwig = snow.dataBigwig || {};
         var binsize
         var scale
         var gap = 0 //TODO for gap axis
+        var mode = 0 // "max" or "mean" { 0: mix (max,min,mean) , 1: mean, 2: max/min }
         var callback = function (d) {
             console.log("callback", d)
         }
@@ -63,7 +64,7 @@ snow.dataBigwig = snow.dataBigwig || {};
                 var width = x2 - x1
                 if (width > 100) {
                     console.log("debug region", region[i])
-                } //debug
+                }
                 var ymax = region[i].Max || region[i].Value
                 var ymin = region[i].Min || region[i].Value
                 var yv = region[i].Sum / region[i].Valid || region[i].Value
@@ -71,18 +72,34 @@ snow.dataBigwig = snow.dataBigwig || {};
                 var ym = yv < 0 ? yscale(ymin) : yscale(ymax)
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
-                if (y0 < 0) {
-                    ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
-                    //ctx.fillRect(x + xoffset + x1, y + yoffset , width, y1);
-                } else {
-                    if (y1 > y0) {
-                        ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
-                    } else {
-                        ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y0), width, y0 - y1);
-                    }
+                if (mode==0 || mode==1) {
+                  if (y0 < 0) {
+                      ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
+                      //ctx.fillRect(x + xoffset + x1, y + yoffset , width, y1);
+                  } else {
+                      if (y1 > y0) {
+                          ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
+                      } else {
+                          ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y0), width, y0 - y1);
+                      }
+                  }
                 }
-                ctx.fillStyle = "#111"
-                ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1)
+                if (mode==0) {
+                  ctx.fillStyle = "#111"
+                  ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1)
+                }
+                if (mode==2) {
+                  if (y0 < 0) {
+                      ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, ym - 0);
+                  } else {
+                      if (y1 > y0) {
+                          ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, ym - y0);
+                      } else {
+                          ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y0), width, y0 - ym);
+                      }
+                  }
+                }
+
             }
         }
 
@@ -113,17 +130,34 @@ snow.dataBigwig = snow.dataBigwig || {};
 
                 var y0 = yscale(0);
                 //var y1 = barHeight - height
-                if (y0 < 0) {
-                    ctx.fillRect(x + xoffset, y + yoffset + x1, y1 - 0, width);
-                } else {
-                    if (y1 > y0) {
-                        ctx.fillRect(x + xoffset + y0, y + yoffset + x1, y1 - y0, width);
-                    } else {
-                        ctx.fillRect(x + xoffset + y1, y + yoffset + x1, y0 - y1, width);
-                    }
+                if (mode==1 || mode==2) {
+                  if (y0 < 0) {
+                      ctx.fillRect(x + xoffset, y + yoffset + x1, y1 - 0, width);
+                  } else {
+                      if (y1 > y0) {
+                          ctx.fillRect(x + xoffset + y0, y + yoffset + x1, y1 - y0, width);
+                      } else {
+                          ctx.fillRect(x + xoffset + y1, y + yoffset + x1, y0 - y1, width);
+                      }
+                  }
                 }
-                ctx.fillStyle = "#111"
-                ctx.fillRect(x + xoffset + ym, y + yoffset + x1, 1, width)
+                if (mode==0) {
+                  ctx.fillStyle = "#111"
+                  ctx.fillRect(x + xoffset + ym, y + yoffset + x1, 1, width)
+                }
+                if (mode==2) {
+                  if (y0 < 0) {
+                      ctx.fillRect(x + xoffset, y + yoffset + x1, ym - 0, width);
+                  } else {
+                      if (y1 > y0) {
+                          ctx.fillRect(x + xoffset + y0, y + yoffset + x1, ym - y0, width);
+                      } else {
+                          ctx.fillRect(x + xoffset + ym, y + yoffset + x1, y0 - ym, width); //TODO TEST
+                      }
+                  }
+                }
+
+
             }
         }
         var xscales, xoffsets, widths;
@@ -245,6 +279,7 @@ snow.dataBigwig = snow.dataBigwig || {};
             })
 
             results.forEach(function (arr) {
+              if (mode==0 || mode==2 ) {
                 arr.forEach(function (d) {
                     var v = d.Max || d.Value
                     var vmin = d.Min || d.Value
@@ -255,6 +290,18 @@ snow.dataBigwig = snow.dataBigwig || {};
                         min = vmin
                     }
                 })
+              } else {
+                arr.forEach(function (d) {
+                    var v =  d.Sum/d.Valid || d.Value
+                    if (v > max) {
+                        max = v
+                    }
+                    if (v < min) {
+                        min = v
+                    }
+                })
+              }
+
             })
             var yscale = d3.scaleLinear().domain([Math.min(0, min), Math.max(max, 0)]).range([0, barHeight]) //TODO?
             scale = yscale;
@@ -318,6 +365,22 @@ snow.dataBigwig = snow.dataBigwig || {};
         chart = function (selection) { //selection is canvas;
             canvas = selection;
             render();
+        }
+        var modes=["mix","mean","max"]
+        chart.mode = function(_) {
+          if (!arguments.length) {
+            return modes[mode]
+          }
+          else {
+          mode = 0
+          if (_=="max" || _==2) {
+            mode = 2
+          }
+          if (_=="mean" || _==1) {
+            mode = 1
+          }
+          return chart
+          }
         }
         chart.callback = function (_) {
             return arguments.length ? (callback = _, chart) : callback;

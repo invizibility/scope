@@ -1,0 +1,135 @@
+<html>
+
+<head>
+    <title>GS Bigwig Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-queue.v2.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-request.v1.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+    <!--
+    <div id="top" class="menu">
+        <label for="width"> width </label> <span id="width"></span>
+        <label for="height"> height </label> <span id="height"></span>
+    </div>
+    <div id="left" class="container">
+    </div>
+    <div id="main" class="container">
+    </div>
+  -->
+</body>
+<script type="text/javascript" src="/lib0/lib.js"></script>
+<script type="text/javascript" src="/lib0/bigwig.js"></script>
+<script>
+    (function(d3, $, S) {
+        var B = S.dataBigwig;
+        var body = d3.select("body")
+        var scope = {} //TODO
+        var top = body.append("div").attr("id", "top")
+            .classed("container", true)
+        var nav = top.append("nav").classed("navbar", true).classed("navbar-default", true)
+        var navl = nav.append("div").classed("navbar-inner-sm", true).append("ul").classed("nav", true).classed("navbar-nav", true)
+        navl.append("li").append("a").attr("href", "/index.html").text("Modern")
+        navl.append("li").append("a").attr("href", "/index2.html").text("Classic")
+        navl.append("li").classed("active", true).append("a").attr("href", "#").text("BigWigs")
+        var main = body.append("div").attr("id", "main")
+            .classed("container", true)
+        var left = body.append("div").attr("id", "left")
+            .classed("container", true)
+
+        var navr = nav.append("div").style("text-align", "right")
+        navr.append("label").attr("for", "width").text("width")
+        var width = navr.append("span").attr("id", "width")
+        navr.append("label").attr("for", "height").text("height")
+        var height = navr.append("span").attr("id", "height")
+
+        var panel = main.append("div").style("position", "relative")
+        var canvas = panel.append("canvas").style("postion", "absolute")
+        //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
+        //var svg = svgdiv.append("svg") //design for brushes.
+        var background = "#BBB"
+
+        $(window).resize(function() {
+            resize()
+        })
+        var resize = function() {
+            //var canvasdiv = d3.select("#canvasdiv")
+            scope.width = $(window).width() - 200
+            scope.height = $(window).height() - 30
+            canvas.attr("width", scope.width).attr("height", scope.height)
+            //svg.attr("width", scope.width).attr("height", scope.height)
+            main.style("height", scope.height + "px")
+            main.style("width", scope.width + "px")
+            width.text(scope.width)
+            height.text(scope.height)
+            //var b = svg.append("g").attr("class", "brush")
+            //b.call(brush)
+
+        }
+        resize()
+
+
+
+        var plot = function(d) {
+
+
+
+        }
+        var btns = left.append("div").classed("btn-group", true)
+        var btns2 = left.append("div").classed("btn-group", true)
+
+        var paraMonitor = left.append("div").classed("panel", true)
+        /*
+        var renderBwCtrlPanel = function(data) {
+            bigwigCtrl = S.dataBigwig.form().data(data).number(2)
+            bigwigCtrlDiv.call(bigwigCtrl)
+        }
+        */
+        var regions = [{
+            "chr": "chr1",
+            "start": 1,
+            "end": 1000000
+        }];
+
+        var render = function(d) {
+            var ctx = canvas.node().getContext("2d");
+            ctx.fillStyle = background
+            ctx.fillRect(0, 0, scope.width, scope.height)
+            //  console.log(hicCtrl.state())
+            //  console.log(regionCtrl.regions())
+
+
+            //var regions = d || regionCtrl.regions() //TODO
+
+            var edge = Math.min(scope.height - 100, scope.width - 40)
+            d.trackIds.forEach(function(d0, i) {
+
+                var bw = B.canvas()
+                    .URI("/bw")
+                    .id(d0)
+                    .x(80)
+                    .y(60 + i * 100)
+                    .width(edge)
+                    .gap(0) //TODO REMV
+                    .regions(regions)
+                    .panel(panel)
+                    .pos(i)
+                    .mode(1)
+                canvas.call(bw)
+            })
+        }
+
+        B.Get("/bw", function(d) {
+            render(d)
+        })
+
+    }(d3, jQuery, snow));
+</script>
+
+</html>
