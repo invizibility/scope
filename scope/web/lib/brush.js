@@ -35,6 +35,12 @@ S.brush = function() {
      rect.on("click",function(e){
        listeners.call("click")
      })
+     listeners.on("activate",function(d){
+       rect.attr("opacity",0.2)
+     })
+     listeners.on("deactivate",function(d){
+       rect.attr("opacity",0.0)
+     })
      var fix = function(x,y){
        var r = [x,y]
        r[0] = Math.max(border[0][0],Math.min(border[1][0]-width,r[0]))
@@ -108,12 +114,18 @@ S.brush = function() {
        //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
      }
    }
-   var listeners = d3.dispatch(brush, "start","brush","end","click")
+   var listeners = d3.dispatch(brush, "start","brush","end","click","activate","deactivate")
    /* TO FIX
    brush.extent = function() {
      return [[xi,yi],[xi+width,yi+height]]
    }
    */
+   brush.activate = function(_) {
+     listeners.call("activate",this,_)
+   }
+   brush.deactivate = function(_) {
+     listeners.call("deactivate",this,_)
+   }
    brush.theta = function(_) { return arguments.length ? (theta= _, brush) : theta; }
    brush.border = function(_) { return arguments.length ? (border= _, xscale.range([border[0][0],border[1][0]]),yscale.range([border[1][0],border[1][1]]),brush) : border; }
    brush.on = function() {
