@@ -108,8 +108,8 @@ var snow = snow || {};
                       Bs[i].activate(d.d)
                     }
                     if (d.from==2 && i!=2) {
-                      Bs[0].response(d.d)
-                      Bs[1].response(d.d)
+                      Bs[0].response([d.d[0][0],d.d[1][0]])
+                      Bs[1].response([d.d[0][1],d.d[1][1]])
                     }
                   })
                 })
