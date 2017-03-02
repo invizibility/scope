@@ -78,6 +78,7 @@ var snow = snow || {};
                     .on("brush", function (d) {
                         //buffer = d;
                         //listeners.call("lbrush", this, d)
+                        console.log("data2",d)
                         var e = {"from":2,"d":d}
                         dispatch.call("new", this, e)
                     })
@@ -102,9 +103,9 @@ var snow = snow || {};
                   G.forEach(function(d0,i){
                     console.log(d.from,i)
                     if (d.from!=i) {
-                      Bs[i].deactivate()
+                      Bs[i].deactivate(d.d)
                     } else {
-                      Bs[i].activate()
+                      Bs[i].activate(d.d)
                     }
                   })
                 })
