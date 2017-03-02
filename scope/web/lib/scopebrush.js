@@ -70,7 +70,7 @@ var snow = snow || {};
 
                 })
 
-
+                var yscale = d3.scaleLinear().domain([scales[1].domain()[1],scales[1].domain()[0]]).range(scales[1].range())
                 Bs[2] = S.brush()
                     .x(width / 2) //TODO THIS FOR MULTI
                     .y(0)
@@ -94,7 +94,7 @@ var snow = snow || {};
                         //listeners.call("submit",this,regions)
                     })
                     .xscale(scales[0])
-                    .yscale(scales[1])
+                    .yscale(yscale)
                 dispatch.on("new",function(d){
                   console.log("new")
                   console.log(this)
