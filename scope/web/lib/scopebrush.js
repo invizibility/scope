@@ -51,7 +51,7 @@ var snow = snow || {};
                 renderTri(svg, 0, 0, scales[0]) //TODO G call
             } else if (regions.length == 2) {
                 var offsets=[]
-                var gap = 2
+                var gap = 10
                 var l = 0;
                 var offsets = []
 
