@@ -156,6 +156,10 @@ var snow = snow || {};
 
 
         })
+        listeners.on("deactivate.tri",function(d){
+          G.selectAll(".rLite").remove()
+          G.selectAll(".hLite").remove()
+        })
         listeners.on("lbrush",function(d){
         var data =
           [{"x":scale(d[0][0]),"y":yscale(d[1][0]),"size":scale(d[1][0])-scale(d[0][0])},
@@ -166,10 +170,7 @@ var snow = snow || {};
           b.enter().append("g").classed("hLite",true)
           .merge(b)
           .call(flag)
-         listeners.on("deactivate.tri",function(d){
-           G.selectAll(".rLite").remove()
-           b.remove()
-         })
+
           listeners.on("activate.tri", function(d){
             G.selectAll(".rLite").remove()
           })
