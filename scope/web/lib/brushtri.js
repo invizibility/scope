@@ -120,8 +120,8 @@ var snow = snow || {};
                 g.attr("transform", "translate(" + Math.min(x0, x1) + "," + Math.min(y0, y1) + ")")
                 rect.attr("height", height).attr("width", width)
                 listeners.call("lbrush", this, invert([
-                    [x0, y0],
-                    [x0 + width, y0 + height]
+                    [Math.min(x0,x1), Math.min(y0,y1)],
+                    [Math.min(x0,x1) + width, Math.min(y0,y1) + height]
                 ]));
             }
 
