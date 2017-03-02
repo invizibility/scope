@@ -107,6 +107,10 @@ var snow = snow || {};
                     } else {
                       Bs[i].activate(d.d)
                     }
+                    if (d.from==2 && i!=2) {
+                      Bs[0].response(d.d)
+                      Bs[1].response(d.d)
+                    }
                   })
                 })
                 G[2] = svg.append("g").attr("transform","translate("+ 0 +","+ 0 + ")").call(Bs[2])
