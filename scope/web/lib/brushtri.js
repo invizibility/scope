@@ -40,7 +40,12 @@ var snow = snow || {};
             rect.on("click", function (e) {
                 listeners.call("click")
             })
-
+            listeners.on("deactivate", function(d){
+              rect.attr("opacity",0.0)
+            })
+            listeners.on("activate", function(d){
+              rect.attr("opacity",0.2)
+            })
             var fix = function (x, y) {
                 if (x + y + width + height > edge) {
                     x = edge - width - height - y
@@ -63,6 +68,7 @@ var snow = snow || {};
 
             function start(d) {
                 console.log("start move")
+                rect.attr("opacity", 0.2)
                 d3.select(this).attr("stroke", "blue").attr("stroke-width", 2)
                 xf = d3.event.x
                 yf = d3.event.y
@@ -124,7 +130,8 @@ var snow = snow || {};
                 //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
             }
         }
-        var listeners = d3.dispatch(brush, "start", "brush", "end", "click","lbrush")
+        var listeners = d3.dispatch(brush, "start", "brush", "end", "click","lbrush","activate","deactivate")
+
         listeners.on("lbrush",function(d){
 
           var flag = function(selection) {
@@ -149,6 +156,14 @@ var snow = snow || {};
           b.enter().append("g").classed("hLite",true)
           .merge(b)
           .call(flag)
+         listeners.on("deactivate.tri",function(d){
+           b.remove()
+         })
+          /*
+          listeners.on("new",function(d){
+            b.remove() //call new off. TEST
+            rect.attr("opacity",0.0)
+          })
           /*
           .call(flag)
 
@@ -177,6 +192,12 @@ var snow = snow || {};
         brush.domain = function (_) {
             return arguments.length ? (scale.domain(_), yscale.domain([_[1],_[0]]), brush) : scale.domain();
         }
+        brush.activate = function() {
+          listeners.call("activate",this,{})
+        }
+        brush.deactivate = function() {
+          listeners.call("deactivate",this,{})
+        }
 
         brush.scale = function (_) {
             return arguments.length ? (scale = _, edge = scale.range()[1] - scale.range()[0], yscale.domain([scale.domain()[1], scale.domain()[0]]).range(scale.range()), brush) : scale;
@@ -185,6 +206,7 @@ var snow = snow || {};
         brush.edge = function (_) {
             return arguments.length ? (edge = _, scale.range([0, edge]),yscale.range([0,edge]), brush) : edge;
         }
+        brush.listeners = function(_) { return arguments.length ?(listeners= _, brush) : listeners; }
         return brush
     }
 
