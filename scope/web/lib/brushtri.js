@@ -144,7 +144,18 @@ var snow = snow || {};
             }
         }
         var listeners = d3.dispatch(brush, "start", "brush", "end", "click","lbrush","activate","deactivate","response")
+        listeners.on("response",function(d){
+          var data =
+            [{"x":scale(d[0]),"y":yscale(d[1]),"size":scale(d[1])-scale(d[0])},
+             //{"x":scale(d[0][1]),"y":yscale(d[1][1]),"size":scale(d[1][1])-scale(d[0][1])}
+           ]
+          var b = G.selectAll(".rLite").data(data)
+           b.enter().append("g").classed("rLite",true)
+           .merge(b)
+           .call(flag)
 
+
+        })
         listeners.on("lbrush",function(d){
         var data =
           [{"x":scale(d[0][0]),"y":yscale(d[1][0]),"size":scale(d[1][0])-scale(d[0][0])},
@@ -156,23 +167,13 @@ var snow = snow || {};
           .merge(b)
           .call(flag)
          listeners.on("deactivate.tri",function(d){
+           G.selectAll(".rLite").remove()
            b.remove()
          })
           listeners.on("activate.tri", function(d){
             G.selectAll(".rLite").remove()
           })
-          listeners.on("response",function(d){
-            var data =
-              [{"x":scale(d[0][0]),"y":yscale(d[1][0]),"size":scale(d[1][0])-scale(d[0][0])},
-               {"x":scale(d[0][1]),"y":yscale(d[1][1]),"size":scale(d[1][1])-scale(d[0][1])}
-             ]
-            var b = G.selectAll(".rLite").data(data)
-             b.enter().append("g").classed("rLite",true)
-             .merge(b)
-             .call(flag)
 
-
-          })
           /*
           .call(flag)
 
