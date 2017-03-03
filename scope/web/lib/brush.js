@@ -6,6 +6,7 @@ S.brush = function() {
    var xi = 0, yi = 0
    var x=0,y=0; //x,y is the coord system start point?
    var theta = Math.PI / 4
+   var status = {}
    var xscale = d3.scaleLinear().range([0,500]).domain([0,500])
    var yscale = d3.scaleLinear().range([0,500]).domain([0,500])
    var brush = function(selection) {
@@ -33,13 +34,17 @@ S.brush = function() {
      rect.call(d3.drag().on("drag", move).on("start", start)
        .on("end", end))
      rect.on("click",function(e){
-       listeners.call("click")
+       console.log("click rect",e)
+       listeners.call("click",this,status)
      })
      listeners.on("activate",function(d){
        rect.attr("opacity",0.2)
      })
      listeners.on("deactivate",function(d){
        rect.attr("opacity",0.0)
+     })
+     listeners.on("brush.local", function(d){
+       status = d;
      })
      var fix = function(x,y){
        var r = [x,y]
