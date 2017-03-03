@@ -34,7 +34,9 @@
 
 
         var svg = d3.select("svg").attr("width", 1000).attr("height", 1000)
-        var b = S.scopebrush()
+        var b = S.scopebrush().on("brush", function(d) {
+            console.log("outside", d)
+        })
         svg.call(b) //change this
 
 
