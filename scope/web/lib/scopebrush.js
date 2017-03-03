@@ -17,7 +17,7 @@ var snow = snow || {};
     ]
     var scales = [d3.scaleLinear().domain([0, 100000]).range([0, 100]),d3.scaleLinear().domain([0, 300000]).range([0, 300])]
     S.scopebrush = function () {
-        var dispatch = d3.dispatch("new")
+        var dispatch = d3.dispatch("brush")
         var width = 700
         var G=[{},{},{}]
         var Bs = [{},{},{}]
@@ -32,7 +32,7 @@ var snow = snow || {};
                     .on("brush", function (d) {
                         //console.log("brush", d)
                         var e = {"from":id,"d":d}
-                        dispatch.call("new", this, e)
+                        dispatch.call("brush", this, e)
                     })
                     .on("click", function (d) {
                         console.log("click brush")
@@ -80,7 +80,7 @@ var snow = snow || {};
                         //listeners.call("lbrush", this, d)
                         console.log("data2",d)
                         var e = {"from":2,"d":d}
-                        dispatch.call("new", this, e)
+                        dispatch.call("brush", this, e)
                     })
                     .on("click", function (e) {
                         //console.log("submit",d,buffer)
@@ -95,8 +95,8 @@ var snow = snow || {};
                     })
                     .xscale(scales[0])
                     .yscale(yscale)
-                dispatch.on("new",function(d){
-                  console.log("new")
+                dispatch.on("brush.local",function(d){
+                  console.log("scope brush")
                   console.log(this)
                   console.log(d)
                   var self = this;
