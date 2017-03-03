@@ -17,6 +17,7 @@ var snow = snow || {};
         var x = 0,
             y = 0; //x,y is the coord system start point?
         var theta = 0
+        var status = {}
         var scale = d3.scaleLinear().range([0, 500]).domain([0, 500])
         var yscale = d3.scaleLinear().range([0, 500]).domain([500, 0]) //domain reverse.
 
@@ -55,7 +56,7 @@ var snow = snow || {};
             rect.call(d3.drag().on("drag", move).on("start", start)
                 .on("end", end))
             rect.on("click", function (e) {
-                listeners.call("click")
+                listeners.call("click",this,status)
             })
             listeners.on("deactivate", function (d) {
                 rect.attr("opacity", 0.0)
@@ -181,6 +182,7 @@ var snow = snow || {};
             G.selectAll(".hLite").remove()
         })
         listeners.on("brush.local", function(d){
+          status = d
           highlight(d)
         })
         brush.theta = function (_) {
@@ -207,9 +209,9 @@ var snow = snow || {};
             /** TO FIX THIS **/
 
         }
-        brush.process = function (d) {
-            if (d.code == "brush") {
-                highlight(d.d)
+        brush.process = function(code,data) {
+            if (code == "brush") {
+                highlight(data)
             }
         }
         brush.scale = function (_) {
