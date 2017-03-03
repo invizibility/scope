@@ -92,7 +92,7 @@ var snow = snow || {};
                 yi = d3.event.y + yi - yf
                 var r = fix(xi, yi)
                 g.attr("transform", "translate(" + r[0] + "," + r[1] + ")")
-                listeners.call("lbrush", this, invert([
+                listeners.call("brush", this, invert([
                     [r[0], r[1]],
                     [r[0] + width, r[1] + height]
                 ]));
@@ -132,7 +132,7 @@ var snow = snow || {};
                 height = Math.abs(y1 - y0)
                 g.attr("transform", "translate(" + Math.min(x0, x1) + "," + Math.min(y0, y1) + ")")
                 rect.attr("height", height).attr("width", width)
-                listeners.call("lbrush", this, invert([
+                listeners.call("brush", this, invert([
                     [Math.min(x0,x1), Math.min(y0,y1)],
                     [Math.min(x0,x1) + width, Math.min(y0,y1) + height]
                 ]));
@@ -143,7 +143,7 @@ var snow = snow || {};
                 //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
             }
         }
-        var listeners = d3.dispatch(brush, "start", "brush", "end", "click","lbrush","activate","deactivate","response")
+        var listeners = d3.dispatch(brush, "start", "brush", "end", "click","activate","deactivate","response")
         listeners.on("response",function(d){
           var data =
             [{"x":scale(d[0]),"y":yscale(d[1]),"size":scale(d[1])-scale(d[0])},
@@ -160,7 +160,7 @@ var snow = snow || {};
           G.selectAll(".rLite").remove()
           G.selectAll(".hLite").remove()
         })
-        listeners.on("lbrush",function(d){
+        listeners.on("brush.local",function(d){
         var data =
           [{"x":scale(d[0][0]),"y":yscale(d[1][0]),"size":scale(d[1][0])-scale(d[0][0])},
            {"x":scale(d[0][1]),"y":yscale(d[1][1]),"size":scale(d[1][1])-scale(d[0][1])}
@@ -175,17 +175,7 @@ var snow = snow || {};
             G.selectAll(".rLite").remove()
           })
 
-          /*
-          .call(flag)
-
-          .append("path")
-          .attr("d", d3.symbol().type(S.symbolFlag).size(edge))
-          .style("fill", "red")
-          .style("opacity", 0.1)
-          */
-          //b.remove().exit()
-
-          listeners.call("brush",this,d)
+          //listeners.call("brush",this,d)
         })
         brush.theta = function (_) {
             return arguments.length ? (theta = _, brush) : theta;
