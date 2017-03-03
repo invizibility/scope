@@ -18,6 +18,7 @@ var snow = snow || {};
             return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
         }
         var dispatch = d3.dispatch("brush", "click")
+        var listeners = d3.dispatch("brush", "click")
         var width = 700
         var G = [{}, {}, {}]
         var Bs = [{}, {}, {}]
@@ -126,6 +127,31 @@ var snow = snow || {};
                   render2(svg)
               }
             }
+            var translate = function(d) {
+              var chr0,chr1
+              if (d.from==0 || d.from==1) {
+                chr0 = regions[d.from].chr
+                chr1 = regions[d.from].chr
+              } else {
+                console.log(d,regions)
+                chr0 = regions[0].chr
+                chr1 = regions[1].chr
+              }
+              var brushRegions = [{
+                  "chr": chr0,
+                  "start": Math.round(d.d[0][0]),
+                  "end": Math.round(d.d[1][0])
+
+              }, {
+                  "chr": chr1,
+                  "start": Math.round(d.d[0][1]),
+                  "end": Math.round(d.d[1][1])
+              }]
+              if (nearby(brushRegions[0],brushRegions[1])) {
+                brushRegions=[merge(brushRegions[0],brushRegions[1])]
+              }
+              return brushRegions;
+            }
             dispatch.on("brush.local", function (d) {
                 G.forEach(function (d0, i) {
                     if (d.from != i) {
@@ -138,34 +164,15 @@ var snow = snow || {};
                         Bs[1].process("brush", [d.d[0][1], d.d[1][1]])
                     }
                 })
+                listeners.call("brush",this,translate(d))
             })
+
             dispatch.on("click.local", function (d) {
-                var chr0,chr1;
-                if (d.from==0 || d.from==1) {
-                  chr0 = regions[d.from].chr
-                  chr1 = regions[d.from].chr
-                } else {
-                  console.log(d,regions)
-                  chr0 = regions[0].chr
-                  chr1 = regions[1].chr
-                }
-                regions = [{
-                    "chr": chr0,
-                    "start": Math.round(d.d[0][0]),
-                    "end": Math.round(d.d[1][0])
-
-                }, {
-                    "chr": chr1,
-                    "start": Math.round(d.d[0][1]),
-                    "end": Math.round(d.d[1][1])
-                }]
-                if (nearby(regions[0],regions[1])) {
-                  console.log(regions)
-                  regions=[merge(regions[0],regions[1])]
-                  console.log("merging",regions)
-                }
-
+                regions = translate(d)
+                console.log(regions)
                 render()
+                listeners.call("click",this,regions)
+                //render()
             })
             var svg = selection.append("g")
             G[0] = svg.append("g")
@@ -174,9 +181,11 @@ var snow = snow || {};
             render()
         }
         chart.on = function () {
-            var value = dispatch.on.apply(dispatch, arguments);
-            return value === dispatch ? chart : value;
+            var value = listeners.on.apply(listeners, arguments);
+            return value === listeners ? chart : value;
         };
+        chart.regions = function(_) { return arguments.length ? (regions= _, chart) : regions; }
+        chart.width = function(_) { return arguments.length ? (width= _, chart) : width; }
         return chart
     }
 
