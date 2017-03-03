@@ -3,8 +3,6 @@
 
 var snow = snow || {};
 (function (d3, S) {
-
-
     S.scopebrush = function () {
         function nearby(a,b) {
             if (a.chr!=b.chr) {return false}
@@ -56,8 +54,9 @@ var snow = snow || {};
                     })
                     .scale(scale)
                     .edge(width)
-
-                var axis1 = S.axis().x(50).y(300).scale(scales[0]) //TODO
+                var l = scale.range()[1]-scale.range()[0]
+                var axisScale = d3.scaleLinear().domain(scale.domain()).range([scale.range()[0]/Math.SQRT2*2,scale.range()[1]/Math.SQRT2*2])
+                var axis1 = S.axis().x(-l/Math.SQRT2).y(l/Math.SQRT2).scale(axisScale) //TODO
                 selection.call(axis1)
 
                 var g = selection.append("g").attr("transform", "translate(" + 0 + "," + 0 + ") rotate(45)") //TODO
