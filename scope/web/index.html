@@ -28,6 +28,8 @@
 <script type="text/javascript" src="/lib0/axis.js"></script>
 <script type="text/javascript" src="/lib0/axes.js"></script>
 <script type="text/javascript" src="/lib0/brush.js"></script>
+<script type="text/javascript" src="/lib0/brushtri.js"></script>
+<script type="text/javascript" src="/lib0/scopebrush.js"></script>
 <script type="text/javascript" src="/lib0/hic2.js"></script>
 <script type="text/javascript" src="/lib0/bigwig.js"></script>
 <script>
@@ -80,8 +82,10 @@
 
         var resize = function() {
             //var canvasdiv = d3.select("#canvasdiv")
+            console.log("in Resize")
             scope.width = $(window).width() - 200
             scope.height = $(window).height() - 30
+            console.log(scope)
             canvas.attr("width", scope.width).attr("height", scope.height)
             svg.attr("width", scope.width).attr("height", scope.height)
 
@@ -125,6 +129,7 @@
         var plot = function(d) {
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
+            console.log(scope)
             ctx.fillRect(0, 0, scope.width, scope.height)
             //  console.log(hicCtrl.state())
             //  console.log(regionCtrl.regions())
@@ -133,7 +138,14 @@
             var regions = d || regionCtrl.regions() //TODO
 
             var edge = Math.min(scope.height - 100, scope.width - 40)
-
+            var scopebrush = S.scopebrush().width(edge).on("brush", function(d) {
+                bw.response(d)
+                bw4.response(d)
+            }).on("click", function(d) {
+                plot(d)
+            }).regions(regions)
+            axesG.selectAll("*").remove()
+            axesG.call(scopebrush)
             var bw = B.canvas()
                 .URI("/bw")
                 .id(bigwig[1].track)
@@ -198,6 +210,7 @@
             canvas.call(chart).call(colorbar)
             canvas.call(bw)
             canvas.call(bw4)
+            /*
             axesG.selectAll("*").remove()
             axesG.call(S.axes().regions(regions).width(edge).on("submit", function(d) {
                 console.log("submit", d)
@@ -206,7 +219,7 @@
                 console.log("resp", d)
                 setRegions(d)
             }))
-
+            */
         }
         var btns = left.append("div").classed("btn-group", true)
         var btns2 = left.append("div").classed("btn-group", true)
