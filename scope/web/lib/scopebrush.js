@@ -155,9 +155,13 @@ var snow = snow || {};
             dispatch.on("brush.local", function (d) {
                 G.forEach(function (d0, i) {
                     if (d.from != i) {
+                        if (Bs[i].deactivate) {
                         Bs[i].deactivate(d.d)
+                      }
                     } else {
+                      if (Bs[i].activate) {
                         Bs[i].activate(d.d)
+                      }
                     }
                     if (d.from == 2 && i != 2) {
                         Bs[0].process("brush", [d.d[0][0], d.d[1][0]])
