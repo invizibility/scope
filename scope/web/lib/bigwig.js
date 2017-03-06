@@ -102,7 +102,7 @@ snow.dataBigwig = snow.dataBigwig || {};
 
             }
         }
-
+        //TODO get a simple rotated version.
         var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color) {
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color
@@ -161,42 +161,7 @@ snow.dataBigwig = snow.dataBigwig || {};
             }
         }
         var xscales, xoffsets, widths;
-        /*
-        var renderResp = function () {
-            //add trackId TODO
-            //add chroms;
-            var resp = panel.selectAll(".bwResp" + "_" + pos).data(regions)
-            resp.enter().append("svg")
-                .classed("bwResp" + "_" + pos, true)
-                .merge(resp)
-                .style("position", "absolute")
-                .style("top", y)
-                .style("left", function (d, i) {
-                    return x + xoffsets[i] // TODO change.
-                })
-                .attr("width", function (d, i) {
-                    return widths[i]
-                })
-                .attr("height", barHeight)
-            resp.selectAll("rect").remove()
-        }
-        var renderRespVertical = function () { //TODO merge function to renderRes
-            var resp = panel.selectAll(".bwResp" + "_" + pos).data(regions)
-            resp.enter().append("svg")
-                .classed("bwResp" + "_" + pos, true)
-                .merge(resp)
-                .style("position", "absolute")
-                .style("left", x)
-                .style("top", function (d, i) {
-                    return y + xoffsets[i]
-                })
-                .attr("height", function (d, i) {
-                    return widths[i]
-                })
-                .attr("width", barHeight)
-            resp.selectAll("rect").remove()
-        }
-        */
+
         var overlap = function (a, b) {
             var chrA = a.chr.replace("chr","").replace("Chr","")
             var chrB = b.chr.replace("chr","").replace("Chr","")
