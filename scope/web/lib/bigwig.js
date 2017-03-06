@@ -198,7 +198,9 @@ snow.dataBigwig = snow.dataBigwig || {};
         }
         */
         var overlap = function (a, b) {
-            if (a.chr != b.chr) {
+            var chrA = a.chr.replace("chr","").replace("Chr","")
+            var chrB = b.chr.replace("chr","").replace("Chr","")
+            if (chrA != chrB) {
                 return false
             }
             if (b.end < a.start) {
@@ -209,83 +211,10 @@ snow.dataBigwig = snow.dataBigwig || {};
             }
             return true
         }
-        var res = function (selection) {
-            //TODO response might in the same region.
-            console.log("resp", selection.datum())
 
-            if (vertical) { //TODO.
-                selection.each(function (d) {
-                    var self = this;
-                    regions.forEach(function (r, i) {
-                        if (overlap(r, d)) {
-                            var x = xscales[i](d.start)
-                            var l = xscales[i](d.end) - x
-                            var rect = d3.select(self).selectAll("rect")
-                                .data([{
-                                    "x": x,
-                                    "l": l
-                                }])
-                            rect
-                                .enter()
-                                .append("rect")
-                                .merge(rect)
-                                .attr("y", function (d) {
-                                    return d.x
-                                })
-                                .attr("x", 0)
-                                .attr("width", barHeight)
-                                .attr("height", function (d) {
-                                    return d.l
-                                })
-                                .attr("fill", function (d) {
-                                    return "#777"
-                                })
-                                .attr("opacity", 0.2)
-                        }
-                    })
-
-                })
-
-            } else {
-                selection.each(function (d, j) {
-                    var self = this;
-                    regions.forEach(function (r, i) {
-                        console.log(i, xscales[i].range())
-                        if (overlap(r, d)) {
-                            console.log("overlap", i, j)
-                            var x = xscales[i](d.start) + xoffsets[i]
-                            var l = xscales[i](d.end) + xoffsets[i] - x
-                            console.log(d.start, x)
-                            var rect = d3.select(self).selectAll("rect")
-                                .data([{
-                                    "x": x,
-                                    "l": l
-                                }])
-                            rect
-                                .enter()
-                                .append("rect")
-                                .merge(rect)
-                                .attr("x", function (d) {
-                                    return d.x
-                                })
-                                .attr("y", 0)
-                                .attr("height", barHeight)
-                                .attr("width", function (d) {
-                                    return d.l
-                                })
-                                .attr("fill", function (d) {
-                                    return "#777"
-                                })
-                                .attr("opacity", 0.2)
-                        }
-                    })
-                })
-            }
-        }
         var response = function (e) {
-            //vertical later
-            //console.log(e)
             var rdata = []
+            console.log(e,regions)
             regions.forEach(function (r, i) {
                 e.forEach(function (d, j) {
                     if (overlap(r, d)) {
@@ -298,12 +227,10 @@ snow.dataBigwig = snow.dataBigwig || {};
                     }
                 })
             })
-            console.log("rdata", rdata)
-            console.log(respSvg)
-
+            console.log("rdata",rdata)
             var r1 = respSvg.selectAll("rect").data(rdata)
               r1.exit().remove()
-            r1.enter()
+              r1.enter()
                 .append("rect")
                 .merge(r1)
 
@@ -320,23 +247,6 @@ snow.dataBigwig = snow.dataBigwig || {};
                     return "#777"
                 })
                 .attr("opacity", 0.2)
-
-            console.log(r1)
-
-
-            /*
-            .style("position", "absolute")
-            .style("top", y)
-            .style("left", function (d, i) {
-                return x + xoffsets[i]// TODO change.
-            })
-            .attr("width", function (d, i) {
-                return widths[i]
-            })
-            .attr("height", barHeight)
-            */
-            //.call(res)
-
 
         }
         var _render_ = function (error, results) {
@@ -444,16 +354,27 @@ snow.dataBigwig = snow.dataBigwig || {};
         }
         chart = function (selection) { //selection is canvas;
             canvas = selection;
-            panel.selectAll(".resp").remove();
-            respSvg = panel.append("svg")
-            //vertical later TODO.
+            panel.selectAll(".resp"+"_"+pos).remove();
+            if (vertical) {
+              respSvg = panel.append("svg")
+                  .classed("resp_"+pos, true)
+                  .style("postion", "absolute")
+                  .style("top", y)
+                  .style("left", x)
+                  .attr("width", barHeight)
+                  .attr("height", width)
+                  .append("g")
+                  .attr("transform","translate("+barHeight+","+0+") rotate(90)")
+            } else {
+              respSvg = panel.append("svg")
+                  .classed("resp_"+pos, true)
+                  .style("postion", "absolute")
+                  .style("top", y)
+                  .style("left", x)
+                  .attr("width", width)
+                  .attr("height", barHeight)
+            }
 
-                .classed("resp", true)
-                .style("postion", "absolute")
-                .style("top", y)
-                .style("left", x)
-                .attr("width", width)
-                .attr("height", barHeight)
 
             render();
         }
