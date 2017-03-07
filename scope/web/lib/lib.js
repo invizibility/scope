@@ -12,9 +12,19 @@ var snow = snow || {};
         var lengths = [0, 0]; //two regions;
         var form = {
             "chrs": [], //chrs.
-            "ses": [] //start end
+            "ses": [], //start end,
+            "info" : [] //lendiv;
         }
         var dispatch = d3.dispatch("update")
+        var chr2idx = function(c) {
+          var idx = -1
+          chrs.forEach(function(d,i){
+            if (c==d.Name) {
+              idx = i
+            }
+          })
+          return idx;
+        }
         var chart = function (selection) {
             var data = []
             for (var i = 0; i < regionNum; i++) {
@@ -85,6 +95,7 @@ var snow = snow || {};
                     .attr("id", "region" + i + "se")
                     .style("width", "160px") //TODO remove ID and get state.
                 form["ses"].push(se)
+                form["info"].push(lendiv)
                     //TODO Add submit button and commit sen
             })
 
@@ -113,8 +124,13 @@ var snow = snow || {};
                 regions = _;
                 //TODO update regions?
                 for (var i = 0; i < regionNum; i++) {
-                    form["chrs"][i].node().value = regions[i].chr.replace("chr","")
+                     var name = regions[i].chr.replace("chr","")
+                    form["chrs"][i].node().value = name
+                    var idx = chr2idx(name)
                     form["ses"][i].node().value = regions[i].start + "-" + regions[i].end //use ng solve this?
+                    console.log(chrs,idx)
+                    form["info"][i].html("Name:" + chrs[idx].Name + " Length:" + chrs[idx].Length)
+                    lengths[i] = chrs[idx].Length
                 }
                 return chart;
             }
