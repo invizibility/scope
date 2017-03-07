@@ -317,7 +317,7 @@ snow.dataBigwig = snow.dataBigwig || {};
                 _render();
             })
         }
-        chart = function (selection) { //selection is canvas;
+        var chart = function (selection) { //selection is canvas;
             canvas = selection;
             panel.selectAll(".resp"+"_"+pos).remove();
             if (vertical) {

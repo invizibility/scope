@@ -1,0 +1,72 @@
+<html>
+
+<head>
+    <title>Genome Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/lib0/snow.js"></script>
+
+</head>
+
+<body>
+
+    <div id="top" class="menu">
+        <label for="width"> width </label> <span id="width"></span>
+        <label for="height"> height </label> <span id="height"></span>
+    </div>
+    <div id="left" class="container">
+    </div>
+    <div id="main" class="container">
+        <svg width=600 height=600 transform="translate(10,10)">
+        </svg>
+    </div>
+</body>
+<script>
+    (function(S) {
+        var dispatch = d3.dispatch("new")
+        var scale1 = d3.scaleLinear().domain([0, 200]).range([0, 200])
+        var xscale = d3.scaleLinear().domain([0, 200]).range([0, 200 / Math.SQRT2])
+        var scale2 = d3.scaleLinear().domain([100, 400]).range([0, 300])
+        var yscale = d3.scaleLinear().domain([400, 100]).range([0, 300 / Math.SQRT2])
+        var b = S.brush()
+            .x(250)
+            .y(0)
+            .theta(Math.PI / 4)
+            .on("brush", function(d) {
+                console.log("brush", d)
+                dispatch.call("new", this, d)
+            })
+            .on("click", function(d) {
+                console.log("click brush")
+            })
+            .xscale(xscale)
+            .yscale(yscale)
+
+        var svg = d3.select("svg")
+        var axis1 = S.axis().x(0).y(250).scale(scale1)
+        var axis2 = S.axis().x(200).y(250).scale(scale2)
+        svg.call(axis1)
+        svg.call(axis2)
+        svg.call(b)
+
+        dispatch.on("new", function(d) {
+            console.log(d)
+            axis2.response({
+                "start": d[1][1],
+                "end": d[0][1]
+            })
+            axis1.response({
+                "start": d[0][0],
+                "end": d[1][0]
+            })
+        })
+
+
+
+    }(snow))
+</script>
+
+</html>

@@ -1,0 +1,1151 @@
+(function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+   typeof define === 'function' && define.amd ? define(['exports'], factory) :
+   (factory((global.snow = global.snow || {})));
+}(this, (function (exports) { 'use strict';
+
+var triangle = {
+    draw: function (context, size) {
+        context.moveTo(0, 0);
+        context.lineTo(size, 0);
+        context.lineTo(size / 2, -size / 2);
+        context.closePath();
+    }
+};
+
+var brush = function() {
+   var border  =[[0,0],[500,500]];//[x,y]
+   var x0, y0, x1, y1, xf, yf,width,height;
+   var xi = 0, yi = 0;
+   var x=0,y=0; //x,y is the coord system start point?
+   var theta = Math.PI / 4;
+   var status = {};
+   var xscale = d3.scaleLinear().range([0,500]).domain([0,500]);
+   var yscale = d3.scaleLinear().range([0,500]).domain([0,500]);
+   var brush = function(selection) {
+     var G = selection.append("g").attr("transform", "translate("+x+","+y+") rotate(" + theta / Math.PI * 180 + ")");
+     if (border!=undefined) {
+       var bg = G.append("rect")
+             .attr("x",border[0][0])
+             .attr("y",border[0][1])
+             .attr("width",border[1][0]-border[0][0])
+             .attr("height",border[1][1]-border[0][1])
+             .attr("fill","aliceblue")
+             .attr("opacity",0.2);
+
+        bg.call(
+          d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+        );
+
+
+     }
+     var g = G.append("g");
+     var rect = g.append("rect").classed("brush",true).attr("opacity",0.2);
+     rect.call(d3.drag().on("drag", move).on("start", start)
+       .on("end", end));
+     rect.on("click",function(e){
+       console.log("click rect",e);
+       listeners.call("click",this,status);
+     });
+     listeners.on("activate",function(d){
+       rect.attr("opacity",0.2);
+     });
+     listeners.on("deactivate",function(d){
+       rect.attr("opacity",0.0);
+     });
+     listeners.on("brush.local", function(d){
+       status = d;
+     });
+     var fix = function(x,y){
+       var r = [x,y];
+       r[0] = Math.max(border[0][0],Math.min(border[1][0]-width,r[0]));
+       r[1] = Math.max(border[0][1],Math.min(border[1][1]-height,r[1]));
+       return r
+     };
+     function invert(d) {
+      var lx1 = xscale.invert(d[0][0]);
+      var lx2 = xscale.invert(d[1][0]);
+      var ly1 = yscale.invert(d[0][1]);
+      var ly2 = yscale.invert(d[1][1]);
+      return [[Math.min(lx1,lx2),Math.min(ly1,ly2)],[Math.max(lx1,lx2),Math.max(ly1,ly2)]]
+     }
+     function start(d) {
+       console.log("start move");
+       d3.select(this).attr("stroke", "blue").attr("stroke-width", 2);
+       xf = d3.event.x;
+       yf = d3.event.y;
+     }
+
+     function move(d) {
+       xi = d3.event.x + xi - xf;
+       yi = d3.event.y + yi - yf;
+
+       var r = fix(xi,yi);
+       //TODO fit the border for xi,yi???
+       g.attr("transform", "translate(" + r[0] + "," + r[1] + ")");
+
+       listeners.call("brush", this, invert([[r[0],r[1]],[r[0]+width,r[1]+height]]));
+     }
+
+     function end(d) {
+       d3.select(this).attr("stroke-width", 0);
+     }
+
+     function rotate(d, theta) {
+       return [Math.cos(theta) * d[0] + Math.sin(theta) * d[1], -Math.sin(theta) * d[0] + Math.cos(theta) * d[1]]
+     }
+
+
+     function dragstarted(d) {
+       if (d3.event.defaultPrevented) return;
+       x0 = d3.event.x;
+       y0 = d3.event.y;
+       listeners.call("start", this, [x0,y0]);
+     }
+
+     function dragged(d) {
+       if (d3.event.defaultPrevented) return;
+       x1 = d3.event.x;
+       y1 = d3.event.y;
+       var r0 = [x0, y0];
+       var r1 = [x1, y1];
+       if (border != undefined) {
+         r0[0] = Math.max(border[0][0],Math.min(r0[0],border[1][0]));
+         r0[1] = Math.max(border[0][1],Math.min(r0[1],border[1][1]));
+         r1[0] = Math.max(border[0][0],Math.min(r1[0],border[1][0]));
+         r1[1] = Math.max(border[0][1],Math.min(r1[1],border[1][1]));
+       }
+       var p = [Math.min(r0[0], r1[0]), Math.min(r1[1], r0[1])];
+       xi = p[0];
+       yi = p[1];
+       width = Math.abs(r0[0] - r1[0]);
+       height = Math.abs(r0[1] - r1[1]);
+       g.attr("transform", "translate(" + p[0] + "," + p[1] + ")");
+       rect.attr("height", height).attr("width", width);
+       listeners.call("brush", this, invert([[p[0],p[1]],[p[0]+width,p[1]+height]]));
+     }
+     function dragended(d) {
+       if (d3.event.defaultPrevented) return;
+       //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
+     }
+   };
+   var listeners = d3.dispatch(brush, "start","brush","end","click","activate","deactivate");
+   /* TO FIX
+   brush.extent = function() {
+     return [[xi,yi],[xi+width,yi+height]]
+   }
+   */
+   brush.activate = function(_) {
+     listeners.call("activate",this,_);
+   };
+   brush.deactivate = function(_) {
+     listeners.call("deactivate",this,_);
+   };
+   brush.theta = function(_) { return arguments.length ? (theta= _, brush) : theta; };
+   brush.border = function(_) { return arguments.length ? (border= _, xscale.range([border[0][0],border[1][0]]),yscale.range([border[1][0],border[1][1]]),brush) : border; };
+   brush.on = function() {
+    var value = listeners.on.apply(listeners, arguments);
+    return value === listeners ? brush : value;
+   };
+   brush.x = function(_) { return arguments.length ? (x= _, brush) : x; };
+   brush.y = function(_) { return arguments.length ? (y= _, brush) : y; };
+   brush.xdomain = function(_) {
+     return arguments.length? (xscale.domain(_),brush):xscale.domain();
+   };
+   brush.ydomain = function(_) {
+     return arguments.length? (yscale.domain(_),brush):yscale.domain();
+   };
+   brush.xscale = function(_) { return arguments.length ? (xscale= _, border[0][0]=xscale.range()[0],border[1][0]=xscale.range()[1],brush) : xscale; };
+   brush.yscale = function(_) { return arguments.length ? (yscale= _, border[0][1]=yscale.range()[0],border[1][1]=yscale.range()[1],brush) : yscale; };
+   return brush
+ };
+
+var axis = function () {
+        //var dispatcher = d3.dispatch(chart,"")
+        var scale = d3.scaleLinear().domain([0, 1000]).range([0, 500]);
+        var el, rect;
+        var x = 0,
+            y = 0;
+        var height = 50;
+        var chart = function (selection) {
+            var tickCount = 5;
+            var tickFormat = scale.tickFormat(tickCount, "s");
+            var axisX = d3.axisBottom(scale).tickFormat(tickFormat);
+            el = selection.append("g")
+                .attr("transform", "translate(" + x + "," + y + ")");
+            el.call(axisX);
+        };
+        var response = function (d) {
+            if (!arguments.length) {
+                el.selectAll("rect").remove();
+
+            } else {
+
+                if (d.constructor !== Array) {
+                    d = [d];
+                }
+                var rects = el.selectAll("rect").data(d);
+                rects.enter()
+                    .append("rect")
+                    .attr("height", height)
+                    .attr("fill", "black")
+                    .attr("opacity", 0.2)
+                    .merge(rects)
+                    .attr("x", function (e) {
+                        var x0 = scale(e.start) || scale(e[0]) || 0;
+                        var x1 = scale(e.end) || scale(e[1]) || 0;
+                        return Math.min(x0, x1)
+                    })
+                    .attr("width", function (e) {
+                        var x0 = scale(e.start) || scale(e[0]) || 0;
+                        var x1 = scale(e.end) || scale(e[1]) || 0;
+                        return Math.abs(x0 - x1)
+                    });
+                rects.exit().remove();
+            }
+        };
+        chart.response = function (e) {
+            response(e);
+        };
+        chart.scale = function (_) {
+            return arguments.length ? (scale = _, chart) : scale;
+        };
+        chart.x = function (_) {
+            return arguments.length ? (x = _, chart) : x;
+        };
+        chart.y = function (_) {
+            return arguments.length ? (y = _, chart) : y;
+        };
+        return chart
+    };
+
+var symbolFlag = {
+    draw: function (context, size) {
+        context.moveTo(0, 0);
+        context.lineTo(0, size);
+        context.lineTo(size, 0);
+        context.closePath();
+    }
+};
+
+/*Brush Snow Triangle /\ */
+    var brushTri = function () {
+        var edge = 500; // 直角边　edge length. scale.range() = scale.range() = [0,edge]
+        var x0, y0, x1, y1, xf, yf, width, height;
+        var xi = 0,
+            yi = 0;
+        var x = 0,
+            y = 0; //x,y is the coord system start point?
+        var theta = 0;
+        var status = {};
+        var scale = d3.scaleLinear().range([0, 500]).domain([0, 500]);
+        var yscale = d3.scaleLinear().range([0, 500]).domain([500, 0]); //domain reverse.
+
+        var G;
+        var flag = function (selection) {
+            selection.each(function (d) {
+                d3.select(this)
+                    .attr("transform", function (d) {
+                        return "translate(" + d.x + "," + d.y + ")"
+                    });
+                var path = d3.select(this).selectAll(".flag")
+                    .data([d]);
+                path.enter().append("path").classed("flag", true)
+                    .merge(path)
+                    .attr("d", d3.symbol().type(symbolFlag).size(d.size))
+                    .style("fill", "black")
+                    .style("opacity", 0.2);
+            });
+        };
+        var listeners = d3.dispatch(brush, "start", "brush", "end", "click", "activate", "deactivate","brush.local");
+        var brush = function (selection) {
+            G = selection.append("g").attr("transform", "translate(" + x + "," + y + ") rotate(" + theta / Math.PI * 180 + ")");
+            var tri = G.append("path")
+                .attr("d", d3.symbol().type(symbolFlag).size(edge))
+                .style("fill", "red")
+                .style("opacity", 0.1);
+
+            tri.call(
+                d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended)
+            );
+            var g = G.append("g");
+            var rect = g.append("rect").classed("brush", true).attr("opacity", 0.2);
+            rect.call(d3.drag().on("drag", move).on("start", start)
+                .on("end", end));
+            rect.on("click", function (e) {
+                listeners.call("click",this,status);
+            });
+            listeners.on("deactivate", function (d) {
+                rect.attr("opacity", 0.0);
+            });
+            listeners.on("activate", function (d) {
+                rect.attr("opacity", 0.2);
+            });
+            var fix = function (x, y) {
+                if (x + y + width + height > edge) {
+                    x = edge - width - height - y;
+                }
+                var newx = Math.max(0, Math.min(edge - width - height, x));
+                var newy = Math.max(0, Math.min(edge - height - width, y));
+                return [newx, newy]
+            };
+
+            function invert(d) {
+                var lx1 = scale.invert(d[0][0]);
+                var lx2 = scale.invert(d[1][0]);
+                var ly1 = yscale.invert(d[0][1]);
+                var ly2 = yscale.invert(d[1][1]);
+                return [
+                    [Math.min(lx1, lx2), Math.min(ly1, ly2)],
+                    [Math.max(lx1, lx2), Math.max(ly1, ly2)]
+                ]
+            }
+
+            function start(d) {
+                console.log("start move");
+                rect.attr("opacity", 0.2);
+                d3.select(this).attr("stroke", "blue").attr("stroke-width", 2);
+                xf = d3.event.x;
+                yf = d3.event.y;
+            }
+
+            function move(d) {
+                xi = d3.event.x + xi - xf;
+                yi = d3.event.y + yi - yf;
+                var r = fix(xi, yi);
+                g.attr("transform", "translate(" + r[0] + "," + r[1] + ")");
+                listeners.call("brush", this, invert([
+                    [r[0], r[1]],
+                    [r[0] + width, r[1] + height]
+                ]));
+            }
+
+            function end(d) {
+                d3.select(this).attr("stroke-width", 0);
+            }
+
+            function rotate(d, theta) {
+                return [Math.cos(theta) * d[0] + Math.sin(theta) * d[1], -Math.sin(theta) * d[0] + Math.cos(theta) * d[1]]
+            }
+
+
+            function dragstarted(d) {
+                if (d3.event.defaultPrevented) return;
+                x0 = d3.event.x;
+                y0 = d3.event.y;
+                listeners.call("start", this, [x0, y0]);
+            }
+
+            function dragged(d) {
+                if (d3.event.defaultPrevented) return;
+                x1 = Math.max(0, d3.event.x);
+                y1 = Math.max(0, d3.event.y);
+                if (x1 + y1 >= edge) {
+                    x1 = Math.max(0, edge - y1);
+                    y1 = Math.max(0, edge - x1);
+                }
+                if (x1 + y0 > edge) {
+                    x1 = Math.max(0, edge - y0);
+                }
+                if (y1 + x0 > edge) {
+                    y1 = Math.max(0, edge - x0);
+                }
+                width = Math.abs(x1 - x0);
+                height = Math.abs(y1 - y0);
+                g.attr("transform", "translate(" + Math.min(x0, x1) + "," + Math.min(y0, y1) + ")");
+                rect.attr("height", height).attr("width", width);
+                listeners.call("brush", this, invert([
+                    [Math.min(x0, x1), Math.min(y0, y1)],
+                    [Math.min(x0, x1) + width, Math.min(y0, y1) + height]
+                ]));
+            }
+
+            function dragended(d) {
+                if (d3.event.defaultPrevented) return;
+                //listeners.call("end", this, [[p[0],yi],[xi+width,yi+height]]);
+            }
+        };
+        var highlight=function(d) {
+            var data;
+            if (typeof d[0] == "number") {
+                data = [{
+                        "x": scale(d[0]),
+                        "y": yscale(d[1]),
+                        "size": scale(d[1]) - scale(d[0])
+                    },
+                    //{"x":scale(d[0][1]),"y":yscale(d[1][1]),"size":scale(d[1][1])-scale(d[0][1])}
+                ];
+            } else {
+                data = [{
+                        "x": scale(d[0][0]),
+                        "y": yscale(d[1][0]),
+                        "size": scale(d[1][0]) - scale(d[0][0])
+                    },
+                    {
+                        "x": scale(d[0][1]),
+                        "y": yscale(d[1][1]),
+                        "size": scale(d[1][1]) - scale(d[0][1])
+                    }
+                ];
+            }
+            var b = G.selectAll(".hLite").data(data);
+            //b.exit().remove()
+            b.enter().append("g").classed("hLite", true)
+            .merge(b)
+            .call(flag);
+        };
+
+        listeners.on("deactivate.local", function (d) {
+            G.selectAll(".hLite").remove();
+        });
+        listeners.on("brush.local", function(d){
+          status = d;
+          highlight(d);
+        });
+        brush.theta = function (_) {
+            return arguments.length ? (theta = _, brush) : theta;
+        };
+        brush.on = function () {
+            var value = listeners.on.apply(listeners, arguments);
+            return value === listeners ? brush : value;
+        };
+        brush.x = function (_) {
+            return arguments.length ? (x = _, brush) : x;
+        };
+        brush.y = function (_) {
+            return arguments.length ? (y = _, brush) : y;
+        };
+        brush.domain = function (_) {
+            return arguments.length ? (scale.domain(_), yscale.domain([_[1], _[0]]), brush) : scale.domain();
+        };
+        brush.activate = function (_) {
+            listeners.call("activate", this, _);
+        };
+        brush.deactivate = function (d) {
+            listeners.call("deactivate", this, d);
+            /** TO FIX THIS **/
+
+        };
+        brush.process = function(code,data) {
+            if (code == "brush") {
+                highlight(data);
+            }
+        };
+        brush.scale = function (_) {
+            return arguments.length ? (scale = _, edge = scale.range()[1] - scale.range()[0], yscale.domain([scale.domain()[1], scale.domain()[0]]).range(scale.range()), brush) : scale;
+        };
+
+        brush.edge = function (_) {
+            return arguments.length ? (edge = _, scale.range([0, edge]), yscale.range([0, edge]), brush) : edge;
+        };
+        return brush
+    };
+
+var scopebrush = function () {
+    function nearby(a,b) {
+        if (a.chr!=b.chr) {return false}
+        var l = Math.max(a.end,b.end) - Math.min(a.start,b.start);
+        if (((a.end-a.start)+(b.end-b.start))/ l > 0.95) {
+          return true
+        }
+        return false
+    }
+    function merge(a,b) {
+        console.log("a",a);
+        console.log("b",b);
+        return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
+    }
+    var dispatch = d3.dispatch("brush", "click");
+    var listeners = d3.dispatch("brush", "click");
+    var width = 700;
+    var G = [{}, {}, {}];
+    var Bs = [{}, {}, {}];
+    var regions = [{
+        "chr": "chr1",
+        "start": 0,
+        "end": 300000
+    }, {
+        "chr": "chr2",
+        "start": 0,
+        "end": 200000
+    }];
+    var scales = [d3.scaleLinear().domain([0, 100000]).range([0, 100]), d3.scaleLinear().domain([0, 300000]).range([0, 300])];
+
+    var chart = function (selection) {
+        var renderTri = function (selection, x, y, scale, id) {
+            var width = scale.range()[1] - scale.range()[0];
+            Bs[id] = brushTri()
+                .x(x)
+                .y(y)
+                .on("brush", function (d) {
+                    var e = {
+                        "from": id,
+                        "d": d
+                    };
+                    dispatch.call("brush", this, e);
+                })
+                .on("click", function (d) {
+                    var e = {
+                        "from": id,
+                        "d": d
+                    };
+                    dispatch.call("click", this, e);
+                })
+                .scale(scale)
+                .edge(width);
+            var l = scale.range()[1]-scale.range()[0];
+            var axisScale = d3.scaleLinear().domain(scale.domain()).range([scale.range()[0]/Math.SQRT2*2,scale.range()[1]/Math.SQRT2*2]);
+            var axis1 = axis().x(-l/Math.SQRT2).y(l/Math.SQRT2).scale(axisScale); //TODO
+            selection.call(axis1);
+
+            var g = selection.append("g").attr("transform", "translate(" + 0 + "," + 0 + ") rotate(45)"); //TODO
+            g.call(Bs[id]);
+        };
+        var render1 = function(svg) {
+          var d = regions[0];
+          G[0].attr("transform", "translate(" + (0 + width / 2) + "," + (width / 2 - width / 2) + ")");
+          scales[0] = d3.scaleLinear().domain([d.start, d.end]).range([0, width / Math.SQRT2]);
+          renderTri(G[0], 0, 0, scales[0], 0);
+        };
+        var render2 = function (svg) {
+            var offsets = [];
+            var gap = 10;
+            var l = 0;
+            var offsets = [];
+
+            var offset = 0;
+            var eWidth = width - (regions.length - 1) * gap;
+            regions.forEach(function (d) {
+                l += (+d.end - d.start);
+            });
+            regions.forEach(function (d, i) {
+                offsets.push(offset);
+                var rWidth = eWidth * (d.end - d.start) / l;
+                G[i].attr("transform", "translate(" + (offset + rWidth / 2) + "," + (width / 2 - rWidth / 2) + ")");
+                scales[i] = d3.scaleLinear().domain([d.start, d.end]).range([0, rWidth / Math.SQRT2]);
+                renderTri(G[i], 0, 0, scales[i], i);
+                offset += rWidth + gap;
+
+            });
+
+            var yscale = d3.scaleLinear().domain([scales[1].domain()[1], scales[1].domain()[0]]).range(scales[1].range());
+            Bs[2] = brush()
+                .x(width / 2) //TODO THIS FOR MULTI
+                .y(0)
+                .theta(Math.PI / 4)
+                .on("brush", function (d) {
+                    var e = {
+                        "from": 2,
+                        "d": d
+                    };
+                    dispatch.call("brush", this, e);
+                })
+                .on("click", function (d) {
+                    var e = {
+                        "from": 2,
+                        "d": d
+                    };
+                    dispatch.call("click", this, e);
+                })
+                .xscale(scales[0])
+                .yscale(yscale);
+            G[2].call(Bs[2]);
+        };
+        var render = function() {
+          G[0].selectAll("*").remove();
+          G[1].selectAll("*").remove();
+          G[2].selectAll("*").remove();
+          console.log(regions);
+          if (regions.length == 1) {
+              console.log("region1");
+              render1(svg);
+          } else if (regions.length == 2) {
+              render2(svg);
+          }
+        };
+        var translate = function(d) {
+          var chr0,chr1;
+          if (d.from==0 || d.from==1) {
+            chr0 = regions[d.from].chr;
+            chr1 = regions[d.from].chr;
+          } else {
+            console.log(d,regions);
+            chr0 = regions[0].chr;
+            chr1 = regions[1].chr;
+          }
+          var brushRegions = [{
+              "chr": chr0,
+              "start": Math.round(d.d[0][0]),
+              "end": Math.round(d.d[1][0])
+
+          }, {
+              "chr": chr1,
+              "start": Math.round(d.d[0][1]),
+              "end": Math.round(d.d[1][1])
+          }];
+          if (nearby(brushRegions[0],brushRegions[1])) {
+            brushRegions=[merge(brushRegions[0],brushRegions[1])];
+          }
+          return brushRegions;
+        };
+        dispatch.on("brush.local", function (d) {
+            G.forEach(function (d0, i) {
+                if (d.from != i) {
+                    if (Bs[i].deactivate) {
+                    Bs[i].deactivate(d.d);
+                  }
+                } else {
+                  if (Bs[i].activate) {
+                    Bs[i].activate(d.d);
+                  }
+                }
+                if (d.from == 2 && i != 2) {
+                    Bs[0].process("brush", [d.d[0][0], d.d[1][0]]);
+                    Bs[1].process("brush", [d.d[0][1], d.d[1][1]]);
+                }
+            });
+            listeners.call("brush",this,translate(d));
+        });
+
+        dispatch.on("click.local", function (d) {
+            regions = translate(d);
+            console.log(regions);
+            render();
+            listeners.call("click",this,regions);
+            //render()
+        });
+        var svg = selection.append("g");
+        G[0] = svg.append("g");
+        G[1] = svg.append("g");
+        G[2] = svg.append("g").attr("transform", "translate(" + 0 + "," + 0 + ")");
+        render();
+    };
+    chart.on = function () {
+        var value = listeners.on.apply(listeners, arguments);
+        return value === listeners ? chart : value;
+    };
+    chart.regions = function(_) { return arguments.length ? (regions= _, chart) : regions; };
+    chart.width = function(_) { return arguments.length ? (width= _, chart) : width; };
+    return chart
+};
+
+var canvasToolYAxis = function (context, scale, x, y, height, label) {
+    context.save();
+    context.translate(x,y);
+    var tickCount = 5,
+        tickSize = 6,
+        tickPadding = 3,
+        ticks = scale.ticks(tickCount),
+        tickFormat = scale.tickFormat(tickCount, "s");
+
+    context.beginPath();
+    ticks.forEach(function (d) {
+        context.moveTo(0, scale(d));
+        context.lineTo(6, scale(d));
+    });
+    context.strokeStyle = "black";
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(tickSize, 0);
+    context.lineTo(0.5, 0);
+    context.lineTo(0.5, height);
+    context.lineTo(tickSize, height);
+    context.strokeStyle = "black";
+    context.stroke();
+
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    context.fillStyle = "black";
+    ticks.forEach(function (d) {
+        context.fillText(tickFormat(d), tickSize + tickPadding, scale(d));
+    });
+
+    context.save();
+    context.rotate(-Math.PI / 2);
+    context.textAlign = "right";
+    context.textBaseline = "top";
+    context.font = "bold 10px sans-serif";
+    context.fillText(label, -10, -10);
+    context.restore();
+    context.restore();
+
+};
+
+var canvasToolXAxis = function(ctx,scale,x,y,height,label) {
+  ctx.save();
+  ctx.translate(x+height,y);
+  ctx.rotate(Math.PI/2);
+  S.canvasToolYAxis(ctx,scale,0,0,height,label);
+  ctx.restore();
+};
+
+var bigwig = {
+  　Get : function (URI, callback) {
+        var config = {};
+        var ready = function (error, results) {
+            config.URI = URI;
+            config.trackIds = results[0];
+            callback(config);
+        };
+        d3_queue.queue(2)
+            .defer(d3.json, URI + "/list")
+            .awaitAll(ready);
+    }
+    ,
+    canvas : function () {
+        var id = "default";
+        var pos = 0; //for response rect
+        var height;
+        var width;
+        var regions;
+        var x;
+        var y;
+        var URI = "";
+        var barHeight = 50;
+        var vertical = false;
+        var canvas;
+        var panel; //canvas parent for add svg;
+        var binsize;
+        var scale;
+        var respSvg;
+        var gap = 0; //TODO for gap axis
+        var mode = 0; // "max" or "mean" { 0: mix (max,min,mean) , 1: mean, 2: max/min }
+        var callback = function (d) {
+            console.log("callback", d);
+        };
+
+
+        var totalLength = function (regions) {
+            var l = 0;
+            regions.forEach(function (r, i) {
+                l += (+r.end) - (+r.start);
+            });
+            return l
+        };
+
+        var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color) {
+            //  var ctx = canvas.node().getContext("2d");
+            //console.log(mat, mat.length)
+
+            for (var i = 0; i < region.length; i++) {
+                ctx.fillStyle = color;
+                var r = xscale.range();
+                if (isNaN(region[i].From) || isNaN(region[i].To)) {
+                    continue; //add handle large width bug
+                }
+                var x1 = xscale(region[i].From);
+                var x2 = xscale(region[i].To);
+                if (x1 < r[0]) {
+                    x1 = r[0];
+                }
+                if (x2 > r[1]) {
+                    x2 = r[1];
+                }
+                var width = x2 - x1;
+                if (width > 100) {
+                    console.log("debug region", region[i]);
+                }
+                var ymax = region[i].Max || region[i].Value;
+                var ymin = region[i].Min || region[i].Value;
+                var yv = region[i].Sum / region[i].Valid || region[i].Value;
+                var y1 = yscale(yv);
+                var ym = yv < 0 ? yscale(ymin) : yscale(ymax);
+                var y0 = yscale(0);
+                //var y1 = barHeight - height
+                if (mode == 0 || mode == 1) {
+                    if (y0 < 0) {
+                        ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
+                        //ctx.fillRect(x + xoffset + x1, y + yoffset , width, y1);
+                    } else {
+                        if (y1 > y0) {
+                            ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
+                        } else {
+                            ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y0), width, y0 - y1);
+                        }
+                    }
+                }
+                if (mode == 0) {
+                    ctx.fillStyle = "#111";
+                    ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, 1);
+                }
+                if (mode == 2) {
+                    if (y0 < 0) {
+                        ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, ym - 0);
+                    } else {
+                        if (y1 > y0) {
+                            ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - ym), width, ym - y0);
+                        } else {
+                            ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y0), width, y0 - ym);
+                        }
+                    }
+                }
+
+            }
+        };
+        //TODO get a simple rotated version.
+        var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color) {
+            for (var i = 0; i < region.length; i++) {
+                ctx.fillStyle = color;
+                var r = xscale.range();
+                if (isNaN(region[i].From) || isNaN(region[i].To)) {
+                    continue; //add handle large width bug
+                }
+                var x1 = xscale(region[i].From);
+                var x2 = xscale(region[i].To);
+                if (x1 < r[0]) {
+                    x1 = r[0];
+                }
+                if (x2 > r[1]) {
+                    x2 = r[1];
+                }
+                var width = x2 - x1;
+                if (width > 100) {
+                    console.log("debug region", region[i]);
+                } //debug
+                var ymax = region[i].Max || region[i].Value;
+                var ymin = region[i].Min || region[i].Value;
+                var yv = region[i].Sum / region[i].Valid || region[i].Value;
+                var y1 = yscale(yv);
+                var ym = yv < 0 ? yscale(ymin) : yscale(ymax);
+
+                var y0 = yscale(0);
+                //var y1 = barHeight - height
+                if (mode == 1 || mode == 2) {
+                    if (y0 < 0) {
+                        ctx.fillRect(x + xoffset, y + yoffset + x1, y1 - 0, width);
+                    } else {
+                        if (y1 > y0) {
+                            ctx.fillRect(x + xoffset + y0, y + yoffset + x1, y1 - y0, width);
+                        } else {
+                            ctx.fillRect(x + xoffset + y1, y + yoffset + x1, y0 - y1, width);
+                        }
+                    }
+                }
+                if (mode == 0) {
+                    ctx.fillStyle = "#111";
+                    ctx.fillRect(x + xoffset + ym, y + yoffset + x1, 1, width);
+                }
+                if (mode == 2) {
+                    if (y0 < 0) {
+                        ctx.fillRect(x + xoffset, y + yoffset + x1, ym - 0, width);
+                    } else {
+                        if (y1 > y0) {
+                            ctx.fillRect(x + xoffset + y0, y + yoffset + x1, ym - y0, width);
+                        } else {
+                            ctx.fillRect(x + xoffset + ym, y + yoffset + x1, y0 - ym, width); //TODO TEST
+                        }
+                    }
+                }
+
+
+            }
+        };
+        var xscales, xoffsets, widths;
+
+        var overlap = function (a, b) {
+            var chrA = a.chr.replace("chr","").replace("Chr","");
+            var chrB = b.chr.replace("chr","").replace("Chr","");
+            if (chrA != chrB) {
+                return false
+            }
+            if (b.end < a.start) {
+                return false
+            }
+            if (a.end < b.start) {
+                return false
+            }
+            return true
+        };
+
+        var response = function (e) {
+            var rdata = [];
+            console.log(e,regions);
+            regions.forEach(function (r, i) {
+                e.forEach(function (d, j) {
+                    if (overlap(r, d)) {
+                        var x = xscales[i](d.start) + xoffsets[i];
+                        var l = xscales[i](d.end) + xoffsets[i] - x;
+                        rdata.push({
+                            "x": x,
+                            "l": l
+                        });
+                    }
+                });
+            });
+            console.log("rdata",rdata);
+            var r1 = respSvg.selectAll("rect").data(rdata);
+              r1.exit().remove();
+              r1.enter()
+                .append("rect")
+                .merge(r1);
+
+              r1.attr("x", function (d) {
+                    console.log("rx", d.x);
+                    return d.x
+                })
+                .attr("y", 0)
+                .attr("height", barHeight)
+                .attr("width", function (d) {
+                    return d.l
+                })
+                .attr("fill", function (d) {
+                    return "#777"
+                })
+                .attr("opacity", 0.2);
+
+        };
+        var _render_ = function (error, results) {
+            var min = Infinity;
+            var max = -Infinity;
+            xscales = [];
+            xoffsets = [];
+            widths = [];
+            var yoffset = 0;
+            var offset = 0;
+            var totalLen = totalLength(regions);
+            var effectWidth = width - (regions.length - 1) * gap;
+            regions.forEach(function (d) {
+                var w = (+(d.end) - (+d.start)) * effectWidth / totalLen;
+                var scale = d3.scaleLinear().domain([+(d.start), +(d.end)]).range([0, w]);
+                xscales.push(scale);
+                xoffsets.push(offset);
+                offset += w + gap;
+                widths.push(w);
+            });
+
+            results.forEach(function (arr) {
+                if (mode == 0 || mode == 2) {
+                    arr.forEach(function (d) {
+                        var v = d.Max || d.Value;
+                        var vmin = d.Min || d.Value;
+                        if (v > max) {
+                            max = v;
+                        }
+                        if (vmin < min) {
+                            min = vmin;
+                        }
+                    });
+                } else {
+                    arr.forEach(function (d) {
+                        var v = d.Sum / d.Valid || d.Value;
+                        if (v > max) {
+                            max = v;
+                        }
+                        if (v < min) {
+                            min = v;
+                        }
+                    });
+                }
+
+            });
+            var yscale = d3.scaleLinear().domain([Math.min(0, min), Math.max(max, 0)]).range([0, barHeight]); //TODO?
+            scale = yscale;
+            var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0]);
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
+            var background = "#EFE";
+            if (vertical) {
+                //renderRespVertical(); //TODO
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = background;
+                ctx.fillRect(x, y, barHeight, width);
+                results.forEach(function (region, i) {
+                    renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i));
+                });
+                canvasToolXAxis(ctx, axisScale, x, y + width, barHeight, id);
+            } else {
+                //renderResp(); //TODO
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = background;
+                ctx.fillRect(x, y, width, barHeight);
+                results.forEach(function (region, i) {
+                    renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i));
+                });
+
+                canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id);
+            }
+            callback({
+                "min": min,
+                "max": max
+            });
+        };
+        var rawdata = false;
+        var _render = function () {
+            var q = d3_queue.queue(2);
+            if (binsize != -1) {
+                rawdata = false;
+                if (binsize == undefined) {
+                    binsize = 1;
+                }
+                regions.forEach(function (d) {
+                    q.defer(d3.json, URI + "/getbin/" + id + "/" + d.chr + ":" + d.start + "-" + d.end + "/" + binsize);
+                });
+            } else {
+                rawdata = true;
+                regions.forEach(function (d) {
+                    q.defer(d3.json, URI + "/get/" + id + "/" + d.chr + ":" + d.start + "-" + d.end);
+                });
+            }
+            q.awaitAll(_render_);
+        };
+        var render = function () {
+            var length = totalLength(regions);
+            var url = URI + "/binsize/" + id + "/" + length + "/" + width;
+            console.log("URL", url);
+            d3.json(url, function (d) {
+                binsize = d;
+                console.log("BINSIZE", binsize);
+                _render();
+            });
+        };
+        var chart = function (selection) { //selection is canvas;
+            canvas = selection;
+            panel.selectAll(".resp"+"_"+pos).remove();
+            if (vertical) {
+              respSvg = panel.append("svg")
+                  .classed("resp_"+pos, true)
+                  .style("postion", "absolute")
+                  .style("top", y)
+                  .style("left", x)
+                  .attr("width", barHeight)
+                  .attr("height", width)
+                  .append("g")
+                  .attr("transform","translate("+barHeight+","+0+") rotate(90)");
+            } else {
+              respSvg = panel.append("svg")
+                  .classed("resp_"+pos, true)
+                  .style("postion", "absolute")
+                  .style("top", y)
+                  .style("left", x)
+                  .attr("width", width)
+                  .attr("height", barHeight);
+            }
+
+
+            render();
+        };
+        var modes = ["mix", "mean", "max"];
+        chart.mode = function (_) {
+            if (!arguments.length) {
+                return modes[mode]
+            } else {
+                mode = 0;
+                if (_ == "max" || _ == 2) {
+                    mode = 2;
+                }
+                if (_ == "mean" || _ == 1) {
+                    mode = 1;
+                }
+                return chart
+            }
+        };
+        chart.callback = function (_) {
+            return arguments.length ? (callback = _, chart) : callback;
+        };
+        chart.panel = function (_) {
+            return arguments.length ? (panel = _, chart) : panel;
+        };
+        chart.x = function (_) {
+            return arguments.length ? (x = _, chart) : x;
+        };
+        chart.y = function (_) {
+            return arguments.length ? (y = _, chart) : y;
+        };
+        chart.regions = function (_) {
+            return arguments.length ? (regions = _, chart) : regions;
+        };
+        chart.width = function (_) {
+            return arguments.length ? (width = _, chart) : width;
+        };
+        chart.height = function (_) {
+            return arguments.length ? (height = _, chart) : height;
+        };
+        chart.URI = function (_) {
+            return arguments.length ? (URI = _, chart) : URI;
+        };
+        chart.barHeight = function (_) {
+            return arguments.length ? (barHeight = _, chart) : barHeight;
+        };
+        chart.response = function (e) {
+            response(e);
+        };
+        chart.id = function (_) {
+            return arguments.length ? (id = _, chart) : id;
+        };
+        chart.vertical = function (_) {
+            return arguments.length ? (vertical = _, chart) : vertical;
+        };
+        chart.pos = function (_) {
+            return arguments.length ? (pos = _, chart) : pos;
+        };
+        chart.scale = function (_) {
+            return arguments.length ? (scale = _, chart) : scale;
+        };
+        chart.gap = function (_) {
+            return arguments.length ? (gap = _, chart) : gap;
+        };
+        return chart
+    },
+
+    form : function () {
+        var data;
+        var number = 1;
+        var trackInputs = [];
+        var chart = function (selection) {
+            selection.selectAll("*").remove();
+            form = selection.append("div").classed("form-group", true);
+            form.append("label").text("Track");
+            for (var i = 0; i < number; i++) {
+                trackInputs.push(form.append("select").classed("form-control", true));
+                trackInputs[i].selectAll("option")
+                    .data(data.trackIds)
+                    .enter()
+                    .append("option")
+                    .attr("value", function (d, i) {
+                        return d
+                    })
+                    .text(function (d, i) {
+                        return d
+                    });
+            }
+        };
+        chart.state = function () {
+            if (number == 1) {
+                return {
+                    "track": trackInputs[0].node().value
+                }
+            } else {
+                var v = [];
+                trackInputs.forEach(function (d) {
+                    v.push({
+                        "track": d.node().value
+                    });
+                });
+                return v;
+            }
+        };
+        chart.number = function (_) {
+            return arguments.length ? (number = _, chart) : number;
+        };
+        chart.data = function (_) {
+            return arguments.length ? (data = _, chart) : data;
+        };
+        return chart
+    }
+};
+
+exports.symbolTriangle = triangle;
+exports.brush = brush;
+exports.axis = axis;
+exports.scopebrush = scopebrush;
+exports.dataBigwig = bigwig;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));

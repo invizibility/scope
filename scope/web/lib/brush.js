@@ -97,8 +97,8 @@ S.brush = function() {
        if (d3.event.defaultPrevented) return;
        x1 = d3.event.x
        y1 = d3.event.y
-       r0 = [x0, y0]
-       r1 = [x1, y1]
+       var r0 = [x0, y0]
+       var r1 = [x1, y1]
        if (border != undefined) {
          r0[0] = Math.max(border[0][0],Math.min(r0[0],border[1][0]))
          r0[1] = Math.max(border[0][1],Math.min(r0[1],border[1][1]))

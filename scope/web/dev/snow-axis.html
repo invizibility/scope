@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <title>Genome Browser</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/lib0/snow.js"></script>
+</head>
+
+<body>
+
+    <div id="top" class="menu">
+        <label for="width"> width </label> <span id="width"></span>
+        <label for="height"> height </label> <span id="height"></span>
+    </div>
+    <div id="left" class="container">
+    </div>
+    <div id="main" class="container">
+        <canvas id="canvas">
+        </canvas>
+        <svg width=500 height=500>
+        </svg>
+    </div>
+</body>
+<script>
+    (function(d3, S) {
+        var scale = d3.scaleLinear().domain([0, 150]).range([0, 250])
+        var axisX = d3.axisBottom(scale)
+        var svg = d3.select("svg")
+        var X = svg.append("g").attr("transform", "translate(100,20)").call(axisX)
+        var resp = svg.append("g")
+        var rect = resp.append("rect").attr("x", 0).attr("y", 0).attr("height", 10).attr("width", 20).attr("fill", "black")
+            .attr("opacity", 0.2)
+
+        function zoomed() {
+            console.log("zoomed")
+            X.call(axisX.scale(d3.event.transform.rescaleX(scale)))
+        }
+        var zoom = d3.zoom()
+            //.scaleExtent([0,250])
+            //.translateExtent([[0, 150], [0,250]])
+            .on("zoom", zoomed);
+        X.call(zoom)
+
+        var axis = S.axis()
+        svg.call(axis)
+    }(d3, snow))
+</script>
+
+</html>
