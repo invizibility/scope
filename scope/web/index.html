@@ -24,14 +24,17 @@
     </div>
   -->
 </body>
-<script type="text/javascript" src="/lib0/lib.js"></script>
+<!--
 <script type="text/javascript" src="/lib0/axis.js"></script>
 <script type="text/javascript" src="/lib0/axes.js"></script>
 <script type="text/javascript" src="/lib0/brush.js"></script>
 <script type="text/javascript" src="/lib0/brushtri.js"></script>
 <script type="text/javascript" src="/lib0/scopebrush.js"></script>
-<script type="text/javascript" src="/lib0/hic2.js"></script>
+-->
+<script type="text/javascript" src="/lib0/snow.js"></script>
+<!--
 <script type="text/javascript" src="/lib0/bigwig.js"></script>
+-->
 <script>
     (function(d3, $, S) {
         var trimChr = function(regions) {
@@ -46,7 +49,7 @@
             return a
         }
 
-        var H = S.dataHic;
+        var H = S.dataHic2;
         var B = S.dataBigwig;
         var body = d3.select("body")
         var scope = {} //TODO
@@ -207,7 +210,7 @@
                 //.panel(panel)
                 .emit(setRegions)
                 .callback(showPara)
-            var colorbar = S.colorBar().color1(hic.color1).color2(hic.color2).x(scope.width - 100).y(scope.height - 50)
+            var colorbar = S.colorbar().color1(hic.color1).color2(hic.color2).x(scope.width - 100).y(scope.height - 50)
 
             canvas.call(chart).call(colorbar)
             canvas.call(bw)

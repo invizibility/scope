@@ -414,7 +414,7 @@ export default {
         var trackInputs = []
         var chart = function (selection) {
             selection.selectAll("*").remove();
-            form = selection.append("div").classed("form-group", true)
+            var form = selection.append("div").classed("form-group", true)
             form.append("label").text("Track")
             for (var i = 0; i < number; i++) {
                 trackInputs.push(form.append("select").classed("form-control", true))
