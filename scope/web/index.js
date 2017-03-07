@@ -2,6 +2,7 @@ export{default as symbolTriangle} from "./src/symbol/triangle"
 export{default as brush} from "./src/brush"
 export{default as axis} from "./src/axis"
 export{default as scopebrush} from "./src/scopebrush"
+export{default as brushTri} from "./src/brushtri"
 
 export{default as regionForm} from "./src/form/region"
 export{default as paraTable} from "./src/table/parameter"
