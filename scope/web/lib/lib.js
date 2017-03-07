@@ -14,6 +14,7 @@ var snow = snow || {};
             "chrs": [], //chrs.
             "ses": [] //start end
         }
+        var dispatch = d3.dispatch("update")
         var chart = function (selection) {
             var data = []
             for (var i = 0; i < regionNum; i++) {
@@ -75,6 +76,7 @@ var snow = snow || {};
                     length = chrs[this.selectedIndex].Length;
                     form["ses"][i].node().value = default_range(length)
                     lengths[i] = length;
+                    //dispatch.call("update")
                 })
 
                 var lendiv = d3.select(this).append("div")
@@ -111,6 +113,7 @@ var snow = snow || {};
                 regions = _;
                 //TODO update regions?
                 for (var i = 0; i < regionNum; i++) {
+                    form["chrs"][i].node().value = regions[i].chr.replace("chr","")
                     form["ses"][i].node().value = regions[i].start + "-" + regions[i].end //use ng solve this?
                 }
                 return chart;
