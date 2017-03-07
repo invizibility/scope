@@ -1,6 +1,5 @@
-var snow = snow || {};
-(function(d3,S){
-S.brush = function() {
+
+export default function() {
    var border  =[[0,0],[500,500]]//[x,y]
    var x0, y0, x1, y1, xf, yf,width,height
    var xi = 0, yi = 0
@@ -149,5 +148,3 @@ S.brush = function() {
    brush.yscale = function(_) { return arguments.length ? (yscale= _, border[0][1]=yscale.range()[0],border[1][1]=yscale.range()[1],brush) : yscale; }
    return brush
  }
-
-}(d3,snow))

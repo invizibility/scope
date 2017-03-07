@@ -1,7 +1,8 @@
-var snow = snow || {};
-snow.dataBigwig = snow.dataBigwig || {};
-(function (S, B) {
-    B.Get = function (URI, callback) {
+import canvasToolYAxis from "../canvastool/yaxis"
+import canvasToolXAxis from "../canvastool/xaxis"
+
+export default {
+  　Get : function (URI, callback) {
         var config = {}
         var ready = function (error, results) {
             config.URI = URI
@@ -12,7 +13,8 @@ snow.dataBigwig = snow.dataBigwig || {};
             .defer(d3.json, URI + "/list")
             .awaitAll(ready);
     }
-    B.canvas = function () {
+    ,
+    canvas : function () {
         var id = "default"
         var pos = 0 //for response rect
         var height
@@ -271,7 +273,7 @@ snow.dataBigwig = snow.dataBigwig || {};
                 results.forEach(function (region, i) {
                     renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
                 })
-                S.canvasToolXAxis(ctx, axisScale, x, y + width, barHeight, id)
+                canvasToolXAxis(ctx, axisScale, x, y + width, barHeight, id)
             } else {
                 //renderResp(); //TODO
                 var ctx = canvas.node().getContext("2d");
@@ -281,7 +283,7 @@ snow.dataBigwig = snow.dataBigwig || {};
                     renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
                 })
 
-                S.canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id)
+                canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id)
             }
             callback({
                 "min": min,
@@ -404,8 +406,9 @@ snow.dataBigwig = snow.dataBigwig || {};
             return arguments.length ? (gap = _, chart) : gap;
         }
         return chart
-    }
-    B.form = function () {
+    },
+
+    form : function () {
         var data
         var number = 1
         var trackInputs = []
@@ -450,4 +453,4 @@ snow.dataBigwig = snow.dataBigwig || {};
         }
         return chart
     }
-}(snow, snow.dataBigwig));
+}

@@ -1,0 +1,40 @@
+{
+  "name": "snow-scope",
+  "version": "0.0.1",
+  "description": "scope library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rm -rf build && mkdir build && rollup  -f umd -n snow -o build/snow.js -- index.js && cp build/snow.js lib/",
+    "start": "http-server"
+  },
+  "keywords": [
+    "d3",
+    "bio",
+    "hic",
+    "genome"
+  ],
+  "author": "zhuxp",
+  "license": "GPL",
+  "dependencies": {
+    "d3-array": "1.0.1",
+    "d3-axis": "1.0.3",
+    "d3-brush": "1.0.3",
+    "d3-collection": "1.0.1",
+    "d3-color": "1.0.1",
+    "d3-dispatch": "1.0.1",
+    "d3-drag": "1.0.1",
+    "d3-dsv": "1.0.3",
+    "d3-format": "1.0.2",
+    "d3-queue": "3.0.3",
+    "d3-scale": "1.0.3",
+    "d3-selection": "1.0.2",
+    "d3-transition": "1.0.3"
+  },
+  "devDependencies": {
+    "rollup": "0.36",
+    "tape":"4",
+    "uglify-js": "2",
+    "http-server":"^0.9.0"
+  }
+}
