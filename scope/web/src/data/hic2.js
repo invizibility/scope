@@ -21,6 +21,10 @@ var totalLength = function (regions) {
     })
     return l
 }
+var regionString = function (o) {
+    return o.chr + ":" + o.start + "-" + o.end
+}
+
 
 export default {
     Get: function (URI, callback) {
@@ -132,16 +136,7 @@ export default {
             console.log("emit")
         }
 
-        var regionString = function (o) {
-            return o.chr + ":" + o.start + "-" + o.end
-        }
-        var totalLength = function (regions) {
-            var l = 0;
-            regions.forEach(function (r, i) {
-                l += (+r.end) - (+r.start)
-            })
-            return l
-        }
+
         var generateQueryUrl = function (d) {
             var a = regions[d[0]]
             var b = regions[d[1]]
@@ -269,6 +264,7 @@ export default {
         var color4 //for inter chromosome
         var background = "#FFF"
         var lineColor = "#FF0"
+        var domain = undefined;
         var render = function () {
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
@@ -276,7 +272,14 @@ export default {
             ctx.translate(xoffset, yoffset)
             //ctx.rotate(rotate)
             //ctx.fillRect(0, 0, width, height)
-            var color = d3.scaleLog().domain([min + 1.0, max + 1.0]).range([color1, color2]) //TODO not log scale
+
+            var color
+            if (domain) {
+                color = d3.scaleLog().domain([domain[0] + 1.0, domain[1] + 1.0]).range([color1, color2]) //TODO set scale.
+            } else {
+                color = d3.scaleLog().domain([min + 1.0, max + 1.0]).range([color1, color2]) //TODO set scale.
+            }
+
             var colorScale = function (d) {
                 if (isNaN(d)) {
                     return "#FFF" //color(0)
@@ -350,6 +353,8 @@ export default {
             //TODO Call Render Function;
             render();
         }
+
+
         var regionsToResIdx = function () {
             var w = Math.min(width, height)
             var eW = w - gap * (regions.length - 1)
@@ -403,6 +408,7 @@ export default {
             //render done.
             loadData();
         }
+        chart.render = render; //TODO change name later.
         /*
         chart.loadData = function(callback) {
           loadData()
@@ -415,6 +421,8 @@ export default {
         chart.svg = function (_) {
             return arguments.length ? (svg = _, chart) : svg;
         }
+        chart.domain = function(_) { return arguments.length ? (domain= _, chart) : domain; }
+
         chart.height = function (_) {
             return arguments.length ? (height = _, chart) : height;
         }
