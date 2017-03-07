@@ -120,7 +120,7 @@ export default function (d) { //regionForm
             return regions
         } else {
             regions = _;
-            //TODO update regions?
+            //TODO update regions? change region number?
             for (var i = 0; i < regionNum; i++) {
                  var name = regions[i].chr.replace("chr","")
                 form["chrs"][i].node().value = name

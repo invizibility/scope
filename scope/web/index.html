@@ -51,6 +51,7 @@
 
         var H = S.dataHic2;
         var B = S.dataBigwig;
+        var dispatch = d3.dispatch("changeDomain")
         var body = d3.select("body")
         var scope = {} //TODO
 
@@ -64,7 +65,10 @@
             .classed("container", true)
         var left = body.append("div").attr("id", "left")
             .classed("container", true)
-
+        var btns = left.append("div").classed("btn-group", true)
+        var btns2 = left.append("div").classed("btn-group", true)
+        var btns3 = left.append("div").classed("btn-group", true)
+        var paraPanel = left.append("div").classed("panel", true)
         var navr = nav.append("div").style("text-align", "right")
         navr.append("label").attr("for", "width").text("width")
         var width = navr.append("span").attr("id", "width")
@@ -187,6 +191,8 @@
             }
             var showPara = function(d) {
                 var paratable = S.paraTable().data(d)
+                console.log("paras", d)
+                threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
                 paraMonitor.call(paratable)
             }
 
@@ -210,11 +216,19 @@
                 //.panel(panel)
                 .emit(setRegions)
                 .callback(showPara)
+
             var colorbar = S.colorbar().color1(hic.color1).color2(hic.color2).x(scope.width - 100).y(scope.height - 50)
 
             canvas.call(chart).call(colorbar)
             canvas.call(bw)
             canvas.call(bw4)
+
+            //TODO IMPROVE .
+            dispatch.on("changeDomain", function(d) {
+                chart.domain(d)
+                chart.render()
+            })
+
             /*
             axesG.selectAll("*").remove()
             axesG.call(S.axes().regions(regions).width(edge).on("submit", function(d) {
@@ -226,8 +240,7 @@
             }))
             */
         }
-        var btns = left.append("div").classed("btn-group", true)
-        var btns2 = left.append("div").classed("btn-group", true)
+
         btns.append("button")
             .classed("btn", true)
             .html('<small><span class="glyphicon glyphicon-backward"></span></small>')
@@ -289,7 +302,6 @@
                 regionCtrlDiv.call(regionCtrl)
                 plot();
             })
-        var btns3 = left.append("div").classed("btn-group", true)
         btns3.append("button")
             .classed("btn", true)
             .html('<small><span class="glyphicon glyphicon-triangle-top"></span></small>')
@@ -316,7 +328,22 @@
                 regionCtrlDiv.call(regionCtrl)
                 plot();
             })
-        var paraMonitor = left.append("div").classed("panel", true)
+
+
+        var paraCtrl = paraPanel.append("div")
+        var paraMonitor = paraPanel.append("div")
+        var threshold = paraCtrl.append("input").attr("type", "range")
+        var cutoff
+        threshold.on("change", function(d) {
+            cutoff = this.value
+        })
+        ///TODO GET para.
+        paraCtrl.append("button")
+            .classed("btn", true)
+            .html('<small>re-render hic</small>')
+            .on("click", function() {
+                dispatch.call("changeDomain", this, [0, cutoff])
+            })
         var renderHicCtrlPanel = function(data) {
             hicOpts = data;
             hicCtrl = H.chart().data(data);

@@ -24,8 +24,7 @@
     </div>
   -->
 </body>
-<script type="text/javascript" src="/lib0/lib.js"></script>
-<script type="text/javascript" src="/lib0/bigwig.js"></script>
+<script type="text/javascript" src="/lib0/snow.js"></script>
 <script>
     (function(d3, $, S) {
         var B = S.dataBigwig;
@@ -43,8 +42,8 @@
         var height = top.append("span").attr("id", "height")
         var panel = main.append("div").style("position", "relative")
         var canvas = panel.append("canvas").style("postion", "absolute")
-            //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
-            //var svg = svgdiv.append("svg") //design for brushes.
+        //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
+        //var svg = svgdiv.append("svg") //design for brushes.
         var background = "#BBB"
 
         $(window).resize(function() {
@@ -55,19 +54,19 @@
             scope.width = $(window).width() - 200
             scope.height = $(window).height() - 30
             canvas.attr("width", scope.width).attr("height", scope.height)
-                //svg.attr("width", scope.width).attr("height", scope.height)
+            //svg.attr("width", scope.width).attr("height", scope.height)
             main.style("height", scope.height + "px")
             main.style("width", scope.width + "px")
             width.text(scope.width)
             height.text(scope.height)
-                //var b = svg.append("g").attr("class", "brush")
-                //b.call(brush)
+            //var b = svg.append("g").attr("class", "brush")
+            //b.call(brush)
 
         }
         resize()
         var regionCtrl, bigwigCtrl, paraMonitor;
         var regionCtrlPanel = left.append("div").classed("panel", true)
-            //regionCtrlPanel.append("div").classed("panel-heading", true).text("Regions Ctrl")
+        //regionCtrlPanel.append("div").classed("panel-heading", true).text("Regions Ctrl")
         var regionCtrlDiv = regionCtrlPanel.append("div").classed("panel-body", true)
         var CtrlPanel = left.append("div").classed("panel", true)
         var CtrlDiv = CtrlPanel.append("div").classed("panel-body", true)
