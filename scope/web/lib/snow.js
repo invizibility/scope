@@ -2324,6 +2324,7 @@ exports.canvasToolXAxis = canvasToolXAxis;
 exports.dataBigwig = bigwig;
 exports.dataHic1 = hic1;
 exports.dataHic2 = hic2;
+exports.dataHic = hic2;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
