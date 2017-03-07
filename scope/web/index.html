@@ -193,6 +193,7 @@
                 var paratable = S.paraTable().data(d)
                 console.log("paras", d)
                 threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
+                cutoff = d.max
                 paraMonitor.call(paratable)
             }
 
