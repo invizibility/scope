@@ -2315,6 +2315,7 @@ exports.symbolTriangle = triangle;
 exports.brush = brush;
 exports.axis = axis;
 exports.scopebrush = scopebrush;
+exports.brushTri = brushTri;
 exports.regionForm = region;
 exports.paraTable = parameter;
 exports.colorbar = colorbar;
