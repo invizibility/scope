@@ -16,6 +16,7 @@
 
     <script type="text/javascript" src="/lib0/lib.js"></script>
     <script type="text/javascript" src="/lib0/bigwig.js"></script>
+    <script type="text/javascript" src="/lib0/hic2.js"></script>
 
 </head>
 
@@ -37,6 +38,7 @@
 </body>
 <script>
     (function(S) {
+        var H = S.dataHic
         var svg = d3.select("svg")
         var canvas = d3.select("canvas")
         var panel = d3.select("#main")
@@ -44,14 +46,19 @@
         var regions = [{
             "chr": "chr1",
             "start": 1,
-            "end": 1000000
+            "end": 10000000
         }, {
             "chr": "chr2",
-            "start": 1000000,
-            "end": 3000000
+            "start": 10000000,
+            "end": 30000000
         }]
+        var background = "#FFE"
+        var ctx = canvas.node().getContext("2d");
         var render = function(regions) {
             svg.selectAll("*").remove(); //TODO
+            ctx.fillStyle = background
+            ctx.fillRect(0, 0, 1000, 800)
+
             svg.call(S.axes().regions(regions).on("submit", function(d) {
                 render(d)
             }).on("brush", function(d) {
@@ -60,7 +67,7 @@
             }))
             var bw = B.canvas()
                 .URI("/bw")
-                .id("chipseq") //TODO
+                .id("LaminB") //TODO
                 .x(0)
                 .y(450)
                 .width(800)
@@ -68,15 +75,70 @@
                 .regions(regions)
                 .panel(panel)
                 .pos(1) //for response id
+            var chart = H.canvas()
+                .URI("/hic")
+                .norm(hic.norm)
+                .unit(hic.unit)
+                .bpres(
+                    [
+                        2500000,
+                        1000000,
+                        500000,
+                        250000,
+                        100000,
+                        50000,
+                        25000,
+                        10000,
+                        5000
+                    ]
+                )
+                .xoffset(0)
+                .yoffset(400)
+                .width(edge)
+                .height(edge)
+                .regions(trimChr(regions))
+                .panel(panel)
+                .color1(hic.color1)
+                .color2(hic.color2)
+                .rotate(0) //OR NOT.
+                .gap(20)
             canvas.call(bw)
+            canvas.call(chart)
+        }
+        var hic = {
+            "norm": 0,
+            "unit": 0,
+            "bpres": 0,
+            "color1": "#FFF",
+            "color2": "#F00"
+        }
+        var edge = 800
+        var trimChr = function(regions) {
+            var a = []
+            regions.forEach(function(d) {
+                a.push({
+                    "chr": d.chr.replace("chr", ""),
+                    "start": d.start,
+                    "end": d.end
+                })
+            })
+            return a
         }
 
+        //.svg(svgdiv)
+        //.panel(panel)
+        //.emit(setRegions)
+        //.callback(showPara)
         render(regions)
 
 
 
 
     }(snow))
+</script>
+
+</html>
+egions) //.callback(showPara) render(regions) }(snow))
 </script>
 
 </html>
