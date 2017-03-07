@@ -10,10 +10,13 @@
     <script type="text/javascript" src="/lib/jquery.min.js"></script>
     <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
 
-
-    <script type="text/javascript" src="/lib0/snow.js"></script>
+    <script type="text/javascript" src="/lib0/brush.js"></script>
+    <script type="text/javascript" src="/lib0/brushtri.js"></script>
+    <script type="text/javascript" src="/lib0/axis.js"></script>
+    <script type="text/javascript" src="/lib0/axestri.js"></script>
 
     <script type="text/javascript" src="/lib0/lib.js"></script>
+    <script type="text/javascript" src="/lib0/bigwig.js"></script>
     <script type="text/javascript" src="/lib0/hic2.js"></script>
 
 </head>
@@ -38,7 +41,6 @@
     (function(S) {
         var H = S.dataHic
         var svg = d3.select("svg")
-
         var canvas = d3.select("canvas")
         var panel = d3.select("#main")
         var B = S.dataBigwig;
@@ -51,24 +53,19 @@
             "start": 10000000,
             "end": 30000000
         }]
-
         var background = "#FFE"
         var ctx = canvas.node().getContext("2d");
-
-
-
         var render = function(regions) {
             svg.selectAll("*").remove(); //TODO
             ctx.fillStyle = background
             ctx.fillRect(0, 0, 1000, 800)
-            var scope = S.scopebrush().width(800).on("brush", function(d) {
-                console.log("send out brush", d)
-                bw.response(d)
-            }).on("click", function(d) {
-                console.log("send out click", d)
+
+            svg.call(S.axes().regions(regions).on("submit", function(d) {
                 render(d)
-            }).regions(regions)
-            svg.call(scope)
+            }).on("brush", function(d) {
+                console.log("resp", d)
+                bw.response(d)
+            }))
             var bw = B.canvas()
                 .URI("/bw")
                 .id("chipseq") //TODO
@@ -78,12 +75,61 @@
                 .gap(20) //TODO REMV
                 .regions(regions)
                 .panel(panel)
-                .mode(1)
                 .pos(1) //for response id
+            var chart = H.canvas()
+                .URI("/hic")
+                .norm(hic.norm)
+                .unit(hic.unit)
+                .bpres(
+                    [
+                        2500000,
+                        1000000,
+                        500000,
+                        250000,
+                        100000,
+                        50000,
+                        25000,
+                        10000,
+                        5000
+                    ]
+                )
+                .xoffset(0)
+                .yoffset(400)
+                .width(edge)
+                .height(edge)
+                .regions(trimChr(regions))
+                .panel(panel)
+                .color1(hic.color1)
+                .color2(hic.color2)
+                .rotate(0) //OR NOT.
+                .gap(20)
             canvas.call(bw)
-
+            canvas.call(chart)
+        }
+        var hic = {
+            "norm": 0,
+            "unit": 0,
+            "bpres": 0,
+            "color1": "#FFF",
+            "color2": "#F00"
         }
         var edge = 800
+        var trimChr = function(regions) {
+            var a = []
+            regions.forEach(function(d) {
+                a.push({
+                    "chr": d.chr.replace("chr", ""),
+                    "start": d.start,
+                    "end": d.end
+                })
+            })
+            return a
+        }
+
+        //.svg(svgdiv)
+        //.panel(panel)
+        //.emit(setRegions)
+        //.callback(showPara)
         render(regions)
 
 
