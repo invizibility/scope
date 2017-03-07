@@ -84,6 +84,8 @@ var brush = function() {
        yi = d3.event.y + yi - yf;
 
        var r = fix(xi,yi);
+       xi = r[0];
+       yi = r[1];
        //TODO fit the border for xi,yi???
        g.attr("transform", "translate(" + r[0] + "," + r[1] + ")");
 
@@ -319,6 +321,8 @@ var symbolFlag = {
                 xi = d3.event.x + xi - xf;
                 yi = d3.event.y + yi - yf;
                 var r = fix(xi, yi);
+                xi = r[0];
+                yi = r[1];
                 g.attr("transform", "translate(" + r[0] + "," + r[1] + ")");
                 listeners.call("brush", this, invert([
                     [r[0], r[1]],
