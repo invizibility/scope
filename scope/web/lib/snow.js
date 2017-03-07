@@ -265,8 +265,8 @@ var symbolFlag = {
             G = selection.append("g").attr("transform", "translate(" + x + "," + y + ") rotate(" + theta / Math.PI * 180 + ")");
             var tri = G.append("path")
                 .attr("d", d3.symbol().type(symbolFlag).size(edge))
-                .style("fill", "red")
-                .style("opacity", 0.1);
+                .style("fill", "white")
+                .style("opacity", 0.05); //for debug
 
             tri.call(
                 d3.drag()
@@ -758,7 +758,7 @@ var region = function (d) { //regionForm
         } else {
             regions = _;
             //TODO update regions? change region number?
-            for (var i = 0; i < regionNum; i++) {
+            for (var i = 0; i < regions.length; i++) {
                  var name = regions[i].chr.replace("chr","");
                 form["chrs"][i].node().value = name;
                 var idx = chr2idx(name);

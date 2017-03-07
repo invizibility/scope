@@ -178,7 +178,8 @@
                 //.vertical(true)
                 .pos(4)
             var setRegions = function(e) {
-                var regions = regionCtrl.regions();
+                var regions = e;
+                //var regions = regionCtrl.regions();
                 regions.forEach(function(d, i) {
                     d.chr = e[i].chr
                     d.start = e[i].start
