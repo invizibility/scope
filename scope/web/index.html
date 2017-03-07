@@ -139,8 +139,9 @@
 
             var edge = Math.min(scope.height - 100, scope.width - 40)
             var scopebrush = S.scopebrush().width(edge).on("brush", function(d) {
-                bw.response(d)
-                bw4.response(d)
+                //bw.response(d)
+                //bw4.response(d)
+                setRegions(d)
             }).on("click", function(d) {
                 plot(d)
             }).regions(regions)
@@ -172,6 +173,7 @@
             var setRegions = function(e) {
                 var regions = regionCtrl.regions();
                 regions.forEach(function(d, i) {
+                    d.chr = e[i].chr
                     d.start = e[i].start
                     d.end = e[i].end
                 })
