@@ -7,6 +7,7 @@ v3:
   get url parameters.
   add history variable.
   mv namespace.
+  add cutoff monitor
 -->
 
 <head>
@@ -286,6 +287,10 @@ v3:
                 var v = hic.ctrl.state();
                 if (v.norm == hic.state.norm && v.unit == hic.state.unit) {
                     hic.chart.domain(d).color1(v.color1).color2(v.color2).render("no callback")
+                } else {
+                    hic.chart.norm(v.norm).unit(v.norm).color1(v.color1).color2(v.color2) //not domain change offically
+                    hic.state = hic.ctrl.state();
+                    canvas.call(hic.chart)
                 }
 
 
