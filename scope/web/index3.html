@@ -1,0 +1,297 @@
+<html>
+<!--
+v3:
+  event driven scratch
+  no buttons implemented.
+  multi bigwig tracks.
+  get url parameters.
+  add history variable.
+v4:
+  mv namespace.
+-->
+
+<head>
+    <title>Genome Scope</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-queue.v2.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-request.v1.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <!--
+    <div id="top" class="menu">
+        <label for="width"> width </label> <span id="width"></span>
+        <label for="height"> height </label> <span id="height"></span>
+    </div>
+    <div id="left" class="container">
+    </div>
+    <div id="main" class="container">
+    </div>
+  -->
+</body>
+
+<script type="text/javascript" src="/lib0/snow.js"></script>
+<script>
+    (function(d3, $, S) {
+        /* Static Functions */
+        var trimChrPrefix = function(r) {
+            var a = []
+            r.forEach(function(d) {
+                a.push({
+                    "chr": d.chr.replace("chr", ""),
+                    "start": d.start,
+                    "end": d.end
+                })
+            })
+            return a
+        }
+        var addChrPrefix = function(r) { //TODO fix using idx , XY bug
+            var s = []
+            r.forEach(function(d) {
+                s.push({
+                    "start": d.start,
+                    "end": d.end,
+                    "chr": "chr" + d.chr
+                })
+            })
+            console.log(s)
+            return s
+        }
+
+        /* Global Vars */
+        var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
+        //brush regions event -> every panel {"from":id, "regions":regions}
+        //update regions (both 0 and 1) event -> every panel {"from":id, "regions":regions}
+        //update0 region0
+        //update1 region1
+        //hicRender
+        //resize
+
+        /* Global Variables */
+        var paraNames = [] //TODO, this is a example
+        var scope = {
+            "background": "#BBB"
+        };
+        var layout = {
+
+        }
+        paraNames.forEach(function(d) {
+            scope[d] = S.toolsGetUrlParam(d)
+        })
+        var history = [] //history stack for forward and backward.
+        var historyData = [] //history data; no re-render.
+        dispatch.on("update.history", function(d) {
+            history.push(d)
+            console.log("history", history) //TEST
+        })
+        var H = S.dataHic2;
+        var B = S.dataBigwig;
+
+
+        /* Begin of Layout */
+        var body = d3.select("body")
+
+        /* Top Pane */
+        var top = body.append("div").attr("id", "top")
+            .classed("container", true)
+        /*navibar */
+        var nav = top.append("nav").classed("navbar", true).classed("navbar-default", true)
+        var navl = nav.append("div").classed("navbar-inner-sm", true).append("ul").classed("nav", true).classed("navbar-nav", true)
+        navl.append("li").classed("active", true).append("a").attr("href", "#").text("Modern") //TODO data driven navibar module?
+        navl.append("li").append("a").attr("href", "/index2.html").text("Classic")
+        //navr: navibar right
+        var navr = nav.append("div").style("text-align", "right")
+        navr.append("label").attr("for", "width").text("width")
+        var widthLabel = navr.append("span").attr("id", "width")
+        navr.append("label").attr("for", "height").text("height")
+        var heightLabel = navr.append("span").attr("id", "height")
+        /*end of navibar */
+
+        /*Left Pane*/
+        var left = body.append("div").attr("id", "left")
+            .classed("container", true) //TODO rename buttons to map. for event driven coordinate.
+        //var btns = left.append("div").classed("btn-group", true)
+        //var btns2 = left.append("div").classed("btn-group", true)
+        //var btns3 = left.append("div").classed("btn-group", true)
+
+
+
+        var URI = "/hic" //local variable . TODO fix.
+
+        var initPanel = function(el) {
+            var panel = el.append("div").classed("panel", true)
+            var head = panel.append("div").classed("panel-heading", true)
+            var body = panel.append("div").classed("panel-body", true)
+            return {
+                "panel": panel,
+                "head": head,
+                "body": body
+            }
+        }
+
+        var para = initPanel(left)
+        var hic = initPanel(left)
+        var bigwig = initPanel(left)
+        var region = initPanel(left)
+
+        var threshold = para.body.append("input").attr("type", "range")
+
+        para.monitor = para.body.append("div");
+
+
+        /*Main Pane*/
+        var main = body.append("div").attr("id", "main")
+            .classed("container", true)
+        var panel = main.append("div").style("position", "relative")
+        var canvas = panel.append("canvas").style("postion", "absolute")
+        var svg = panel.append("svg").style("position", "absolute")
+        var axesG = svg.append("g").attr("transform", "translate(80,0)")
+
+
+
+
+        $(window).resize(function() {
+            dispatch.call("resize", this, {})
+        })
+        dispatch.on("resize", function() {
+            scope.width = $(window).width() - 200 //TODO 200
+            scope.height = $(window).height() - 30 //TODO 30
+            canvas.attr("width", scope.width).attr("height", scope.height)
+            svg.attr("width", scope.width).attr("height", scope.height)
+            main.style("height", scope.height + "px")
+            main.style("width", scope.width + "px")
+            widthLabel.text(scope.width)
+            heightLabel.text(scope.height)
+
+        })
+        dispatch.call("resize", this, {})
+
+
+        dispatch.on("update", function(d) {
+            var ctx = canvas.node().getContext("2d");
+            ctx.fillStyle = scope.background
+            ctx.fillRect(0, 0, scope.width, scope.height)
+            hic.state = hic.ctrl.state()
+            bigwig.state = bigwig.ctrl.state()
+            var bw = []
+
+            var regions = d || region.ctrl.regions() //TODO
+            var edge = Math.min(scope.height - 100, scope.width - 40) //TODO
+            var scopebrush = S.scopebrush().width(edge).on("brush", function(d) {
+                dispatch.call("brush", this, d)
+            }).on("click", function(d) {
+                dispatch.call("update", this, d)
+            }).regions(regions)
+
+            axesG.selectAll("*").remove()
+            axesG.call(scopebrush)
+            bigwig.state.forEach(function(b, i) {
+                bw.push(
+                    B.canvas()
+                    .URI("/bw")
+                    .id(b.track)
+                    .x(80)
+                    .y(edge / 2 + 40 + i * 80)
+                    .width(edge)
+                    .gap(20) //TODO REMV
+                    .regions(addChrPrefix(regions))
+                    .panel(panel)
+                    .mode(1)
+                    .pos(i)
+
+                )
+            })
+            dispatch.on("brush.local", function(e) { //bw is local variable. using dispatch.
+                e.forEach(function(d, i) {
+                    d.chr = e[i].chr
+                    d.start = e[i].start
+                    d.end = e[i].end
+                })
+                region.ctrl.regions(e)
+                bw.forEach(function(b, i) {
+                    b.response(e)
+                })
+            })
+
+            /** HiC Ctrl **/
+            var hicPara = function(d) {
+                var paratable = S.paraTable().data(d)
+                console.log("paras", d)
+                threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
+                cutoff = d.max
+                para.monitor.call(paratable)
+            }
+            hic.chart = H.canvas()
+                .URI(URI)
+                .norm(hic.state.norm)
+                .unit(hic.state.unit)
+                .bpres(hic.opts.bpres)
+                .xoffset(80)
+                .yoffset(edge * 0.5)
+                .width(edge)
+                .height(edge)
+                .regions(regions)
+                .panel(panel)
+                .color1(hic.state.color1)
+                .color2(hic.state.color2)
+                .emit(function(d) {
+                    dispatch.call("brush", this, d)
+                })
+                .callback(hicPara)
+
+            canvas.call(hic.chart)
+            bw.forEach(function(b) {
+                canvas.call(b)
+            })
+            dispatch.on("domainHic", function(d) { //hicChart is a local var, thus we need dispatch.
+                hic.chart.domain(d)
+                hic.chart.render()
+            })
+
+
+        })
+
+
+
+
+
+
+        /********** TODO fix the global env ************/
+        var cutoff
+        threshold.on("change", function(d) {
+            cutoff = this.value
+        })
+        para.body.append("button")
+            .classed("btn", true)
+            .html('<small>re-render hic</small>')
+            .on("click", function() {
+                dispatch.call("domainHic", this, [0, cutoff])
+            })
+        /***********************************************/
+
+        /* RUNNING CODE TODO: fix the global variable by event driven set.*/
+        var renderHicCtrlPanel = function(data) {
+            hic.opts = data;
+            hic.ctrl = H.chart().data(data);
+            hic.body.call(hic.ctrl)
+            region.ctrl = S.regionForm().chrs(data.chrs).regionNum(2).send(function(d) {
+                dispatch.call("update", this, d)
+            })
+            region.body.call(region.ctrl)
+        }
+        var renderBwCtrlPanel = function(data) {
+            bigwig.ctrl = S.dataBigwig.form().data(data).number(2)
+            bigwig.body.call(bigwig.ctrl)
+        }
+        H.Get(URI, renderHicCtrlPanel)
+        B.Get("/bw", renderBwCtrlPanel)
+
+
+    }(d3, jQuery, snow))
+</script>
+
+</html>
