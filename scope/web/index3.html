@@ -130,13 +130,15 @@ v3:
         hic.div = hic.body.append("div")
         var threshold = hic.body.append("input").attr("type", "range")
         threshold.on("change", function(d) {
-            hic.state.cutoff = this.value
+            hic.paras.cutoff = this.value
+            var paratable = S.paraTable().data(hic.paras)
+            hic.monitor.call(paratable)
         })
         hic.body.append("button")
             .classed("btn", true)
             .html('plot')
             .on("click", function() {
-                dispatch.call("domainHic", this, [0, hic.state.cutoff])
+                dispatch.call("domainHic", this, [0, hic.paras.cutoff])
             })
         hic.monitor = hic.body.append("div");
 
@@ -252,9 +254,9 @@ v3:
             /** HiC Ctrl **/
             var hicPara = function(d) {
                 var paratable = S.paraTable().data(d)
-                console.log("paras", d)
                 threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
-                cutoff = d.max
+                d.cutoff = d.max
+                hic.paras = d;
                 hic.monitor.call(paratable)
             }
             hic.chart = H.canvas()
@@ -283,14 +285,9 @@ v3:
                 //hicChart is a local var, thus we need dispatch.
                 var v = hic.ctrl.state();
                 if (v.norm == hic.state.norm && v.unit == hic.state.unit) {
-                    hic.chart
-                        .color1(v.color1)
-                        .color2(v.color2)
-                        .domain(d)
-                        .render()
-                } else {
-                    //TODO not render but re fetch data render. need to be implemented
+                    hic.chart.domain(d).color1(v.color1).color2(v.color2).render("no callback")
                 }
+
 
             })
         })

@@ -265,7 +265,7 @@ export default {
         var background = "#FFF"
         var lineColor = "#FF0"
         var domain = undefined;
-        var render = function () {
+        var render = function (_) {
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
             ctx.save()
@@ -314,11 +314,15 @@ export default {
                 }
             }
             ctx.restore()
-            callback({
-                "resolution": bpres[resIdx],
-                "max": max,
-                "min": min
-            }) //callback to send parameters
+            if (!arguments.length) { 
+              callback({
+                  "resolution": bpres[resIdx],
+                  "max": max,
+                  "min": min
+              }) //callback to send parameters
+
+            }
+
         }
 
 
