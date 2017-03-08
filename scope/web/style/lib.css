@@ -46,6 +46,9 @@ canvas {
   font-size : smaller;
 }
 
+.para-table {
+  font-size : smaller;
+}
 
 .navbar-nav > li > a {padding-top:2px !important; padding-bottom:2px !important;}
 .navbar {

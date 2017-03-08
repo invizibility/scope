@@ -685,6 +685,7 @@ var region = function (d) { //regionForm
             .append("div")
             .classed("send", true)
             .append("button")
+            .classed("btn",true)
             .attr("value", "submit")
             .on("click", function () {
                 parseRegions();
@@ -692,7 +693,7 @@ var region = function (d) { //regionForm
             }).text("submit");
     };
     var default_range = function (length) {
-        return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
+        return 0 + "-" + length
     };
     var chrOpts = function (selection) {
         selection.each(function (chrs, i) {
@@ -791,8 +792,8 @@ var region = function (d) { //regionForm
 var parameter = function () {
     var data = {};
     var chart = function (selection) {
-            var table = selection.selectAll("table").data([data]);
-            table.enter().append("table");
+            var table = selection.selectAll(".para-table").data([data]);
+            table.enter().append("table").classed("para-table",true);
             table.merge(table)
                 .classed("table", true);
             table.selectAll("*").remove();
