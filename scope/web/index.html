@@ -24,17 +24,7 @@
     </div>
   -->
 </body>
-<!--
-<script type="text/javascript" src="/lib0/axis.js"></script>
-<script type="text/javascript" src="/lib0/axes.js"></script>
-<script type="text/javascript" src="/lib0/brush.js"></script>
-<script type="text/javascript" src="/lib0/brushtri.js"></script>
-<script type="text/javascript" src="/lib0/scopebrush.js"></script>
--->
 <script type="text/javascript" src="/lib0/snow.js"></script>
-<!--
-<script type="text/javascript" src="/lib0/bigwig.js"></script>
--->
 <script>
     (function(d3, $, S) {
         var trimChr = function(regions) {
@@ -53,31 +43,40 @@
         var B = S.dataBigwig;
         var dispatch = d3.dispatch("changeDomain")
         var body = d3.select("body")
-        var scope = {} //TODO
+        var scope = {} // scope is the global env namespace.
 
+        /* top pane */
         var top = body.append("div").attr("id", "top")
             .classed("container", true)
         var nav = top.append("nav").classed("navbar", true).classed("navbar-default", true)
+        //navl: navibar left
         var navl = nav.append("div").classed("navbar-inner-sm", true).append("ul").classed("nav", true).classed("navbar-nav", true)
         navl.append("li").classed("active", true).append("a").attr("href", "#").text("Modern")
         navl.append("li").append("a").attr("href", "/index2.html").text("Classic")
+        //navr: navibar right
+        var navr = nav.append("div").style("text-align", "right")
+        navr.append("label").attr("for", "width").text("width")
+        var width = navr.append("span").attr("id", "width")
+        navr.append("label").attr("for", "height").text("height")
+        var height = navr.append("span").attr("id", "height")
+
+        /*Main Pane*/
         var main = body.append("div").attr("id", "main")
             .classed("container", true)
+        var panel = main.append("div").style("position", "relative")
+        var canvas = panel.append("canvas").style("postion", "absolute")
+        var svg = panel.append("svg").style("position", "absolute")
+        var axesG = svg.append("g").attr("transform", "translate(80,0)")
+
+        /*Left Pane*/
         var left = body.append("div").attr("id", "left")
             .classed("container", true)
         var btns = left.append("div").classed("btn-group", true)
         var btns2 = left.append("div").classed("btn-group", true)
         var btns3 = left.append("div").classed("btn-group", true)
         var paraPanel = left.append("div").classed("panel", true)
-        var navr = nav.append("div").style("text-align", "right")
-        navr.append("label").attr("for", "width").text("width")
-        var width = navr.append("span").attr("id", "width")
-        navr.append("label").attr("for", "height").text("height")
-        var height = navr.append("span").attr("id", "height")
-        var panel = main.append("div").style("position", "relative")
-        var canvas = panel.append("canvas").style("postion", "absolute")
-        var svg = panel.append("svg").style("position", "absolute")
-        var axesG = svg.append("g").attr("transform", "translate(80,0)")
+
+
 
         //var svgdiv = main.append("div").style("position", "absolute") //TO GET X Y for region 1 and region 2.
         //var svg = svgdiv.append("svg") //design for brushes.

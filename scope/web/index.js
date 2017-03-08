@@ -17,3 +17,7 @@ export{default as dataBigwig} from "./src/data/bigwig"
 export{default as dataHic1} from "./src/data/hic1"
 export{default as dataHic2} from "./src/data/hic2"
 export{default as dataHic} from "./src/data/hic2"
+
+
+export{default as toolsGetUrlParam} from "./src/tools/getUrlParam"
+export{default as toolsRandomString} from "./src/tools/randomString"

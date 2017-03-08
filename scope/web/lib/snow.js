@@ -791,7 +791,6 @@ var region = function (d) { //regionForm
 var parameter = function () {
     var data = {};
     var chart = function (selection) {
-            //var keys = Object.keys(data)
             var table = selection.selectAll("table").data([data]);
             table.enter().append("table");
             table.merge(table)
@@ -2247,6 +2246,24 @@ var hic1 = {
 
 };
 
+var getUrlParam = function (name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null;
+};
+
+var randomString = function (length) {
+    var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+
+    if (!length) {
+        length = Math.floor(Math.random() * chars.length);
+    }
+
+    var str = '';
+    for (var i = 0; i < length; i++) {
+        str += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return str;
+};
+
 exports.symbolTriangle = triangle;
 exports.brush = brush;
 exports.axis = axis;
@@ -2261,6 +2278,8 @@ exports.dataBigwig = bigwig;
 exports.dataHic1 = hic1;
 exports.dataHic2 = hic2;
 exports.dataHic = hic2;
+exports.toolsGetUrlParam = getUrlParam;
+exports.toolsRandomString = randomString;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

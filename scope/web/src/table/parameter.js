@@ -1,7 +1,6 @@
 export default function () {
     var data = {}
     var chart = function (selection) {
-            //var keys = Object.keys(data)
             var table = selection.selectAll("table").data([data])
             table.enter().append("table")
             table.merge(table)
