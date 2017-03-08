@@ -1,8 +1,8 @@
 export default function () {
     var data = {}
     var chart = function (selection) {
-            var table = selection.selectAll("table").data([data])
-            table.enter().append("table")
+            var table = selection.selectAll(".para-table").data([data])
+            table.enter().append("table").classed("para-table",true)
             table.merge(table)
                 .classed("table", true)
             table.selectAll("*").remove();

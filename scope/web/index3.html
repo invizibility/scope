@@ -6,7 +6,6 @@ v3:
   multi bigwig tracks.
   get url parameters.
   add history variable.
-v4:
   mv namespace.
 -->
 
@@ -61,6 +60,16 @@ v4:
             console.log(s)
             return s
         }
+        var initPanel = function(el) {
+            var panel = el.append("div").classed("panel", true)
+            var head = panel.append("div").classed("panel-heading", true)
+            var body = panel.append("div").classed("panel-body", true)
+            return {
+                "panel": panel,
+                "head": head,
+                "body": body
+            }
+        }
 
         /* Global Vars */
         var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
@@ -101,8 +110,9 @@ v4:
         /*navibar */
         var nav = top.append("nav").classed("navbar", true).classed("navbar-default", true)
         var navl = nav.append("div").classed("navbar-inner-sm", true).append("ul").classed("nav", true).classed("navbar-nav", true)
-        navl.append("li").classed("active", true).append("a").attr("href", "#").text("Modern") //TODO data driven navibar module?
+        navl.append("li").append("a").attr("href", "/index.html").text("Modern") //TODO data driven navibar module?
         navl.append("li").append("a").attr("href", "/index2.html").text("Classic")
+        navl.append("li").classed("active", true).append("a").attr("href", "#").text("Developing")
         //navr: navibar right
         var navr = nav.append("div").style("text-align", "right")
         navr.append("label").attr("for", "width").text("width")
@@ -113,39 +123,63 @@ v4:
 
         /*Left Pane*/
         var left = body.append("div").attr("id", "left")
-            .classed("container", true) //TODO rename buttons to map. for event driven coordinate.
-        //var btns = left.append("div").classed("btn-group", true)
-        //var btns2 = left.append("div").classed("btn-group", true)
-        //var btns3 = left.append("div").classed("btn-group", true)
-
-
-
+            .classed("container", true)
         var URI = "/hic" //local variable . TODO fix.
 
-        var initPanel = function(el) {
-            var panel = el.append("div").classed("panel", true)
-            var head = panel.append("div").classed("panel-heading", true)
-            var body = panel.append("div").classed("panel-body", true)
-            return {
-                "panel": panel,
-                "head": head,
-                "body": body
-            }
-        }
-
-        var para = initPanel(left)
         var hic = initPanel(left)
-        var bigwig = initPanel(left)
+        hic.div = hic.body.append("div")
+        var threshold = hic.body.append("input").attr("type", "range")
+        threshold.on("change", function(d) {
+            hic.state.cutoff = this.value
+        })
+        hic.body.append("button")
+            .classed("btn", true)
+            .html('plot')
+            .on("click", function() {
+                dispatch.call("domainHic", this, [0, hic.state.cutoff])
+            })
+        hic.monitor = hic.body.append("div");
+
+
+
         var region = initPanel(left)
+        region.div = region.body.append("div")
+        region.body.append("button")
+            .classed("btn", true)
+            .html('<small><span class="glyphicon glyphicon-zoom-in"></span></small>')
+            .on("click", function() {
+                var regions = region.ctrl.regions();
+                regions.forEach(function(d, i) {
+                    var l = Math.round((d.end - d.start) / 3)
+                    regions[i].start = d.start + l
+                    regions[i].end = d.end - l
+                })
+                dispatch.call("update", this, regions)
+            })
+        region.body.append("button")
+            .classed("btn", true)
+            .html('<small><span class="glyphicon glyphicon-zoom-out"></span></small>')
+            .on("click", function() {
+                var regions = region.ctrl.regions(); //or states?
+                regions.forEach(function(d, i) {
+                    var l = d.end - d.start
+                    regions[i].start = d.start - l < 0 ? 0 : d.start - l
+                    regions[i].end = d.end + l > d.length ? d.length : d.end + l
+                })
+                dispatch.call("update", this, regions)
+            })
 
-        var threshold = para.body.append("input").attr("type", "range")
 
-        para.monitor = para.body.append("div");
+        dispatch.on("update.region", function(d) {
+            region.ctrl.regions(d)
+        })
 
+        var bigwig = initPanel(left)
 
         /*Main Pane*/
         var main = body.append("div").attr("id", "main")
             .classed("container", true)
+        //TODO modulize canvas panel initialize.
         var panel = main.append("div").style("position", "relative")
         var canvas = panel.append("canvas").style("postion", "absolute")
         var svg = panel.append("svg").style("position", "absolute")
@@ -166,7 +200,6 @@ v4:
             main.style("width", scope.width + "px")
             widthLabel.text(scope.width)
             heightLabel.text(scope.height)
-
         })
         dispatch.call("resize", this, {})
 
@@ -178,7 +211,6 @@ v4:
             hic.state = hic.ctrl.state()
             bigwig.state = bigwig.ctrl.state()
             var bw = []
-
             var regions = d || region.ctrl.regions() //TODO
             var edge = Math.min(scope.height - 100, scope.width - 40) //TODO
             var scopebrush = S.scopebrush().width(edge).on("brush", function(d) {
@@ -223,7 +255,7 @@ v4:
                 console.log("paras", d)
                 threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
                 cutoff = d.max
-                para.monitor.call(paratable)
+                hic.monitor.call(paratable)
             }
             hic.chart = H.canvas()
                 .URI(URI)
@@ -247,12 +279,20 @@ v4:
             bw.forEach(function(b) {
                 canvas.call(b)
             })
-            dispatch.on("domainHic", function(d) { //hicChart is a local var, thus we need dispatch.
-                hic.chart.domain(d)
-                hic.chart.render()
+            dispatch.on("domainHic", function(d) {
+                //hicChart is a local var, thus we need dispatch.
+                var v = hic.ctrl.state();
+                if (v.norm == hic.state.norm && v.unit == hic.state.unit) {
+                    hic.chart
+                        .color1(v.color1)
+                        .color2(v.color2)
+                        .domain(d)
+                        .render()
+                } else {
+                    //TODO not render but re fetch data render. need to be implemented
+                }
+
             })
-
-
         })
 
 
@@ -261,27 +301,20 @@ v4:
 
 
         /********** TODO fix the global env ************/
-        var cutoff
-        threshold.on("change", function(d) {
-            cutoff = this.value
-        })
-        para.body.append("button")
-            .classed("btn", true)
-            .html('<small>re-render hic</small>')
-            .on("click", function() {
-                dispatch.call("domainHic", this, [0, cutoff])
-            })
+
+
         /***********************************************/
 
         /* RUNNING CODE TODO: fix the global variable by event driven set.*/
         var renderHicCtrlPanel = function(data) {
             hic.opts = data;
             hic.ctrl = H.chart().data(data);
-            hic.body.call(hic.ctrl)
+            hic.div.call(hic.ctrl)
+
             region.ctrl = S.regionForm().chrs(data.chrs).regionNum(2).send(function(d) {
                 dispatch.call("update", this, d)
             })
-            region.body.call(region.ctrl)
+            region.div.call(region.ctrl)
         }
         var renderBwCtrlPanel = function(data) {
             bigwig.ctrl = S.dataBigwig.form().data(data).number(2)
