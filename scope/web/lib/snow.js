@@ -174,8 +174,8 @@ var axis = function () {
         var height = 50;
         var chart = function (selection) {
             var tickCount = 5;
-            var tickFormat = scale.tickFormat(tickCount, "s");
-            var axisX = d3.axisBottom(scale).tickFormat(tickFormat);
+            var tickFormat = d3.formatPrefix(".2",1e6);
+            var axisX = d3.axisBottom(scale).ticks(tickCount).tickFormat(tickFormat);
             el = selection.append("g")
                 .attr("transform", "translate(" + x + "," + y + ")");
             el.call(axisX);
@@ -2274,6 +2274,24 @@ var randomString = function (length) {
     return str;
 };
 
+function parseRegion(s){
+  var a = s.split(":");
+  var x = a[1].split("-");
+  return {
+      "chr": a[0],
+      "start": +x[0],
+      "end": +x[1],
+  }
+}
+var parseRegions = function(s) {
+  var a = s.split(",");
+  var r =[];
+  a.forEach(function(d){
+    r.push(parseRegion(d));
+  });
+  return r
+};
+
 var addPanelTo = function (el) {
     var panel = el.append("div").classed("panel", true);
     var head = panel.append("div").classed("panel-heading", true);
@@ -2344,6 +2362,7 @@ exports.dataHic2 = hic2;
 exports.dataHic = hic2;
 exports.toolsGetUrlParam = getUrlParam;
 exports.toolsRandomString = randomString;
+exports.toolsParseRegions = parseRegions;
 exports.simpleMonitor = simpleMonitor;
 
 Object.defineProperty(exports, '__esModule', { value: true });
