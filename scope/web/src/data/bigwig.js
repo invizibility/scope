@@ -1,5 +1,6 @@
 import canvasToolYAxis from "../canvastool/yaxis"
 import canvasToolXAxis from "../canvastool/xaxis"
+import {totalLength,overlap} from "./funcs"
 
 export default {
   　Get : function (URI, callback) {
@@ -16,7 +17,7 @@ export default {
     ,
     canvas : function () {
         var id = "default"
-        var pos = 0 //for response rect
+        var pos = 0 //for response rect TODO remove this limitation (change to id or get the response var)
         var height
         var width
         var regions
@@ -36,15 +37,7 @@ export default {
             console.log("callback", d)
         }
 
-
-        var totalLength = function (regions) {
-            var l = 0;
-            regions.forEach(function (r, i) {
-                l += (+r.end) - (+r.start)
-            })
-            return l
-        }
-
+        /* is this a really a static function? */
         var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color) {
             //  var ctx = canvas.node().getContext("2d");
             //console.log(mat, mat.length)
@@ -164,20 +157,7 @@ export default {
         }
         var xscales, xoffsets, widths;
 
-        var overlap = function (a, b) {
-            var chrA = a.chr.replace("chr","").replace("Chr","")
-            var chrB = b.chr.replace("chr","").replace("Chr","")
-            if (chrA != chrB) {
-                return false
-            }
-            if (b.end < a.start) {
-                return false
-            }
-            if (a.end < b.start) {
-                return false
-            }
-            return true
-        }
+
 
         var response = function (e) {
             var rdata = []
@@ -264,7 +244,7 @@ export default {
             scale = yscale;
             var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0])
             var color = d3.scaleOrdinal(d3.schemeCategory10);
-            var background = "#EFE"
+            var background = "#EEE"
             if (vertical) {
                 //renderRespVertical(); //TODO
                 var ctx = canvas.node().getContext("2d");

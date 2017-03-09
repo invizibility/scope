@@ -1,30 +1,10 @@
 import canvasToolYAxis from "../canvastool/yaxis"
 import hic2 from "./hic2"
-var norms = [
-    "NONE",
-    "VC",
-    "VC_SQRT",
-    "KR",
-    "GW_KR",
-    "INTER_KR",
-    "GW_VC",
-    "INTER_VC",
-    "LOADED"
-]
-var units = ["BP", "FRAG"]
-var default_range = function (length) {
-    return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
-}
-var totalLength = function (regions) {
-    var l = 0;
-    regions.forEach(function (r, i) {
-        l += (+r.end) - (+r.start)
-    })
-    return l
-}
-var regionString = function (o) {
-    return o.chr + ":" + o.start + "-" + o.end
-}
+
+import {default as constant} from "./hicvar"
+import {totalLength,regionString} from "./funcs"
+const norms = constant().norms
+const units = constant().units
 
 export default {
     Get: hic2.Get,

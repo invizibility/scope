@@ -901,6 +901,38 @@ var canvasToolXAxis = function(ctx,scale,x,y,height,label) {
   ctx.restore();
 };
 
+function totalLength(regions) {
+    var l = 0;
+    regions.forEach(function (r, i) {
+        l += (+r.end) - (+r.start);
+    });
+    return l
+}
+function regionString(o) {
+    return o.chr + ":" + o.start + "-" + o.end
+}
+
+
+function overlap(a, b) {
+    var chrA = a.chr.replace("chr","").replace("Chr","");
+    var chrB = b.chr.replace("chr","").replace("Chr","");
+    if (chrA != chrB) {
+        return false
+    }
+    if (b.end < a.start) {
+        return false
+    }
+    if (a.end < b.start) {
+        return false
+    }
+    return true
+}
+/*
+export function default_range(length) {
+    return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
+}
+*/
+
 var bigwig = {
   　Get : function (URI, callback) {
         var config = {};
@@ -916,7 +948,7 @@ var bigwig = {
     ,
     canvas : function () {
         var id = "default";
-        var pos = 0; //for response rect
+        var pos = 0; //for response rect TODO remove this limitation (change to id or get the response var)
         var height;
         var width;
         var regions;
@@ -936,15 +968,7 @@ var bigwig = {
             console.log("callback", d);
         };
 
-
-        var totalLength = function (regions) {
-            var l = 0;
-            regions.forEach(function (r, i) {
-                l += (+r.end) - (+r.start);
-            });
-            return l
-        };
-
+        /* is this a really a static function? */
         var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color) {
             //  var ctx = canvas.node().getContext("2d");
             //console.log(mat, mat.length)
@@ -1064,20 +1088,7 @@ var bigwig = {
         };
         var xscales, xoffsets, widths;
 
-        var overlap = function (a, b) {
-            var chrA = a.chr.replace("chr","").replace("Chr","");
-            var chrB = b.chr.replace("chr","").replace("Chr","");
-            if (chrA != chrB) {
-                return false
-            }
-            if (b.end < a.start) {
-                return false
-            }
-            if (a.end < b.start) {
-                return false
-            }
-            return true
-        };
+
 
         var response = function (e) {
             var rdata = [];
@@ -1164,7 +1175,7 @@ var bigwig = {
             scale = yscale;
             var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0]);
             var color = d3.scaleOrdinal(d3.schemeCategory10);
-            var background = "#EFE";
+            var background = "#EEE";
             if (vertical) {
                 //renderRespVertical(); //TODO
                 var ctx = canvas.node().getContext("2d");
@@ -1355,30 +1366,32 @@ var bigwig = {
     }
 };
 
-/*triangle hic */
-var norms$1 = [
-    "NONE",
-    "VC",
-    "VC_SQRT",
-    "KR",
-    "GW_KR",
-    "INTER_KR",
-    "GW_VC",
-    "INTER_VC",
-    "LOADED"
-];
-var units$1 = ["BP", "FRAG"];
-var totalLength$1 = function (regions) {
-    var l = 0;
-    regions.forEach(function (r, i) {
-        l += (+r.end) - (+r.start);
-    });
-    return l
+var constant = function(){
+  return {
+    norms :[
+        "NONE",
+        "VC",
+        "VC_SQRT",
+        "KR",
+        "GW_KR",
+        "INTER_KR",
+        "GW_VC",
+        "INTER_VC",
+        "LOADED"
+    ],
+    units: ["BP", "FRAG"]
+  }
 };
-var regionString$1 = function (o) {
-    return o.chr + ":" + o.start + "-" + o.end
-};
+/*
+var default_range = function (length) {
+    return Math.round(length * 2 / 10) + "-" + Math.round(length * 3 / 10)
+}
+*/
 
+/*triangle hic */
+
+const norms$1 = constant().norms;
+const units$1 = constant().units;
 
 var hic2 = {
     Get: function (URI, callback) {
@@ -1494,7 +1507,7 @@ var hic2 = {
         var generateQueryUrl = function (d) {
             var a = regions[d[0]];
             var b = regions[d[1]];
-            var url = "/get2dnorm/" + regionString$1(a) + "/" + regionString$1(b) + "/" + resIdx + "/" + norm + "/" + unit + "/text";
+            var url = "/get2dnorm/" + regionString(a) + "/" + regionString(b) + "/" + resIdx + "/" + norm + "/" + unit + "/text";
             return url
         };
         /*TODO TO Triangle  x, y change? which should be region 1. after 3/4 rotate*/
@@ -1668,7 +1681,7 @@ var hic2 = {
                 }
             }
             ctx.restore();
-            if (!arguments.length) { 
+            if (!arguments.length) {
               callback({
                   "resolution": bpres[resIdx],
                   "max": max,
@@ -1716,7 +1729,7 @@ var hic2 = {
         var regionsToResIdx = function () {
             var w = Math.min(width, height);
             var eW = w - gap * (regions.length - 1);
-            var l = totalLength$1(regions);
+            var l = totalLength(regions);
             var pixel = l / eW;
             var resIdx = bpres.length - 1;
             for (var i = 0; i < bpres.length; i++) {
@@ -1835,16 +1848,8 @@ var hic2 = {
 
 };
 
-var totalLength = function (regions) {
-    var l = 0;
-    regions.forEach(function (r, i) {
-        l += (+r.end) - (+r.start);
-    });
-    return l
-};
-var regionString = function (o) {
-    return o.chr + ":" + o.start + "-" + o.end
-};
+const norms = constant().norms;
+const units = constant().units;
 
 var hic1 = {
     Get: hic2.Get,
