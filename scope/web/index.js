@@ -21,6 +21,7 @@ export{default as dataHic} from "./src/data/hic2"
 
 export{default as toolsGetUrlParam} from "./src/tools/getUrlParam"
 export{default as toolsRandomString} from "./src/tools/randomString"
+export{default as toolsParseRegions} from "./src/tools/parseRegions"
 
 
 export{default as simpleMonitor} from "./src/simpleMonitor"

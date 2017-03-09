@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>GScope Bigwig Browser</title>
+    <title>GScope BigWigs URL</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/style0/lib.css">
     <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
@@ -12,7 +12,6 @@
 </head>
 
 <body>
-
     <!--
     <div id="top" class="menu">
         <label for="width"> width </label> <span id="width"></span>
@@ -67,30 +66,12 @@
             main.style("width", scope.width + "px")
             width.text(scope.width)
             height.text(scope.height)
-            //var b = svg.append("g").attr("class", "brush")
-            //b.call(brush)
+            scope.edge = Math.min(scope.height - 100, scope.width - 40)
 
         }
         resize()
 
-
-
-        var plot = function(d) {
-
-
-
-        }
-        var btns = left.append("div").classed("btn-group", true)
-        var btns2 = left.append("div").classed("btn-group", true)
-
-        var paraMonitor = left.append("div").classed("panel", true)
-        /*
-        var renderBwCtrlPanel = function(data) {
-            bigwigCtrl = S.dataBigwig.form().data(data).number(2)
-            bigwigCtrlDiv.call(bigwigCtrl)
-        }
-        */
-        var regions = [{
+        var regions = S.toolsParseRegions(S.toolsGetUrlParam("q")) || [{
             "chr": "chr1",
             "start": 1,
             "end": 1000000
@@ -100,25 +81,17 @@
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = background
             ctx.fillRect(0, 0, scope.width, scope.height)
-            //  console.log(hicCtrl.state())
-            //  console.log(regionCtrl.regions())
-
-
-            //var regions = d || regionCtrl.regions() //TODO
-
-            var edge = Math.min(scope.height - 100, scope.width - 40)
             d.trackIds.forEach(function(d0, i) {
-
                 var bw = B.canvas()
                     .URI("/bw")
                     .id(d0)
                     .x(80)
                     .y(60 + i * 100)
-                    .width(edge)
-                    .gap(0) //TODO REMV
+                    .width(scope.edge)
+                    .gap(20) //TODO REMV
                     .regions(regions)
                     .panel(panel)
-                    .pos(i)
+                    .pos(i) //TODO.
                     .mode(1)
                 canvas.call(bw)
             })

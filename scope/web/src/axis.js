@@ -7,8 +7,8 @@ export default function () {
         var height = 50;
         var chart = function (selection) {
             var tickCount = 5
-            var tickFormat = scale.tickFormat(tickCount, "s");
-            var axisX = d3.axisBottom(scale).tickFormat(tickFormat)
+            var tickFormat = d3.formatPrefix(".2",1e6);
+            var axisX = d3.axisBottom(scale).ticks(tickCount).tickFormat(tickFormat)
             el = selection.append("g")
                 .attr("transform", "translate(" + x + "," + y + ")")
             el.call(axisX)
