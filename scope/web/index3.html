@@ -179,6 +179,16 @@ v3:
 
         var bigwig = initPanel(left)
 
+        /* This is  a interface for additional panel */
+        var simpleMonitor = S.simpleMonitor()
+        left.call(simpleMonitor);
+        dispatch.on("update.simple", function(d) {
+            simpleMonitor.update(d)
+        })
+        dispatch.on("brush.simple", function(d) {
+            simpleMonitor.brush(d)
+        })
+
         /*Main Pane*/
         var main = body.append("div").attr("id", "main")
             .classed("container", true)
@@ -203,35 +213,24 @@ v3:
             main.style("width", scope.width + "px")
             widthLabel.text(scope.width)
             heightLabel.text(scope.height)
+            scope.edge = Math.min(scope.height - 100, scope.width - 40) //TODO
         })
         dispatch.call("resize", this, {})
 
 
-        dispatch.on("update", function(d) {
-            var ctx = canvas.node().getContext("2d");
-            ctx.fillStyle = scope.background
-            ctx.fillRect(0, 0, scope.width, scope.height)
-            hic.state = hic.ctrl.state()
-            bigwig.state = bigwig.ctrl.state()
-            var bw = []
-            var regions = d || region.ctrl.regions() //TODO
-            var edge = Math.min(scope.height - 100, scope.width - 40) //TODO
-            var scopebrush = S.scopebrush().width(edge).on("brush", function(d) {
-                dispatch.call("brush", this, d)
-            }).on("click", function(d) {
-                dispatch.call("update", this, d)
-            }).regions(regions)
+        //TODO Modulize HiC render.
 
-            axesG.selectAll("*").remove()
-            axesG.call(scopebrush)
+        var renderBigwig = function(regions) {
+            bigwig.state = bigwig.ctrl.state() //set this?
+            var bw = []
             bigwig.state.forEach(function(b, i) {
                 bw.push(
                     B.canvas()
-                    .URI("/bw")
+                    .URI("/bw") //set this?
                     .id(b.track)
                     .x(80)
-                    .y(edge / 2 + 40 + i * 80)
-                    .width(edge)
+                    .y(scope.edge / 2 + 40 + i * 80)
+                    .width(scope.edge)
                     .gap(20) //TODO REMV
                     .regions(addChrPrefix(regions))
                     .panel(panel)
@@ -251,8 +250,20 @@ v3:
                     b.response(e)
                 })
             })
+            bw.forEach(function(b) {
+                canvas.call(b)
+            })
 
-            /** HiC Ctrl **/
+        }
+        var renderHic = function(regions) {
+            hic.state = hic.ctrl.state()
+            var scopebrush = S.scopebrush().width(scope.edge).on("brush", function(d) {
+                dispatch.call("brush", this, d)
+            }).on("click", function(d) {
+                dispatch.call("update", this, d)
+            }).regions(regions)
+            axesG.selectAll("*").remove()
+            axesG.call(scopebrush)
             var hicPara = function(d) {
                 var paratable = S.paraTable().data(d)
                 threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
@@ -266,9 +277,9 @@ v3:
                 .unit(hic.state.unit)
                 .bpres(hic.opts.bpres)
                 .xoffset(80)
-                .yoffset(edge * 0.5)
-                .width(edge)
-                .height(edge)
+                .yoffset(scope.edge * 0.5)
+                .width(scope.edge)
+                .height(scope.edge)
                 .regions(regions)
                 .panel(panel)
                 .color1(hic.state.color1)
@@ -277,11 +288,7 @@ v3:
                     dispatch.call("brush", this, d)
                 })
                 .callback(hicPara)
-
             canvas.call(hic.chart)
-            bw.forEach(function(b) {
-                canvas.call(b)
-            })
             dispatch.on("domainHic", function(d) {
                 //hicChart is a local var, thus we need dispatch.
                 var v = hic.ctrl.state();
@@ -292,9 +299,25 @@ v3:
                     hic.state = hic.ctrl.state();
                     canvas.call(hic.chart)
                 }
-
-
             })
+        }
+
+
+        dispatch.on("update", function(d) {
+            /* init section */
+            var ctx = canvas.node().getContext("2d");
+            ctx.fillStyle = scope.background
+            ctx.fillRect(0, 0, scope.width, scope.height)
+            var regions = d || region.ctrl.regions() //TODO
+
+
+
+            /*bigwig section */
+            renderBigwig(regions)
+            /** HiC Ctrl **/
+            renderHic(regions)
+
+
         })
 
 
