@@ -76,3 +76,14 @@ func CmdServe(c *cli.Context) error {
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))
 	return nil
 }
+
+func CmdHttp(c *cli.Context) error {
+	port := c.Int("port")
+	router := mux.NewRouter()
+	snowjs.AddHandlers(router, "")
+	AddStaticHandle(router)
+	log.Println("Listening...")
+	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))
+	return nil
+}
