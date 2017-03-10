@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/urfave/cli"
 	"os"
+
+	"github.com/urfave/cli"
 )
 
 const (
@@ -43,21 +44,22 @@ func main() {
 				cli.StringFlag{
 					Name:  "hic,H",
 					Usage: "hic data file",
-					//Value: testFile,
 				},
-				/*
-					cli.StringFlag{
-						Name:  "index,idx",
-						Usage: "index file",
-					},
-					cli.StringFlag{
-						Name:  "db",
-						Usage: "bolt index db file",
-					},
-				*/
 				cli.IntFlag{
 					Name:  "port,p",
 					Usage: "data server port",
+					Value: 5050,
+				},
+			},
+		},
+		{
+			Name:   "http",
+			Usage:  "simple http server for development",
+			Action: CmdHttp,
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "port,p",
+					Usage: "http server port",
 					Value: 5050,
 				},
 			},

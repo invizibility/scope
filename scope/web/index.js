@@ -25,3 +25,4 @@ export{default as toolsParseRegions} from "./src/tools/parseRegions"
 
 
 export{default as simpleMonitor} from "./src/simpleMonitor"
+export{default as panel} from "./src/panel"
