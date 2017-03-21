@@ -302,14 +302,13 @@ v3:
             })
         }
 
-
         dispatch.on("update", function(d) {
             /* init section */
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = scope.background
             ctx.fillRect(0, 0, scope.width, scope.height)
             var regions = d || region.ctrl.regions() //TODO
-
+            regions = S.toolsFixRegions(regions)
 
 
             /*bigwig section */
