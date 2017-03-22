@@ -41,27 +41,35 @@
                 ]
             }]
         };
-        var dispatch = d3.dispatch("resize")
+        //var dispatch = d3.dispatch("resize")
         var myLayout = new GoldenLayout(config);
         myLayout.registerComponent('example', function(container, state) {
             container.getElement().html('<h2>' + state.text + '</h2>');
             container.on("resize", function(e) {
                 console.log("resize", e)
-                dispatch.call("resize", this, {})
+                //dispatch.call("resize", this, {})
+                myLayout.eventHub.emit("resize", "ab")
             })
         });
+
         myLayout.registerComponent('canvas', function(container, state) {
             container.getElement().html('<h2>' + state.title + '</h2>');
             container.on("resize", function(e) {
                 console.log("resize canvas", e)
                 container.getElement().html("resize c")
             })
-            dispatch.on("resize.container", function(d) {
-                container.getElement().html("resize a or b")
+            myLayout.eventHub.on("resize", function(d) {
+                //console.log(myLayout.getComponent("canvas"))
+                //console.log(myLayout.eventHub)
+                console.log("ab?", d)
+                container.getElement().html("resize a and b")
             })
+
         });
 
+
         myLayout.init();
+
     }(jQuery))
 </script>
 
