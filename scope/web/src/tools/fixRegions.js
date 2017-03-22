@@ -11,7 +11,10 @@ function merge(a,b) {
 }
 /* input :regions
  * output : merged regions */
-function fixed(regions) { //for now it use two only.//TODO multi regions.
+function fixed(regions) {
+  if (regions.length==1) {
+    return regions;
+  } //for now it use two only.//TODO multi regions.
   if (nearby(regions[0],regions[1])) {
     return [merge(regions[0],regions[1])]
   } else {
