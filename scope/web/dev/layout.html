@@ -4,8 +4,9 @@
     <title>GoldenLayout Demo</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/goldenlayout-base.css">
-    <link rel="stylesheet" href="/css/goldenlayout-dark-theme.css">
+    <link rel="stylesheet" href="/css/goldenlayout-light-theme.css">
     <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
     <script type="text/javascript" src="/lib/goldenlayout.min.js"></script>
 </head>
 
@@ -32,19 +33,34 @@
                     },
                     {
                         type: 'component',
-                        componentName: 'example',
+                        componentName: 'canvas',
                         componentState: {
-                            text: 'Component 3'
+                            title: 'Canvas 3',
                         }
                     }
                 ]
             }]
         };
-
+        var dispatch = d3.dispatch("resize")
         var myLayout = new GoldenLayout(config);
         myLayout.registerComponent('example', function(container, state) {
             container.getElement().html('<h2>' + state.text + '</h2>');
+            container.on("resize", function(e) {
+                console.log("resize", e)
+                dispatch.call("resize", this, {})
+            })
         });
+        myLayout.registerComponent('canvas', function(container, state) {
+            container.getElement().html('<h2>' + state.title + '</h2>');
+            container.on("resize", function(e) {
+                console.log("resize canvas", e)
+                container.getElement().html("resize c")
+            })
+            dispatch.on("resize.container", function(d) {
+                container.getElement().html("resize a or b")
+            })
+        });
+
         myLayout.init();
     }(jQuery))
 </script>
