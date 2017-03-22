@@ -14,6 +14,7 @@
 </body>
 <script>
     (function($) {
+        var stateId = "snowScopeState"
         var config = {
             content: [{
                 type: 'row',
@@ -52,7 +53,7 @@
         }
         //var dispatch = d3.dispatch("resize")
         var myLayout,
-            savedState = localStorage.getItem('snowScopeState');
+            savedState = localStorage.getItem(stateId);
         if (savedState !== null) {
             myLayout = new GoldenLayout(JSON.parse(savedState));
         } else {
@@ -60,7 +61,7 @@
         }
         myLayout.on('stateChanged', function() {
             var state = JSON.stringify(myLayout.toConfig());
-            localStorage.setItem('snowScopeState', state);
+            localStorage.setItem(stateId, state);
         });
         myLayout.registerComponent('ctrl', function(container, state) {
             container.getElement().html('<h2>' + state.text + '</h2>');
