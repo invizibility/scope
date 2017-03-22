@@ -140,7 +140,7 @@
             localStorage.setItem(stateId, state);
         });
         myLayout.registerComponent('ctrl', function(container, state) {
-            container.getElement().html('<h2>' + state.text + '</h2>');
+            //container.getElement().html('<h2>' + state.text + '</h2>');
             var input = $('<input type="text" />')
             if (state.regionTxt) {
                 input.val(state.regionTxt); //for now.
@@ -162,17 +162,62 @@
                     myLayout.eventHub.emit("input", r)
                 })
 
-            var btn = d3.select(container.getElement()[0])
-                .append("input")
+            var body = d3.select(container.getElement()[0])
+
+            var current = body.append("div")
+            var currentHead = current.append("div")
+            currentHead.html("<h3>current regions</h3>")
+            var currentBody = current.append("div")
+            var currentRegions;
+            myLayout.eventHub.on("update", function(d) {
+                currentRegions = d;
+                currentBody.html(regionsText(d))
+            })
+            var btn = currentHead.append("input")
                 .attr("type", "button")
                 .attr("value", "replot")
                 .on("click", function() {
                     myLayout.eventHub.emit("replot")
                 })
+            var btnZoomOut = currentHead.append("input")
+                .attr("type", "button")
+                //.classed("btn", true)
+                .attr("value", "zoom out")
+                .on("click", function() {
+                    //var regions = region.ctrl.regions(); //or states?
+                    var regions = currentRegions
+                    regions.forEach(function(d, i) {
+                        d.length = 500000000 //TODO FIXed; map for chromosome length;
+                        var l = d.end - d.start
+                        regions[i].start = d.start - l < 0 ? 0 : d.start - l
+                        regions[i].end = d.end + l > d.length ? d.length : d.end + l
+                    })
+                    regions = S.toolsFixRegions(regions)
+                    dispatch.call("update", this, regions)
+                    myLayout.eventHub.emit("input", regions)
+                })
+
+            var btnZoomIn = currentHead.append("input")
+                .attr("type", "button")
+                .attr("value", "zoom in")
+                .on("click", function() {
+                    var regions = currentRegions
+                    regions.forEach(function(d, i) {
+                        var l = Math.round((d.end - d.start) / 3)
+                        regions[i].start = d.start + l
+                        regions[i].end = d.end - l
+                    })
+                    regions = S.toolsFixRegions(regions)
+                    //dispatch.call("update", this, regions)
+                    myLayout.eventHub.emit("input", regions) //TODO
+                })
+
+
+
 
         });
         myLayout.registerComponent('monitor', function(container, state) {
-            container.getElement().html('<h2>' + state.text + '</h2>');
+            //container.getElement().html('<h2>' + state.text + '</h2>');
             var div1 = d3.select(container.getElement()[0]).append("div");
             var div2 = d3.select(container.getElement()[0]).append("div");
             myLayout.eventHub.on("brush", function(d) {
