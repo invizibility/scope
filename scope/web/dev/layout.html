@@ -81,6 +81,13 @@
             });
 
             container.getElement().append(input);
+            var btn = d3.select(container.getElement()[0])
+                .append("button")
+                .attr("value", "show config")
+                .on("click", function(d) {
+                    myLayout.eventHub.emit("show")
+                })
+
 
         });
         myLayout.registerComponent('monitor', function(container, state) {
@@ -90,7 +97,10 @@
                 //dispatch.call("resize", this, {})
                 myLayout.eventHub.emit("resize", "ab")
             })
-            d3.select(container.getElement()[0]).append("canvas")
+            //d3.select(container.getElement()[0]).append("canvas")
+            myLayout.eventHub.on("show", function(d) {
+                container.getElement().html(JSON.stringify(myLayout.toConfig()));
+            })
 
         });
 
@@ -104,7 +114,9 @@
                 //console.log(myLayout.getComponent("canvas"))
                 //console.log(myLayout.eventHub)
                 console.log("ab?", d)
-                container.getElement().html("resize a and b")
+                container.getElement().html(
+                    "resize ab"
+                )
             })
 
             console.log(container.getElement())
