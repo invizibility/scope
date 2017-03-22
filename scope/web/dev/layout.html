@@ -18,18 +18,24 @@
             content: [{
                 type: 'row',
                 content: [{
-                        type: 'component',
-                        componentName: 'example',
-                        componentState: {
-                            text: 'Component 1'
-                        }
-                    },
-                    {
-                        type: 'component',
-                        componentName: 'example',
-                        componentState: {
-                            text: 'Component 2'
-                        }
+                        type: "column",
+                        content: [
+
+                            {
+                                type: 'component',
+                                componentName: 'ctrl',
+                                componentState: {
+                                    text: 'TODO CTRL'
+                                }
+                            },
+                            {
+                                type: 'component',
+                                componentName: 'monitor',
+                                componentState: {
+                                    text: 'TODO 3D'
+                                }
+                            }
+                        ]
                     },
                     {
                         type: 'component',
@@ -41,15 +47,50 @@
                 ]
             }]
         };
+        var states = {
+
+        }
         //var dispatch = d3.dispatch("resize")
-        var myLayout = new GoldenLayout(config);
-        myLayout.registerComponent('example', function(container, state) {
+        var myLayout,
+            savedState = localStorage.getItem('snowScopeState');
+        if (savedState !== null) {
+            myLayout = new GoldenLayout(JSON.parse(savedState));
+        } else {
+            myLayout = new GoldenLayout(config);
+        }
+        myLayout.on('stateChanged', function() {
+            var state = JSON.stringify(myLayout.toConfig());
+            localStorage.setItem('snowScopeState', state);
+        });
+        myLayout.registerComponent('ctrl', function(container, state) {
             container.getElement().html('<h2>' + state.text + '</h2>');
             container.on("resize", function(e) {
                 console.log("resize", e)
                 //dispatch.call("resize", this, {})
                 myLayout.eventHub.emit("resize", "ab")
             })
+            var input = $('<input type="text" />');
+            if (state.regionTxt) {
+                input.val(state.regionTxt); //for now.
+            }
+            input.on('change', function() {
+                container.extendState({
+                    regionTxt: input.val()
+                });
+            });
+
+            container.getElement().append(input);
+
+        });
+        myLayout.registerComponent('monitor', function(container, state) {
+            container.getElement().html('<h2>' + state.text + '</h2>');
+            container.on("resize", function(e) {
+                console.log("resize", e)
+                //dispatch.call("resize", this, {})
+                myLayout.eventHub.emit("resize", "ab")
+            })
+            d3.select(container.getElement()[0]).append("canvas")
+
         });
 
         myLayout.registerComponent('canvas', function(container, state) {
@@ -64,6 +105,9 @@
                 console.log("ab?", d)
                 container.getElement().html("resize a and b")
             })
+
+            console.log(container.getElement())
+
 
         });
 
