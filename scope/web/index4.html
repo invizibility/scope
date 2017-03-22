@@ -94,18 +94,38 @@
 
         var stateId = "genomeScopeState"
         var config = {
+            settings: {
+                showPopoutIcon: false,
+                showCloseIcon: false
+            },
             content: [{
                 type: 'row',
                 content: [{
                         type: "column",
-                        content: [
-
-                            {
-                                type: 'component',
-                                componentName: 'ctrl',
-                                componentState: {
-                                    text: 'TODO CTRL'
-                                }
+                        content: [{
+                                type: 'stack',
+                                content: [{
+                                        type: 'component',
+                                        componentName: 'ctrl',
+                                        componentState: {
+                                            text: 'CTRL'
+                                        }
+                                    },
+                                    {
+                                        type: 'component',
+                                        componentName: 'hic',
+                                        componentState: {
+                                            text: 'HIC CTRL'
+                                        }
+                                    },
+                                    {
+                                        type: 'component',
+                                        componentName: 'bigwig',
+                                        componentState: {
+                                            text: 'BigWig CTRL'
+                                        }
+                                    },
+                                ]
                             },
                             {
                                 type: 'component',
@@ -130,11 +150,14 @@
         //var dispatch = d3.dispatch("resize")
         var myLayout,
             savedState = localStorage.getItem(stateId);
+
         if (savedState !== null) {
             myLayout = new GoldenLayout(JSON.parse(savedState));
         } else {
             myLayout = new GoldenLayout(config);
         }
+
+        //myLayout = new GoldenLayout(config);
         myLayout.on('stateChanged', function() {
             var state = JSON.stringify(myLayout.toConfig());
             localStorage.setItem(stateId, state);
@@ -153,12 +176,14 @@
                 });
             });
             container.getElement().append(input);
+            var currentRegions;
             var btn = d3.select(container.getElement()[0])
                 .append("input")
                 .attr("type", "button")
                 .attr("value", "submit")
                 .on("click", function() {
                     var r = S.toolsParseRegions(input.val())
+                    currentRegions = r;
                     myLayout.eventHub.emit("input", r)
                 })
 
@@ -168,7 +193,6 @@
             var currentHead = current.append("div")
             currentHead.html("<h3>current regions</h3>")
             var currentBody = current.append("div")
-            var currentRegions;
             myLayout.eventHub.on("update", function(d) {
                 currentRegions = d;
                 currentBody.html(regionsText(d))
@@ -216,6 +240,16 @@
 
 
         });
+
+        myLayout.registerComponent('hic', function(container, state) {
+            container.getElement().html('<h2>' + state.text + '</h2>');
+
+        });
+        myLayout.registerComponent('bigwig', function(container, state) {
+            container.getElement().html('<h2>' + state.text + '</h2>');
+
+        });
+
         myLayout.registerComponent('monitor', function(container, state) {
             //container.getElement().html('<h2>' + state.text + '</h2>');
             var div1 = d3.select(container.getElement()[0]).append("div");
