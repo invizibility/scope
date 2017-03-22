@@ -1,0 +1,337 @@
+<html>
+
+<head>
+    <title>Genome Scope</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/goldenlayout-base.css">
+    <link rel="stylesheet" href="/css/goldenlayout-light-theme.css">
+    <link rel="stylesheet" href="/style0/lib.css">
+
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/lib/goldenlayout.min.js"></script>
+
+    <script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-queue.v2.min.js"></script>
+    <script type="text/javascript" src="/lib/d3-request.v1.min.js"></script>
+</head>
+
+<body>
+</body>
+<script type="text/javascript" src="/lib0/snow.js"></script>
+<script>
+    (function($, d3, S) {
+        /* Static Functions */
+        var regionText = function(d) {
+            return d.chr + ":" + d.start + "-" + d.end
+        }
+        var regionsText = function(regions) {
+            var r = []
+            regions.forEach(function(d) {
+                r.push(regionText(d))
+            })
+            return r.join(",")
+        }
+        var trimChrPrefix = function(r) {
+            var a = []
+            r.forEach(function(d) {
+                a.push({
+                    "chr": d.chr.replace("chr", ""),
+                    "start": d.start,
+                    "end": d.end
+                })
+            })
+            return a
+        }
+        var addChrPrefix = function(r) { //TODO fix using idx , XY bug
+            var s = []
+            r.forEach(function(d) {
+                s.push({
+                    "start": d.start,
+                    "end": d.end,
+                    "chr": "chr" + d.chr
+                })
+            })
+            console.log(s)
+            return s
+        }
+        var initPanel = function(el) {
+            var panel = el.append("div").classed("panel", true)
+            var head = panel.append("div").classed("panel-heading", true)
+            var body = panel.append("div").classed("panel-body", true)
+            return {
+                "panel": panel,
+                "head": head,
+                "body": body
+            }
+        }
+
+        /* End of Static Functions */
+
+        /* Global Variables */
+        var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
+        var paraNames = [] //TODO, this is a example
+        //TODO get localStorage
+        var scope = {
+            "background": "#BBB"
+        };
+        var layout = {
+
+        }
+        paraNames.forEach(function(d) {
+            scope[d] = S.toolsGetUrlParam(d)
+        })
+        var history = [] //history stack for forward and backward.
+        var historyData = [] //history data; no re-render.
+        dispatch.on("update.history", function(d) {
+            history.push(d)
+            console.log("history", history) //TEST
+        })
+        var H = S.dataHic2;
+        var B = S.dataBigwig;
+
+        /* End of Global Variables */
+
+        var stateId = "genomeScopeState"
+        var config = {
+            content: [{
+                type: 'row',
+                content: [{
+                        type: "column",
+                        content: [
+
+                            {
+                                type: 'component',
+                                componentName: 'ctrl',
+                                componentState: {
+                                    text: 'TODO CTRL'
+                                }
+                            },
+                            {
+                                type: 'component',
+                                componentName: 'monitor',
+                                componentState: {
+                                    text: 'TODO 3D'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        type: 'component',
+                        componentName: 'canvas',
+                        componentState: {
+                            title: 'Canvas 3',
+                        }
+                    }
+                ]
+            }]
+        };
+
+        //var dispatch = d3.dispatch("resize")
+        var myLayout,
+            savedState = localStorage.getItem(stateId);
+        if (savedState !== null) {
+            myLayout = new GoldenLayout(JSON.parse(savedState));
+        } else {
+            myLayout = new GoldenLayout(config);
+        }
+        myLayout.on('stateChanged', function() {
+            var state = JSON.stringify(myLayout.toConfig());
+            localStorage.setItem(stateId, state);
+        });
+        myLayout.registerComponent('ctrl', function(container, state) {
+            container.getElement().html('<h2>' + state.text + '</h2>');
+            var input = $('<input type="text" />')
+            if (state.regionTxt) {
+                input.val(state.regionTxt); //for now.
+            } else {
+                input.val("1:1-10000000,2:100000-10000000")
+            }
+            input.on('change', function() {
+                container.extendState({
+                    regionTxt: input.val()
+                });
+            });
+            container.getElement().append(input);
+            var btn = d3.select(container.getElement()[0])
+                .append("input")
+                .attr("type", "button")
+                .attr("value", "submit")
+                .on("click", function() {
+                    var r = S.toolsParseRegions(input.val())
+                    myLayout.eventHub.emit("input", r)
+                })
+
+            var btn = d3.select(container.getElement()[0])
+                .append("input")
+                .attr("type", "button")
+                .attr("value", "replot")
+                .on("click", function() {
+                    myLayout.eventHub.emit("replot")
+                })
+
+        });
+        myLayout.registerComponent('monitor', function(container, state) {
+            container.getElement().html('<h2>' + state.text + '</h2>');
+            var div1 = d3.select(container.getElement()[0]).append("div");
+            var div2 = d3.select(container.getElement()[0]).append("div");
+            myLayout.eventHub.on("brush", function(d) {
+                div2.html("BRUSHING   " + regionsText(d))
+            })
+            myLayout.eventHub.on("update", function(d) {
+                div1.html("CURRENT   " + regionsText(d))
+                div2.html("")
+            })
+        });
+
+        myLayout.registerComponent('canvas', function(container, state) {
+            var hic = {}
+            //var scope = {} //TODO change it to component state;
+            var main = d3.select(container.getElement()[0]).style("position", "relative")
+            var canvas = main.append("canvas")
+            var svg = main.append("svg")
+            var axesG = svg.append("g").attr("transform", "translate(10,0)")
+            container.on("resize", function(e) {
+                console.log(container.height, container.width)
+                canvas.attr("height", container.height)
+                    .attr("width", container.width)
+                svg.attr("height", container.height)
+                    .attr("width", container.width)
+                scope.edge = container.width - 20
+                scope.width = container.width
+                scope.height = container.height
+            })
+
+            var URI = "/hic"
+            var testBeds = [{
+                    chr: "1",
+                    start: 0,
+                    end: 10000000
+                },
+                {
+                    chr: "2",
+                    start: 100000,
+                    end: 10000000
+                }
+            ]
+            var initHic = function(data) {
+                hic.opts = data;
+                hic.state = {
+                    "norm": 0,
+                    "unit": 0,
+                    "color1": "#FFF",
+                    "color2": "#F00"
+                } //This is just for test.
+                //console.log(hic)
+
+                var r = state.regions || testBeds
+                render(r) //TODO d3 queue ?
+            }
+
+            var bigwig;
+            var initBw = function(data) {
+                console.log("bigwig", data)
+                bigwig = data;
+            }
+            B.Get("/bw", initBw)
+            H.Get(URI, initHic)
+
+            var renderBigwig = function(regions) {
+                var bw = []
+                bigwig.trackIds.forEach(function(b, i) {
+                    bw.push(
+                        B.canvas()
+                        .URI("/bw") //set this?
+                        .id(b)
+                        .x(10)
+                        .y(scope.edge / 2 + 40 + i * 80)
+                        .width(scope.edge)
+                        .gap(20) //TODO REMV
+                        .regions(addChrPrefix(regions))
+                        .panel(main)
+                        .mode(1)
+                        .pos(i)
+                    )
+                })
+                dispatch.on("brush.local", function(e) {
+                    bw.forEach(function(b, i) {
+                        b.response(e)
+                    })
+                    myLayout.eventHub.emit("brush", e)
+                })
+                bw.forEach(function(b) {
+                    canvas.call(b)
+                })
+            }
+
+
+
+            var renderHic = function(regions) {
+                var scopebrush = S.scopebrush().width(scope.edge).on("brush", function(d) {
+                    dispatch.call("brush", this, d)
+                }).on("click", function(d) {
+                    dispatch.call("update", this, d)
+                }).regions(regions)
+                axesG.selectAll("*").remove()
+                axesG.call(scopebrush)
+
+                var hicPara = function(d) {
+                    console.log(d)
+                }
+
+                hic.chart = H.canvas()
+                    .URI(URI)
+                    .norm(hic.state.norm)
+                    .unit(hic.state.unit)
+                    .bpres(hic.opts.bpres)
+                    .xoffset(10)
+                    .yoffset(scope.edge * 0.5)
+                    .width(scope.edge)
+                    .height(scope.edge)
+                    .regions(regions)
+                    .panel(main)
+                    .color1(hic.state.color1)
+                    .color2(hic.state.color2)
+                    .emit(function(d) {
+                        dispatch.call("brush", this, d)
+                    })
+                    .callback(hicPara)
+                canvas.call(hic.chart)
+
+
+            }
+            var render = function(d) {
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = scope.background
+                ctx.fillRect(0, 0, scope.width, scope.height)
+                var regions = d
+                regions = S.toolsFixRegions(regions)
+                container.extendState({
+                    "regions": d
+                });
+                state.regions = regions;
+                myLayout.eventHub.emit("update", d)
+                renderBigwig(regions)
+                renderHic(regions)
+            }
+
+            dispatch.on("update.local", function(d) {
+                render(d)
+            })
+
+            myLayout.eventHub.on("input", function(d) {
+                render(d)
+            })
+            myLayout.eventHub.on("replot", function(d) {
+                myLayout.eventHub.emit("update", state.reigions || testBeds)
+                render(state.regions || testBeds)
+            })
+        });
+
+
+        myLayout.init();
+
+    }(jQuery, d3, snow))
+</script>
+
+</html>
