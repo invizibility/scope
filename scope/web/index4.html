@@ -21,8 +21,6 @@
 <script type="text/javascript" src="/lib0/snow.js"></script>
 <script>
     (function($, d3, S) {
-        /* Static Functions */
-        /* End of Static Functions */
         /* Global Variables */
         var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
         var init = {
@@ -45,16 +43,156 @@
         dispatch.on("update.history", function(d) {
             history.push(d)
             console.log("history", history) //TEST
+            if (history.length > 100) {
+                history.shift();
+            }
         })
         var H = S.dataHic2;
         var B = S.dataBigwig;
-
         var simple = S.simpleRenderer
-
-
         /* End of Global Variables */
         var hic = {} //Move To MyLayout States?
         var stateId = "genomeScopeState000"
+
+
+        var hicRenderer = function(layout, container, state) {
+            //TODO RM Global Variables, make it as a renderer in Snow;
+            var main = d3.select(container.getElement()[0]).style("position", "relative")
+            var canvas = main.append("canvas")
+            var svg = main.append("svg")
+            var axesG = svg.append("g").attr("transform", "translate(10,0)")
+            container.on("resize", function(e) {
+                canvas.attr("height", container.height)
+                    .attr("width", container.width)
+                svg.attr("height", container.height)
+                    .attr("width", container.width)
+                scope.edge = container.width - 20
+                scope.width = container.width
+                scope.height = container.height
+                layout.eventHub.emit("replot")
+            })
+
+            var URI = "/hic"
+            var testBeds = [{
+                    chr: "1",
+                    start: 0,
+                    end: 10000000
+                },
+                {
+                    chr: "2",
+                    start: 100000,
+                    end: 10000000
+                }
+            ]
+            var initHic = function(data) {
+                hic.opts = data;
+                layout.eventHub.emit("hiccfg", data)
+                init.hic = true;
+                var r = state.regions || testBeds
+                render(r) //TODO d3 queue ?
+            }
+
+            var bigwig;
+            var initBw = function(data) {
+                console.log("bigwig", data)
+                bigwig = data;
+                init.bigwig = true;
+            }
+            B.Get("/bw", initBw)
+            H.Get(URI, initHic)
+            var renderBigwig = function(regions) {
+                var bw = []
+                bigwig.trackIds.forEach(function(b, i) {
+                    bw.push(
+                        B.canvas()
+                        .URI("/bw") //set this?
+                        .id(b)
+                        .x(10)
+                        .y(scope.edge / 2 + 40 + i * 80)
+                        .width(scope.edge)
+                        .gap(20) //TODO REMV
+                        .regions(S.toolsAddChrPrefix(regions))
+                        .panel(main)
+                        .mode(1)
+                        .pos(i)
+                    )
+                })
+                dispatch.on("brush.local", function(e) {
+                    bw.forEach(function(b, i) {
+                        b.response(e)
+                    })
+                })
+                bw.forEach(function(b) {
+                    canvas.call(b)
+                })
+            }
+            var renderHic = function(regions) {
+                var scopebrush = S.scopebrush().width(scope.edge).on("brush", function(d) {
+                    dispatch.call("brush", this, d)
+                    layout.eventHub.emit("brush", d)
+                }).on("click", function(d) {
+                    dispatch.call("update", this, d)
+                }).regions(regions)
+                axesG.selectAll("*").remove()
+                axesG.call(scopebrush)
+
+                var hicPara = function(d) {
+                    layout.eventHub.emit("hicmonitor", d)
+                }
+                hic.state = hic.ctrl.state();
+                hic.chart = H.canvas()
+                    .URI(URI)
+                    .norm(hic.state.norm)
+                    .unit(hic.state.unit)
+                    .bpres(hic.opts.bpres)
+                    .xoffset(10)
+                    .yoffset(scope.edge * 0.5)
+                    .width(scope.edge)
+                    .height(scope.edge)
+                    .regions(regions)
+                    .panel(main)
+                    .color1(hic.state.color1)
+                    .color2(hic.state.color2)
+                    .emit(function(d) {
+                        dispatch.call("brush", this, d)
+                    })
+                    .callback(hicPara)
+                canvas.call(hic.chart)
+
+
+            }
+            var render = function(d) {
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = scope.background
+                ctx.fillRect(0, 0, scope.width, scope.height)
+                var regions = d
+                regions = S.toolsFixRegions(regions)
+                container.extendState({
+                    "regions": d
+                });
+                state.regions = regions;
+                layout.eventHub.emit("update", d)
+                if (init.bigwig) {
+                    renderBigwig(regions)
+                }
+                if (init.hic) {
+                    renderHic(regions)
+                }
+            }
+
+            dispatch.on("update.local", function(d) {
+                render(d)
+            })
+
+            layout.eventHub.on("input", function(d) {
+                render(d)
+            })
+            layout.eventHub.on("replot", function(d) {
+                layout.eventHub.emit("update", state.reigions || testBeds)
+                render(state.regions || testBeds)
+            })
+        }
+
         var config = {
             settings: {
                 showPopoutIcon: false,
@@ -105,6 +243,7 @@
                         title: 'Scope',
                         componentState: {
                             title: 'Canvas',
+                            render: hicRenderer,
                         }
                     },
                     {
@@ -161,6 +300,9 @@
             var state = JSON.stringify(myLayout.toConfig());
             localStorage.setItem(stateId, state);
         });
+
+
+
         myLayout.registerComponent('ctrl', function(container, state) {
             var input = $('<input type="text" />')
             if (state.regionTxt) {
@@ -264,144 +406,7 @@
         myLayout.registerComponent('canvas', function(container, state) {
             //var hic = {}
             //var scope = {} //TODO change it to component state;
-            var main = d3.select(container.getElement()[0]).style("position", "relative")
-            var canvas = main.append("canvas")
-            var svg = main.append("svg")
-            var axesG = svg.append("g").attr("transform", "translate(10,0)")
-            container.on("resize", function(e) {
-                canvas.attr("height", container.height)
-                    .attr("width", container.width)
-                svg.attr("height", container.height)
-                    .attr("width", container.width)
-                scope.edge = container.width - 20
-                scope.width = container.width
-                scope.height = container.height
-                myLayout.eventHub.emit("replot")
-            })
-
-            var URI = "/hic"
-            var testBeds = [{
-                    chr: "1",
-                    start: 0,
-                    end: 10000000
-                },
-                {
-                    chr: "2",
-                    start: 100000,
-                    end: 10000000
-                }
-            ]
-            var initHic = function(data) {
-                hic.opts = data;
-                myLayout.eventHub.emit("hiccfg", data)
-                init.hic = true;
-                var r = state.regions || testBeds
-                render(r) //TODO d3 queue ?
-            }
-
-            var bigwig;
-            var initBw = function(data) {
-                console.log("bigwig", data)
-                bigwig = data;
-                init.bigwig = true;
-            }
-            B.Get("/bw", initBw)
-            H.Get(URI, initHic)
-
-            var renderBigwig = function(regions) {
-                var bw = []
-                bigwig.trackIds.forEach(function(b, i) {
-                    bw.push(
-                        B.canvas()
-                        .URI("/bw") //set this?
-                        .id(b)
-                        .x(10)
-                        .y(scope.edge / 2 + 40 + i * 80)
-                        .width(scope.edge)
-                        .gap(20) //TODO REMV
-                        .regions(S.toolsAddChrPrefix(regions))
-                        .panel(main)
-                        .mode(1)
-                        .pos(i)
-                    )
-                })
-                dispatch.on("brush.local", function(e) {
-                    bw.forEach(function(b, i) {
-                        b.response(e)
-                    })
-                })
-                bw.forEach(function(b) {
-                    canvas.call(b)
-                })
-            }
-
-
-
-            var renderHic = function(regions) {
-                var scopebrush = S.scopebrush().width(scope.edge).on("brush", function(d) {
-                    dispatch.call("brush", this, d)
-                    myLayout.eventHub.emit("brush", d)
-                }).on("click", function(d) {
-                    dispatch.call("update", this, d)
-                }).regions(regions)
-                axesG.selectAll("*").remove()
-                axesG.call(scopebrush)
-
-                var hicPara = function(d) {
-                    myLayout.eventHub.emit("hicmonitor", d)
-                }
-                hic.state = hic.ctrl.state();
-                hic.chart = H.canvas()
-                    .URI(URI)
-                    .norm(hic.state.norm)
-                    .unit(hic.state.unit)
-                    .bpres(hic.opts.bpres)
-                    .xoffset(10)
-                    .yoffset(scope.edge * 0.5)
-                    .width(scope.edge)
-                    .height(scope.edge)
-                    .regions(regions)
-                    .panel(main)
-                    .color1(hic.state.color1)
-                    .color2(hic.state.color2)
-                    .emit(function(d) {
-                        dispatch.call("brush", this, d)
-                    })
-                    .callback(hicPara)
-                canvas.call(hic.chart)
-
-
-            }
-            var render = function(d) {
-                var ctx = canvas.node().getContext("2d");
-                ctx.fillStyle = scope.background
-                ctx.fillRect(0, 0, scope.width, scope.height)
-                var regions = d
-                regions = S.toolsFixRegions(regions)
-                container.extendState({
-                    "regions": d
-                });
-                state.regions = regions;
-                myLayout.eventHub.emit("update", d)
-                if (init.bigwig) {
-                    renderBigwig(regions)
-                }
-                if (init.hic) {
-                    renderHic(regions)
-                }
-            }
-
-            dispatch.on("update.local", function(d) {
-                render(d)
-            })
-
-            myLayout.eventHub.on("input", function(d) {
-                render(d)
-            })
-            myLayout.eventHub.on("replot", function(d) {
-                myLayout.eventHub.emit("update", state.reigions || testBeds)
-                render(state.regions || testBeds)
-            })
+            state.render(myLayout, container, state)
         });
 
 
