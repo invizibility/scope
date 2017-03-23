@@ -49,6 +49,9 @@
         var H = S.dataHic2;
         var B = S.dataBigwig;
 
+        var simple = S.simpleRenderer
+
+
         /* End of Global Variables */
         var hic = {} //Move To MyLayout States?
         var stateId = "genomeScopeState000"
@@ -99,8 +102,9 @@
                     {
                         type: 'component',
                         componentName: 'canvas',
+                        title: 'Scope',
                         componentState: {
-                            title: 'Canvas 3',
+                            title: 'Canvas',
                         }
                     },
                     {
@@ -112,23 +116,26 @@
                                 componentName: 'monitor',
                                 title: 'Simple',
                                 componentState: {
-                                    text: 'TODO 3D'
+                                    text: 'Simple',
+                                    render: simple
                                 }
                             },
                             {
                                 type: 'component',
-                                componentName: 'todo',
+                                componentName: 'monitor',
                                 title: 'Network',
                                 componentState: {
-                                    text: "TODO1"
+                                    text: "TODO1",
+                                    render: simple
                                 }
                             },
                             {
                                 type: 'component',
-                                componentName: 'todo',
+                                componentName: 'monitor',
                                 title: '3D',
                                 componentState: {
-                                    text: "TODO2"
+                                    text: "TODO2",
+                                    render: simple
                                 }
                             }
                         ]
@@ -148,13 +155,13 @@
             myLayout = new GoldenLayout(config);
         }
 
+
         //myLayout = new GoldenLayout(config);
         myLayout.on('stateChanged', function() {
             var state = JSON.stringify(myLayout.toConfig());
             localStorage.setItem(stateId, state);
         });
         myLayout.registerComponent('ctrl', function(container, state) {
-
             var input = $('<input type="text" />')
             if (state.regionTxt) {
                 input.val(state.regionTxt); //for now.
@@ -228,10 +235,6 @@
                     //dispatch.call("update", this, regions)
                     myLayout.eventHub.emit("input", regions) //TODO
                 })
-
-
-
-
         });
 
         myLayout.registerComponent('hic', function(container, state) {
@@ -252,22 +255,10 @@
             })
 
         });
+
         myLayout.registerComponent('bigwig', function(container, state) {
             container.getElement().html('<h2>' + state.text + '</h2>');
 
-        });
-
-        myLayout.registerComponent('monitor', function(container, state) {
-            //container.getElement().html('<h2>' + state.text + '</h2>');
-            var div1 = d3.select(container.getElement()[0]).append("div");
-            var div2 = d3.select(container.getElement()[0]).append("div");
-            myLayout.eventHub.on("brush", function(d) {
-                div2.html("BRUSHING   " + S.toolsRegionsText(d))
-            })
-            myLayout.eventHub.on("update", function(d) {
-                div1.html("CURRENT   " + S.toolsRegionsText(d))
-                div2.html("")
-            })
         });
 
         myLayout.registerComponent('canvas', function(container, state) {
@@ -414,8 +405,11 @@
         });
 
 
-        myLayout.registerComponent("todo", function(container, state) {
-            container.getElement().html('<h2>' + state.text + '</h2>');
+        myLayout.registerComponent("monitor", function(container, state) {
+            if (state.text) {
+                container.getElement().html('<h3>' + state.text + '</h3>');
+            }
+            state.render(myLayout, container, state)
         })
 
         myLayout.init();

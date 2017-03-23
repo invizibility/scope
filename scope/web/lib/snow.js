@@ -2460,6 +2460,18 @@ var panel = function () {
     return chart
 };
 
+var simple = function(layout, container, state) {
+    var div1 = d3.select(container.getElement()[0]).append("div");
+    var div2 = d3.select(container.getElement()[0]).append("div");
+    layout.eventHub.on("brush", function(d) {
+        div2.html("BRUSHING   " + regionsText(d));
+    });
+    layout.eventHub.on("update", function(d) {
+        div1.html("CURRENT   " + regionsText(d));
+        div2.html("");
+    });
+};
+
 exports.symbolTriangle = triangle;
 exports.brush = brush;
 exports.axis = axis;
@@ -2485,6 +2497,7 @@ exports.toolsTrimChrPrefix = trimChrPrefix;
 exports.toolsAddChrPrefix = addChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
+exports.simpleRenderer = simple;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
