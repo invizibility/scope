@@ -310,6 +310,15 @@
             var history = [];
             var ul = d3.select(container.getElement()[0]).append("ul")
             myLayout.eventHub.on("update", function(d) {
+                var sign = false;
+                history.forEach(function(d0) {
+                    if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
+                        sign = true;
+                    }
+                })
+                if (sign) {
+                    return;
+                }
                 history.push(d);
                 if (history.length > 8) {
                     history.shift();
