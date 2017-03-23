@@ -23,6 +23,7 @@ export{default as toolsGetUrlParam} from "./src/tools/getUrlParam"
 export{default as toolsRandomString} from "./src/tools/randomString"
 export{default as toolsParseRegions} from "./src/tools/parseRegions"
 export{default as toolsFixRegions} from "./src/tools/fixRegions"
+export{default as toolsAddPanelTo} from "./src/tools/addPanelTo"
 
 
 export{default as simpleMonitor} from "./src/simpleMonitor"
