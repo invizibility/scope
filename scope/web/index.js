@@ -25,6 +25,11 @@ export{default as toolsParseRegions} from "./src/tools/parseRegions"
 export{default as toolsFixRegions} from "./src/tools/fixRegions"
 export{default as toolsAddPanelTo} from "./src/tools/addPanelTo"
 
+export{default as toolsRegionText} from "./src/tools/regionText"
+export{default as toolsRegionsText} from "./src/tools/regionsText"
+export{default as toolsTrimChrPrefix} from "./src/tools/trimChrPrefix"
+export{default as toolsAddChrPrefix} from "./src/tools/addChrPrefix"
+
 
 export{default as simpleMonitor} from "./src/simpleMonitor"
 export{default as panel} from "./src/panel"

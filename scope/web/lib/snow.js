@@ -2330,6 +2330,42 @@ var addPanelTo = function (el) {
     }
 };
 
+var regionText = function(d) {
+    return d.chr + ":" + d.start + "-" + d.end
+};
+
+var regionsText = function(regions) {
+    var r = [];
+    regions.forEach(function(d) {
+        r.push(regionText(d));
+    });
+    return r.join(",")
+};
+
+var trimChrPrefix = function(r) {
+    var a = [];
+    r.forEach(function(d) {
+        a.push({
+            "chr": d.chr.replace("chr", "").replace("Chr",""),
+            "start": d.start,
+            "end": d.end
+        });
+    });
+    return a
+};
+
+var addChrPrefix = function(r) { 
+    var s = [];
+    r.forEach(function(d) {
+        s.push({
+            "start": d.start,
+            "end": d.end,
+            "chr": "chr" + d.chr.replace("chr", "").replace("Chr","")
+        });
+    });
+    return s
+};
+
 /*
  * region , brush ,update monitor
  *
@@ -2443,6 +2479,10 @@ exports.toolsRandomString = randomString;
 exports.toolsParseRegions = parseRegions;
 exports.toolsFixRegions = fixRegions;
 exports.toolsAddPanelTo = addPanelTo;
+exports.toolsRegionText = regionText;
+exports.toolsRegionsText = regionsText;
+exports.toolsTrimChrPrefix = trimChrPrefix;
+exports.toolsAddChrPrefix = addChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
 
