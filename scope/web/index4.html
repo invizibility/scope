@@ -38,15 +38,8 @@
         paraNames.forEach(function(d) {
             scope[d] = S.toolsGetUrlParam(d)
         })
-        var history = [] //history stack for forward and backward.
-        var historyData = [] //history data; no re-render.
-        dispatch.on("update.history", function(d) {
-            history.push(d)
-            console.log("history", history) //TEST
-            if (history.length > 100) {
-                history.shift();
-            }
-        })
+
+
         var H = S.dataHic2;
         var B = S.dataBigwig;
         var simple = S.simpleRenderer
@@ -207,14 +200,26 @@
                         type: "column",
                         width: 20,
                         content: [{
-                                type: 'component',
-                                componentName: 'ctrl',
+                                type: 'stack',
                                 height: 30,
-                                componentState: {
-                                    text: 'CTRL'
-                                }
+                                content: [{
+                                        type: 'component',
+                                        componentName: 'ctrl',
+                                        title: 'regions',
+                                        componentState: {
+                                            text: 'regions ctrl'
+                                        }
+                                    },
+                                    {
+                                        type: 'component',
+                                        componentName: 'history',
+                                        title: 'history',
+                                        componentState: {
+                                            text: 'history'
+                                        }
+                                    },
+                                ]
                             },
-
                             {
                                 type: 'stack',
                                 height: 30,
@@ -241,9 +246,9 @@
                         type: 'component',
                         componentName: 'canvas',
                         title: 'Scope',
+                        render: hicRenderer,
                         componentState: {
                             title: 'Canvas',
-                            render: hicRenderer,
                         }
                     },
                     {
@@ -256,7 +261,6 @@
                                 title: 'Simple',
                                 componentState: {
                                     text: 'Simple',
-                                    render: simple
                                 }
                             },
                             {
@@ -265,7 +269,6 @@
                                 title: 'Network',
                                 componentState: {
                                     text: "TODO1",
-                                    render: simple
                                 }
                             },
                             {
@@ -274,7 +277,6 @@
                                 title: '3D',
                                 componentState: {
                                     text: "TODO2",
-                                    render: simple
                                 }
                             }
                         ]
@@ -286,10 +288,13 @@
 
         //var dispatch = d3.dispatch("resize")
         var myLayout,
+
             savedState = localStorage.getItem(stateId);
 
         if (savedState !== null) {
             myLayout = new GoldenLayout(JSON.parse(savedState));
+            //myLayout.content[0][1].componentStarte.render = hicRenderer
+
         } else {
             myLayout = new GoldenLayout(config);
         }
@@ -301,7 +306,27 @@
             localStorage.setItem(stateId, state);
         });
 
+        myLayout.registerComponent("history", function(container, state) {
+            var history = [];
+            var ul = d3.select(container.getElement()[0]).append("ul")
+            myLayout.eventHub.on("update", function(d) {
+                history.push(d);
+                if (history.length > 8) {
+                    history.shift();
+                }
+                var li = ul.selectAll("li").data(history.reverse())
+                li.enter().append("li")
+                    .merge(li)
+                    .text(function(d) {
+                        return S.toolsRegionsText(d)
+                    })
+                    .on("click", function(d) {
+                        myLayout.eventHub.emit("input", d)
+                    })
+                li.exit().remove();
 
+            })
+        })
 
         myLayout.registerComponent('ctrl', function(container, state) {
             var input = $('<input type="text" />')
@@ -406,7 +431,9 @@
         myLayout.registerComponent('canvas', function(container, state) {
             //var hic = {}
             //var scope = {} //TODO change it to component state;
-            state.render(myLayout, container, state)
+            console.log("container", container)
+            console.log("state", state)
+            hicRenderer(myLayout, container, state)
         });
 
 
@@ -414,7 +441,7 @@
             if (state.text) {
                 container.getElement().html('<h3>' + state.text + '</h3>');
             }
-            state.render(myLayout, container, state)
+            simple(myLayout, container, state)
         })
 
         myLayout.init();
