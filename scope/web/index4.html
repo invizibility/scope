@@ -22,52 +22,7 @@
 <script>
     (function($, d3, S) {
         /* Static Functions */
-        var regionText = function(d) {
-            return d.chr + ":" + d.start + "-" + d.end
-        }
-        var regionsText = function(regions) {
-            var r = []
-            regions.forEach(function(d) {
-                r.push(regionText(d))
-            })
-            return r.join(",")
-        }
-        var trimChrPrefix = function(r) {
-            var a = []
-            r.forEach(function(d) {
-                a.push({
-                    "chr": d.chr.replace("chr", ""),
-                    "start": d.start,
-                    "end": d.end
-                })
-            })
-            return a
-        }
-        var addChrPrefix = function(r) { //TODO fix using idx , XY bug
-            var s = []
-            r.forEach(function(d) {
-                s.push({
-                    "start": d.start,
-                    "end": d.end,
-                    "chr": "chr" + d.chr
-                })
-            })
-            console.log(s)
-            return s
-        }
-        var initPanel = function(el) {
-            var panel = el.append("div").classed("panel", true)
-            var head = panel.append("div").classed("panel-heading", true)
-            var body = panel.append("div").classed("panel-body", true)
-            return {
-                "panel": panel,
-                "head": head,
-                "body": body
-            }
-        }
-
         /* End of Static Functions */
-
         /* Global Variables */
         var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
         var init = {
@@ -155,6 +110,7 @@
                                 type: 'component',
                                 height: 30,
                                 componentName: 'monitor',
+                                title: 'Simple',
                                 componentState: {
                                     text: 'TODO 3D'
                                 }
@@ -162,6 +118,7 @@
                             {
                                 type: 'component',
                                 componentName: 'todo',
+                                title: 'Network',
                                 componentState: {
                                     text: "TODO1"
                                 }
@@ -169,6 +126,7 @@
                             {
                                 type: 'component',
                                 componentName: 'todo',
+                                title: '3D',
                                 componentState: {
                                     text: "TODO2"
                                 }
@@ -196,7 +154,6 @@
             localStorage.setItem(stateId, state);
         });
         myLayout.registerComponent('ctrl', function(container, state) {
-            //container.getElement().html('<h2>' + state.text + '</h2>');
 
             var input = $('<input type="text" />')
             if (state.regionTxt) {
@@ -231,7 +188,7 @@
             var currentBody = current.append("div")
             myLayout.eventHub.on("update", function(d) {
                 currentRegions = d;
-                currentBody.html(regionsText(d))
+                currentBody.html(S.toolsRegionsText(d))
             })
             var btn = currentHead.append("input")
                 .attr("type", "button")
@@ -305,10 +262,10 @@
             var div1 = d3.select(container.getElement()[0]).append("div");
             var div2 = d3.select(container.getElement()[0]).append("div");
             myLayout.eventHub.on("brush", function(d) {
-                div2.html("BRUSHING   " + regionsText(d))
+                div2.html("BRUSHING   " + S.toolsRegionsText(d))
             })
             myLayout.eventHub.on("update", function(d) {
-                div1.html("CURRENT   " + regionsText(d))
+                div1.html("CURRENT   " + S.toolsRegionsText(d))
                 div2.html("")
             })
         });
@@ -371,7 +328,7 @@
                         .y(scope.edge / 2 + 40 + i * 80)
                         .width(scope.edge)
                         .gap(20) //TODO REMV
-                        .regions(addChrPrefix(regions))
+                        .regions(S.toolsAddChrPrefix(regions))
                         .panel(main)
                         .mode(1)
                         .pos(i)
@@ -381,7 +338,6 @@
                     bw.forEach(function(b, i) {
                         b.response(e)
                     })
-                    //myLayout.eventHub.emit("brush", e)
                 })
                 bw.forEach(function(b) {
                     canvas.call(b)
@@ -401,14 +357,6 @@
                 axesG.call(scopebrush)
 
                 var hicPara = function(d) {
-                    console.log(d)
-                    /*
-                    var paratable = S.paraTable().data(d)
-                    threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
-                    d.cutoff = d.max
-                    hic.paras = d;
-                    hic.monitor.call(paratable)
-                    */
                     myLayout.eventHub.emit("hicmonitor", d)
                 }
                 hic.state = hic.ctrl.state();
