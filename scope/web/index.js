@@ -33,3 +33,6 @@ export{default as toolsAddChrPrefix} from "./src/tools/addChrPrefix"
 
 export{default as simpleMonitor} from "./src/simpleMonitor"
 export{default as panel} from "./src/panel"
+
+
+export{default as simpleRenderer} from "./src/renderer/simple"
