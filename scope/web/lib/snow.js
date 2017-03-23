@@ -2442,6 +2442,7 @@ exports.toolsGetUrlParam = getUrlParam;
 exports.toolsRandomString = randomString;
 exports.toolsParseRegions = parseRegions;
 exports.toolsFixRegions = fixRegions;
+exports.toolsAddPanelTo = addPanelTo;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
 
