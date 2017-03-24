@@ -186,7 +186,7 @@
                 render(d)
             })
             layout.eventHub.on("replot", function(d) {
-                layout.eventHub.emit("update", state.reigions || testBeds)
+                //layout.eventHub.emit("update", state.reigions || testBeds)
                 render(state.regions || testBeds)
             })
         }
