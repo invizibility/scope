@@ -433,7 +433,11 @@
             var hicmonitor = main.append("div")
             myLayout.eventHub.on("hiccfg", function(data) {
                 hic.ctrl = H.chart().data(data)
+                console.log("hic state", container.getState().state)
                 hiccfg.call(hic.ctrl)
+                if (container.getState().state) {
+                    hic.ctrl.state(container.getState().state)
+                }
             })
             myLayout.eventHub.on("hicmonitor", function(d) {
                 var paratable = S.paraTable().data(d)
@@ -441,6 +445,14 @@
                 d.cutoff = d.max
                 hic.paras = d;
                 hicmonitor.call(paratable)
+            })
+            myLayout.eventHub.on("update", function(d) {
+
+                if (hic.ctrl) {
+                    container.extendState({
+                        state: hic.ctrl.state()
+                    });
+                }
             })
 
         });
