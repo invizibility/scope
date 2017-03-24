@@ -27,8 +27,7 @@
             "bigwig": false,
             "hic": false
         }
-        var paraNames = [] //TODO, this is a example
-        //TODO get localStorage
+        var paraNames = ["q"] //TODO, this is a example
         var scope = {
             "background": "#BBB"
         };
@@ -169,7 +168,7 @@
                 container.extendState({
                     "regions": d
                 });
-                state.regions = regions;
+                state.regions = regions; //TODO FIXed
                 layout.eventHub.emit("update", d)
                 if (init.bigwig) {
                     renderBigwig(regions)
@@ -327,6 +326,7 @@
             localStorage.setItem(stateId, state);
         });
 
+
         renders.historyCtrl = function(layout, container, state) {
             var history = [];
             var initsign = false;
@@ -381,6 +381,7 @@
 
             container.getElement().append(input);
             var currentRegions;
+
             var btn = d3.select(container.getElement()[0])
                 .append("input")
                 .attr("type", "button")
@@ -488,8 +489,6 @@
             var r = renders[state.render] || S.render[state.render] || simple
             r(myLayout, container, state)
         });
-
-
         myLayout.registerComponent("monitor", function(container, state) {
             if (state.text) {
                 container.getElement().html('<h3>' + state.text + '</h3>');
@@ -499,6 +498,12 @@
         })
 
         myLayout.init();
+        myLayout.on("initialised", function() {
+            if (scope.q != undefined) {
+                console.log(scope.q)
+                myLayout.eventHub.emit("input", S.toolsParseRegions(scope.q))
+            }
+        })
 
     }(jQuery, d3, snow))
 </script>
