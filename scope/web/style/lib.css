@@ -54,3 +54,7 @@ canvas {
 .navbar {
   min-height:20px !important;
 }
+
+.h:hover {
+    background-color: #DDE000;
+}

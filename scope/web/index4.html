@@ -21,6 +21,132 @@
 <script type="text/javascript" src="/lib0/snow.js"></script>
 <script>
     (function($, d3, S) {
+            /* Global Variables */
+            var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
+            var init = {
+                "bigwig": false,
+                "hic": false
+            }
+            var paraNames = ["q"] //TODO, this is a example
+            var scope = {
+                "background": "#BBB"
+            };
+            var layout = {
+
+            }
+            paraNames.forEach(function(d) {
+                scope[d] = S.toolsGetUrlParam(d)
+            })
+
+
+            var H = S.dataHic2;
+            var B = S.dataBigwig;
+            var simple = S.render.simple
+
+            /* End of Global Variables */
+            var hic = {} //Move To MyLayout States?
+            var stateId = "genomeScopeState002"
+
+
+            var hicRenderer = function(layout, container, state) {
+                    //TODO RM Global Variables, make it as a renderer in Snow;
+                    var main = d3.select(container.getElement()[0]).style("position", "relative")
+                    var canvas = main.append("canvas")
+                    var svg = main.append("svg")
+                    var div = main.append("div").style("position", "absolute")
+                        .style("top", 10).style("left", 10).style("width", 100).style("height", 100)
+                    /* CTRL Inside */
+                    var btn = div.append("input")
+                        .attr("type", "button")
+                        .attr("value", "replot")
+                        .on("click", function() {
+                            layout.eventHub.emit("replot")
+                        })
+                    var btnZoomOut = div.append("input")
+                        .attr("type", "button")
+                        //.classed("btn", true)
+                        .attr("value", "zoom out")
+                        .on("click", function() {
+                            //var regions = region.ctrl.regions(); //or states?
+                            var regions = state.regions
+                            regions.forEach(function(d, i) {
+                                d.length = 500000000 //TODO FIXed; map for chromosome length;
+                                var l = d.end - d.start
+                                regions[i].start = d.start - l < 0 ? 0 : d.start - l
+                                regions[i].end = d.end + l > d.length ? d.length : d.end + l
+                            })
+                            regions = S.toolsFixRegions(regions)
+                            //dispatch.call("update", this, regions)
+                            layout.eventHub.emit("input", regions)
+                        })
+
+                    var btnZoomIn = div.append("input")
+                        .attr("type", "button")
+                        .attr("value", "zoom in")
+                        .on("click", function() {
+                            var regions = state.regions
+                            regions.forEach(function(d, i) {
+                                var l = Math.round((d.end - d.start) / 3)
+                                regions[i].start = d.start + l
+                                regions[i].end = d.end - l
+                            })
+                            regions = S.toolsFixRegions(regions)
+                            //dispatch.call("update", this, regions)
+                            layout.eventHub.emit("input", regions) //TODO
+                        })
+                    var axesG = svg.append("g").attr("transform", "translate(10,0)")
+                    container.on("resize", function(e) {
+                        canvas.attr("height", container.height)
+                            .attr("width", container.width)
+                        svg.attr("height", container.height)
+                            .attr("width", container.width)
+                        scope.edge = container.width - 40
+                        scope.width = container.width
+                        scope.height = container.height
+                        layout.eventHub.emit("replot")
+                    })
+
+                    var URI = "/hic"
+                    var testBeds = [{
+                                chr: "1",
+                                start: 0,
+                                end: 10000000
+                            }, <
+                            html >
+
+                            <
+                            head >
+                            <
+                            title > Genome Scope < /title> <
+                            link rel = "stylesheet"
+                            href = "/css/bootstrap.min.css" >
+                            <
+                            link rel = "stylesheet"
+                            href = "/css/goldenlayout-base.css" >
+                            <
+                            link rel = "stylesheet"
+                            href = "/css/goldenlayout-light-theme.css" >
+                            <
+                            link rel = "stylesheet"
+                            href = "/style0/lib.css" >
+
+                            <
+                            script type = "text/javascript"
+                            src = "/lib/jquery.min.js" >
+</script>
+<script type="text/javascript" src="/lib/bootstrap.min.js"></script>
+<script type="text/javascript" src="/lib/goldenlayout.min.js"></script>
+
+<script type="text/javascript" src="/lib/d3.v4.min.js"></script>
+<script type="text/javascript" src="/lib/d3-queue.v2.min.js"></script>
+<script type="text/javascript" src="/lib/d3-request.v1.min.js"></script>
+</head>
+
+<body>
+</body>
+<script type="text/javascript" src="/lib0/snow.js"></script>
+<script>
+    (function($, d3, S) {
         /* Global Variables */
         var dispatch = d3.dispatch("init", "update", "update0", "update1", "brush", "domainHic", "resize");
         var init = {
@@ -53,6 +179,47 @@
             var main = d3.select(container.getElement()[0]).style("position", "relative")
             var canvas = main.append("canvas")
             var svg = main.append("svg")
+            var div = main.append("div").style("position", "absolute")
+                .style("top", 10).style("left", 10).style("width", 100).style("height", 100)
+            /* CTRL Inside */
+            var btn = div.append("input")
+                .attr("type", "button")
+                .attr("value", "replot")
+                .on("click", function() {
+                    layout.eventHub.emit("replot")
+                })
+            var btnZoomOut = div.append("input")
+                .attr("type", "button")
+                //.classed("btn", true)
+                .attr("value", "zoom out")
+                .on("click", function() {
+                    //var regions = region.ctrl.regions(); //or states?
+                    var regions = state.regions
+                    regions.forEach(function(d, i) {
+                        d.length = 500000000 //TODO FIXed; map for chromosome length;
+                        var l = d.end - d.start
+                        regions[i].start = d.start - l < 0 ? 0 : d.start - l
+                        regions[i].end = d.end + l > d.length ? d.length : d.end + l
+                    })
+                    regions = S.toolsFixRegions(regions)
+                    //dispatch.call("update", this, regions)
+                    layout.eventHub.emit("input", regions)
+                })
+
+            var btnZoomIn = div.append("input")
+                .attr("type", "button")
+                .attr("value", "zoom in")
+                .on("click", function() {
+                    var regions = state.regions
+                    regions.forEach(function(d, i) {
+                        var l = Math.round((d.end - d.start) / 3)
+                        regions[i].start = d.start + l
+                        regions[i].end = d.end - l
+                    })
+                    regions = S.toolsFixRegions(regions)
+                    //dispatch.call("update", this, regions)
+                    layout.eventHub.emit("input", regions) //TODO
+                })
             var axesG = svg.append("g").attr("transform", "translate(10,0)")
             container.on("resize", function(e) {
                 canvas.attr("height", container.height)
@@ -353,7 +520,7 @@
                     history: history
                 })
                 var li = ul.selectAll("li").data(history.reverse())
-                li.enter().append("li")
+                li.enter().append("li").classed("h", true)
                     .merge(li)
                     .text(function(d) {
                         return S.toolsRegionsText(d)
@@ -403,44 +570,6 @@
                 currentRegions = d;
                 currentBody.html(S.toolsRegionsText(d))
             })
-            var btn = currentHead.append("input")
-                .attr("type", "button")
-                .attr("value", "replot")
-                .on("click", function() {
-                    layout.eventHub.emit("replot")
-                })
-            var btnZoomOut = currentHead.append("input")
-                .attr("type", "button")
-                //.classed("btn", true)
-                .attr("value", "zoom out")
-                .on("click", function() {
-                    //var regions = region.ctrl.regions(); //or states?
-                    var regions = currentRegions
-                    regions.forEach(function(d, i) {
-                        d.length = 500000000 //TODO FIXed; map for chromosome length;
-                        var l = d.end - d.start
-                        regions[i].start = d.start - l < 0 ? 0 : d.start - l
-                        regions[i].end = d.end + l > d.length ? d.length : d.end + l
-                    })
-                    regions = S.toolsFixRegions(regions)
-                    //dispatch.call("update", this, regions)
-                    layout.eventHub.emit("input", regions)
-                })
-
-            var btnZoomIn = currentHead.append("input")
-                .attr("type", "button")
-                .attr("value", "zoom in")
-                .on("click", function() {
-                    var regions = currentRegions
-                    regions.forEach(function(d, i) {
-                        var l = Math.round((d.end - d.start) / 3)
-                        regions[i].start = d.start + l
-                        regions[i].end = d.end - l
-                    })
-                    regions = S.toolsFixRegions(regions)
-                    //dispatch.call("update", this, regions)
-                    layout.eventHub.emit("input", regions) //TODO
-                })
         }
 
         renders.hicCtrl = function(layout, container, state) {
