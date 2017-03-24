@@ -2486,6 +2486,10 @@ var simple = function(layout, container, state) {
     });
 };
 
+var render = {
+  simple : simple
+};
+
 exports.symbolTriangle = triangle;
 exports.brush = brush;
 exports.axis = axis;
@@ -2511,7 +2515,7 @@ exports.toolsTrimChrPrefix = trimChrPrefix;
 exports.toolsAddChrPrefix = addChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
-exports.simpleRenderer = simple;
+exports.render = render;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

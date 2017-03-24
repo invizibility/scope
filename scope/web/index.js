@@ -35,4 +35,4 @@ export{default as simpleMonitor} from "./src/simpleMonitor"
 export{default as panel} from "./src/panel"
 
 
-export{default as simpleRenderer} from "./src/renderer/simple"
+export{default as render} from "./src/render"
