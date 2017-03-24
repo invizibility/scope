@@ -46,7 +46,7 @@
 
         /* End of Global Variables */
         var hic = {} //Move To MyLayout States?
-        var stateId = "genomeScopeState001"
+        var stateId = "genomeScopeState002"
 
 
         var hicRenderer = function(layout, container, state) {
@@ -193,7 +193,9 @@
         }
 
         var renders = {
-            "hic": hicRenderer
+            "hic": hicRenderer,
+            "simple": S.render.simple,
+
         }
         var config = {
             settings: {
@@ -216,15 +218,17 @@
                                         componentName: 'ctrl',
                                         title: 'regions',
                                         componentState: {
-                                            text: 'regions ctrl'
+                                            text: 'regions ctrl',
+                                            render: "regionCtrl"
                                         }
                                     },
                                     {
                                         type: 'component',
-                                        componentName: 'history',
+                                        componentName: 'ctrl',
                                         title: 'history',
                                         componentState: {
-                                            text: 'history'
+                                            text: 'history',
+                                            render: "historyCtrl"
                                         }
                                     },
                                 ]
@@ -234,16 +238,20 @@
                                 height: 30,
                                 content: [{
                                         type: 'component',
-                                        componentName: 'hic',
+                                        componentName: 'ctrl',
+                                        title: "hic",
                                         componentState: {
-                                            text: 'HIC CTRL'
+                                            text: 'HIC CTRL',
+                                            render: "hicCtrl"
                                         }
                                     },
                                     {
                                         type: 'component',
-                                        componentName: 'bigwig',
+                                        componentName: 'ctrl',
+                                        title: "bigwig",
                                         componentState: {
-                                            text: 'BigWig CTRL'
+                                            text: 'BigWig CTRL',
+                                            render: "bigwigCtrl"
                                         }
                                     },
 
@@ -319,10 +327,15 @@
             localStorage.setItem(stateId, state);
         });
 
-        myLayout.registerComponent("history", function(container, state) {
+        renders.historyCtrl = function(layout, container, state) {
             var history = [];
+            var initsign = false;
             var ul = d3.select(container.getElement()[0]).append("ul")
-            myLayout.eventHub.on("update", function(d) {
+            if (container.getState().history && initsign == false) {
+                history = container.getState().history
+                initsign = true; //load once.
+            }
+            layout.eventHub.on("update", function(d) {
                 var sign = false;
                 history.forEach(function(d0) {
                     if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
@@ -336,6 +349,9 @@
                 if (history.length > 8) {
                     history.shift();
                 }
+                container.extendState({
+                    history: history
+                })
                 var li = ul.selectAll("li").data(history.reverse())
                 li.enter().append("li")
                     .merge(li)
@@ -348,9 +364,9 @@
                 li.exit().remove();
 
             })
-        })
+        }
 
-        myLayout.registerComponent('ctrl', function(container, state) {
+        renders.regionCtrl = function(layout, container, state) {
             var input = $('<input type="text" />')
             if (state.regionTxt) {
                 input.val(state.regionTxt); //for now.
@@ -373,7 +389,7 @@
                     var r = S.toolsParseRegions(input.val())
                     //TODO: check input formats;
                     currentRegions = r;
-                    myLayout.eventHub.emit("input", r)
+                    layout.eventHub.emit("input", r)
                 })
 
             var body = d3.select(container.getElement()[0])
@@ -382,7 +398,7 @@
             var currentHead = current.append("div")
             currentHead.html("<h3>current regions</h3>")
             var currentBody = current.append("div")
-            myLayout.eventHub.on("update", function(d) {
+            layout.eventHub.on("update", function(d) {
                 currentRegions = d;
                 currentBody.html(S.toolsRegionsText(d))
             })
@@ -390,7 +406,7 @@
                 .attr("type", "button")
                 .attr("value", "replot")
                 .on("click", function() {
-                    myLayout.eventHub.emit("replot")
+                    layout.eventHub.emit("replot")
                 })
             var btnZoomOut = currentHead.append("input")
                 .attr("type", "button")
@@ -407,7 +423,7 @@
                     })
                     regions = S.toolsFixRegions(regions)
                     //dispatch.call("update", this, regions)
-                    myLayout.eventHub.emit("input", regions)
+                    layout.eventHub.emit("input", regions)
                 })
 
             var btnZoomIn = currentHead.append("input")
@@ -422,31 +438,33 @@
                     })
                     regions = S.toolsFixRegions(regions)
                     //dispatch.call("update", this, regions)
-                    myLayout.eventHub.emit("input", regions) //TODO
+                    layout.eventHub.emit("input", regions) //TODO
                 })
-        });
+        }
 
-        myLayout.registerComponent('hic', function(container, state) {
+        renders.hicCtrl = function(layout, container, state) {
             //container.getElement().html('<h2>' + state.text + '</h2>');
             var main = d3.select(container.getElement()[0])
             var hiccfg = main.append("div")
             var hicmonitor = main.append("div")
-            myLayout.eventHub.on("hiccfg", function(data) {
+            var sign = false;
+            layout.eventHub.on("hiccfg", function(data) {
                 hic.ctrl = H.chart().data(data)
                 console.log("hic state", container.getState().state)
                 hiccfg.call(hic.ctrl)
-                if (container.getState().state) {
+                if (container.getState().state && sign == false) {
                     hic.ctrl.state(container.getState().state)
+                    sign = true; //load once.
                 }
             })
-            myLayout.eventHub.on("hicmonitor", function(d) {
+            layout.eventHub.on("hicmonitor", function(d) {
                 var paratable = S.paraTable().data(d)
                 //threshold.attr("max", d.max).attr("min", d.min).attr("value", d.max)
                 d.cutoff = d.max
                 hic.paras = d;
                 hicmonitor.call(paratable)
             })
-            myLayout.eventHub.on("update", function(d) {
+            layout.eventHub.on("update", function(d) {
 
                 if (hic.ctrl) {
                     container.extendState({
@@ -455,15 +473,19 @@
                 }
             })
 
-        });
+        }
 
-        myLayout.registerComponent('bigwig', function(container, state) {
+        renders.bigwigCtrl = function(myLayout, container, state) {
             container.getElement().html('<h2>' + state.text + '</h2>');
+        };
 
+        myLayout.registerComponent('ctrl', function(container, state) {
+            //container.getElement().html('<h2>' + state.text + '</h2>');
+            var r = renders[state.render] || S.render[state.render] || simple
+            r(myLayout, container, state)
         });
-
         myLayout.registerComponent('canvas', function(container, state) {
-            var r = S.render[state.render] || renders[state.render] || simple
+            var r = renders[state.render] || S.render[state.render] || simple
             r(myLayout, container, state)
         });
 
@@ -472,7 +494,7 @@
             if (state.text) {
                 container.getElement().html('<h3>' + state.text + '</h3>');
             }
-            var r = S.render[state.render] || renders[state.render] || simple
+            var r = renders[state.render] || S.render[state.render] || simple
             r(myLayout, container, state)
         })
 
