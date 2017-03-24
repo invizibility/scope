@@ -132,6 +132,9 @@
 
                 var hicPara = function(d) {
                     layout.eventHub.emit("hicmonitor", d)
+                    var ctx = canvas.node().getContext("2d");
+                    ctx.fillStyle = scope.background
+                    ctx.fillRect(0, scope.width / 2 - 10, scope.width, 40)
                 }
                 hic.state = hic.ctrl.state();
                 hic.chart = H.canvas()
@@ -152,6 +155,8 @@
                     })
                     .callback(hicPara)
                 canvas.call(hic.chart)
+                //TODO Fix OverFlow.
+
 
 
             }
