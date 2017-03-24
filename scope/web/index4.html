@@ -42,10 +42,11 @@
 
         var H = S.dataHic2;
         var B = S.dataBigwig;
-        var simple = S.simpleRenderer
+        var simple = S.render.simple
+
         /* End of Global Variables */
         var hic = {} //Move To MyLayout States?
-        var stateId = "genomeScopeState000"
+        var stateId = "genomeScopeState001"
 
 
         var hicRenderer = function(layout, container, state) {
@@ -186,6 +187,9 @@
             })
         }
 
+        var renders = {
+            "hic": hicRenderer
+        }
         var config = {
             settings: {
                 showPopoutIcon: false,
@@ -249,6 +253,7 @@
                         render: hicRenderer,
                         componentState: {
                             title: 'Canvas',
+                            render: "hic"
                         }
                     },
                     {
@@ -261,6 +266,7 @@
                                 title: 'Simple',
                                 componentState: {
                                     text: 'Simple',
+                                    render: "simple"
                                 }
                             },
                             {
@@ -269,6 +275,7 @@
                                 title: 'Network',
                                 componentState: {
                                     text: "TODO1",
+                                    render: "simple"
                                 }
                             },
                             {
@@ -277,6 +284,7 @@
                                 title: '3D',
                                 componentState: {
                                     text: "TODO2",
+                                    render: "simple"
                                 }
                             }
                         ]
@@ -438,11 +446,8 @@
         });
 
         myLayout.registerComponent('canvas', function(container, state) {
-            //var hic = {}
-            //var scope = {} //TODO change it to component state;
-            console.log("container", container)
-            console.log("state", state)
-            hicRenderer(myLayout, container, state)
+            var r = S.render[state.render] || renders[state.render] || simple
+            r(myLayout, container, state)
         });
 
 
@@ -450,7 +455,8 @@
             if (state.text) {
                 container.getElement().html('<h3>' + state.text + '</h3>');
             }
-            simple(myLayout, container, state)
+            var r = S.render[state.render] || renders[state.render] || simple
+            r(myLayout, container, state)
         })
 
         myLayout.init();
