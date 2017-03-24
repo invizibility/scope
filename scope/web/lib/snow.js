@@ -1458,13 +1458,20 @@ var hic2 = {
             color2Input = colorInputDiv.append("input").attr("type", "color")
                 .attr("value", "#FF0000");
         };
-        chart.state = function () {
+        chart.state = function (_) {
+            if (!arguments.length) {
             return {
                 "unit": unitInput.node().value,
                 "norm": normInput.node().value,
                 "color1": color1Input.node().value,
                 "color2": color2Input.node().value
             }
+          } else {
+            unitInput.node().value = _.unit || 0;
+            normInput.node().value = _.norm || 0;
+            color1Input.node().value = _.color1 || "#FFF";
+            color2Input.node().value = _.color2 || "#F00";
+          }
         };
         chart.data = function (_) {
             return arguments.length ? (data = _, chart) : data;
