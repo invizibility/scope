@@ -60,7 +60,7 @@
                     .attr("width", container.width)
                 svg.attr("height", container.height)
                     .attr("width", container.width)
-                scope.edge = container.width - 20
+                scope.edge = container.width - 40
                 scope.width = container.width
                 scope.height = container.height
                 layout.eventHub.emit("replot")
@@ -134,7 +134,7 @@
                     layout.eventHub.emit("hicmonitor", d)
                     var ctx = canvas.node().getContext("2d");
                     ctx.fillStyle = scope.background
-                    ctx.fillRect(0, scope.width / 2 - 10, scope.width, 40)
+                    ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
                 }
                 hic.state = hic.ctrl.state();
                 hic.chart = H.canvas()
