@@ -180,7 +180,7 @@
             var canvas = main.append("canvas")
             var svg = main.append("svg")
             var div = main.append("div").style("position", "absolute")
-                .style("top", 10).style("left", 10).style("width", 100).style("height", 100)
+                .style("top", 10).style("left", 10).style("width", container.width / 2).style("height", 100)
             /* CTRL Inside */
             var btn = div.append("input")
                 .attr("type", "button")
@@ -188,10 +188,9 @@
                 .on("click", function() {
                     layout.eventHub.emit("replot")
                 })
-            var btnZoomOut = div.append("input")
-                .attr("type", "button")
-                //.classed("btn", true)
-                .attr("value", "zoom out")
+            var btnZoomOut = div.append("button")
+                .classed("btn", true)
+                .html('<small><span class="glyphicon glyphicon-zoom-out"></span></small>')
                 .on("click", function() {
                     //var regions = region.ctrl.regions(); //or states?
                     var regions = state.regions
@@ -206,9 +205,9 @@
                     layout.eventHub.emit("input", regions)
                 })
 
-            var btnZoomIn = div.append("input")
-                .attr("type", "button")
-                .attr("value", "zoom in")
+            var btnZoomIn = div.append("button")
+                .classed("btn", true)
+                .html('<small><span class="glyphicon glyphicon-zoom-in"></span></small>')
                 .on("click", function() {
                     var regions = state.regions
                     regions.forEach(function(d, i) {
@@ -219,6 +218,7 @@
                     regions = S.toolsFixRegions(regions)
                     //dispatch.call("update", this, regions)
                     layout.eventHub.emit("input", regions) //TODO
+
                 })
             var axesG = svg.append("g").attr("transform", "translate(10,0)")
             container.on("resize", function(e) {
