@@ -1,0 +1,77 @@
+.navbar-nav>li>a, .navbar-brand {
+    padding-top: 5px !important;
+    padding-bottom: 0 !important;
+    height: 30px;
+}
+
+.navbar {
+    min-height: 30px !important;
+    margin-bottom: 0px;
+}
+
+
+#wrapper {
+    height: 100%;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+#menuContainer {
+    width: 20%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #222;
+}
+
+#menuContainer li {
+    cursor: move;
+    border-bottom: 1px solid #000;
+    border-top: 1px solid #333;
+    cursor: pointer;
+    padding: 10px 5px;
+    color: #BBB;
+    background: #1a1a1a;
+    font: 12px Arial, sans-serif;
+}
+
+#menuContainer li:hover {
+    background: #111;
+    color: #CCC;
+}
+
+#layoutContainer {
+    width: 80%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 20%;
+    box-shadow: -3px 0px 9px 0px rgba( 0, 0, 0, 0.4);
+}
+
+
+.config{
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    float: left;
+    margin: 5px 5px 0 0;
+    cursor: pointer;
+    font-size: 10px;
+
+
+}
+
+.config {
+    width: 10px;
+    height: 10px;
+}
+.config:hover {
+  font-size: 12px;
+}
+
+.cfg {
+  display:none;
+}
