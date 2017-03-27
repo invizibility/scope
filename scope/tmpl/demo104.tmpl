@@ -1,0 +1,193 @@
+ {{define "title"}} demo104 {{end}} {{define "html"}}
+<html>
+
+<head>
+    <!--
+    template navbar
+    add parameter config panel. //toggle view render parameters. DONE
+    config change name demo. //Set Title.
+    //toggle side bar.
+    TODO:
+    //implement now scope into draggable version (render reusage)
+    add view and hide panels button , and hidden panel layouts?;
+    add data server config
+    add render config.
+    add input parameters.
+    create panel modules.
+    communication standarize.
+  -->
+    <title>{{template "title"}}</title>
+    {{template "lib"}} {{template "css"}}
+    <link rel="stylesheet" href="/style0/snow.css">
+
+</head>
+
+<body>
+    {{template "menubar"}}
+    <div id="wrapper">
+        <ul id="menuContainer"></ul>
+        <div id="layoutContainer"></div>
+    </div>
+    <template type="text/html" id="cfgbtn">
+  <div class='config'>
+    <span class='glyphicon glyphicon-cog'></span>
+  </div>
+</template>
+
+    <template type="text/html" id="panel">
+  <div class="content">
+  </div>
+  <div class="cfg">
+    config panel
+  </div>
+</template>
+</body>
+<script>
+    (function($) {
+        var dispatch = d3.dispatch("resize", "saveState")
+        var config = {
+            settings: {},
+            dimensions: {
+                borderWidth: 2
+            },
+            content: [{
+                type: 'row',
+                content: [{
+                        type: "component",
+                        componentName: "canvas",
+                        title: "canvas101",
+                        componentState: {
+                            "name": "101",
+                            "render": "simple",
+                            "server": "#"
+                        }
+                    },
+                    {
+                        type: "component",
+                        componentName: "canvas",
+                        title: "canvas102",
+                        componentState: {
+                            "name": "102",
+                            "render": "simple",
+                            "server": "#"
+
+                        }
+                    }
+                ]
+            }]
+        }
+        var stateId = "demo104"
+
+        var initPanels = function(config) {
+            var layout = new GoldenLayout(config, $('#layoutContainer'));
+            layout.registerComponent("canvas", function(container, state) {
+                if (state.name) {
+                    container.getElement().html('<h3>' + state.name + '</h3>');
+                }
+                var panel = $($('#panel').html())
+                container.getElement().append(panel)
+                //TODO renderer...
+            });
+            layout.on('stackCreated', function(stack) {
+                var toggle = $($('#cfgbtn').html())
+                stack.header.controlsContainer.prepend(toggle);
+                toggle.on("click", function() {
+                    toggleConfig();
+                })
+                var toggleConfig = function() {
+                    var container = stack.getActiveContentItem().container;
+                    var toggled = !container.getState().config
+                    container.extendState({
+                        config: toggled
+                    });
+                    console.log("set config to ", toggled)
+                    if (toggled) {
+                        var d = container.getElement().find(".cfg")
+                        container.extendState({
+                            "name": "New"
+                        })
+                        container.setTitle("New")
+                        d.show()
+                        d.html(
+                            JSON.stringify(container.getState(), 2)
+                            //TODO SET TITLE Change Config and Submit hide and show.
+                        )
+
+                    } else {
+                        container.getElement().find(".cfg").hide()
+                    }
+                };
+
+
+            });
+
+            layout.init()
+            $("#menuContainer").empty()
+            var addMenuItem = function(title, text) {
+                var element = $('<li>' + text + '</li>');
+                $('#menuContainer').append(element);
+
+                var newItemConfig = {
+                    title: title,
+                    type: 'component',
+                    componentName: 'canvas',
+                    componentState: {
+                        name: text
+                    }
+                };
+                layout.createDragSource(element, newItemConfig);
+            };
+
+            addMenuItem('Add me!', 'You\'ve added me!');
+            addMenuItem('Me too!', 'You\'ve added me too!');
+
+
+            dispatch.on("resize.inner", function(d) {
+                console.log("resize")
+                layout.updateSize();
+            })
+            dispatch.on("saveState", function() {
+                console.log("save state")
+                var state = JSON.stringify(layout.toConfig());
+                localStorage.setItem(stateId, state);
+            })
+        }
+        initPanels(config)
+        $("#sideToggle").on("click", function() {
+            console.log("still click")
+            if ($('#menuContainer').css('display') == 'none') {
+                console.log("show")
+                $("#menuContainer").show();
+                $("#layoutContainer").css(
+                    "width", "80%"
+                ).css("left", "20%");
+            } else {
+                console.log("hide")
+                $("#menuContainer").hide();
+                $("#layoutContainer").css(
+                    "width", "100%"
+                ).css("left", "0%");
+            }
+            dispatch.call("resize", this, {})
+        })
+        $("#save").on("click", function(d) {
+
+            dispatch.call("saveState")
+        })
+
+
+        $("#open").on("click", function(d) {
+            console.log("load state")
+            savedState = localStorage.getItem(stateId);
+            //console.log(JSON.parse(savedState))
+            $("#layoutContainer").empty()
+            initPanels(JSON.parse(savedState))
+            //layout.config(JSON.parse(savedState))
+
+        })
+
+    }(jQuery))
+</script>
+
+</html>
+{{end}}

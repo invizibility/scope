@@ -1,6 +1,6 @@
 package main
 
-//go:generate go-bindata-assetfs -pkg main web/...
+//go:generate go-bindata-assetfs -pkg main web/... templates/... tmpl/...
 import (
 	"html/template"
 	"log"
