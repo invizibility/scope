@@ -1,0 +1,33 @@
+{{define "title"}} GenomeScopeE5 {{end}} {{define "html"}}
+<html>
+
+<head>
+    <title>{{template "title"}}</title>
+    {{template "css"}}
+    <link rel="stylesheet" href="/style0/snow.css"> {{template "lib"}}
+    <script src="/lib0/snow.js"></script>
+</head>
+
+<body>
+    {{template "menubar"}}
+    <div id="wrapper">
+        <ul id="menuContainer"></ul>
+        <div id="layoutContainer"></div>
+    </div>
+    <template type="text/html" id="cfgbtn">
+  <div class='config'>
+    <span class='glyphicon glyphicon-cog'></span>
+  </div>
+</template>
+
+    <template type="text/html" id="panel">
+  <div class="content">
+  </div>
+  <div class="cfg">
+    config panel
+  </div>
+</template>
+</body>
+
+</html>
+{{end}}
