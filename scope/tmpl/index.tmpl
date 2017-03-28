@@ -1,4 +1,4 @@
-{{define "title"}} GenomeScopeE5 {{end}} {{define "html"}}
+{{define "title"}} ScopeE5 {{end}} {{define "html"}}
 <html>
 
 <head>
@@ -11,7 +11,9 @@
 <body>
     {{template "menubar"}}
     <div id="wrapper">
-        <ul id="menuContainer"></ul>
+        <ul id="menuContainer">
+            <li id="test1">TestInput1</li>
+        </ul>
         <div id="layoutContainer"></div>
     </div>
     <template type="text/html" id="cfgbtn">
@@ -28,6 +30,418 @@
   </div>
 </template>
 </body>
+<script>
+    (function($, d3, S) {
+        //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
+        var hicRenderer = function(layout, container, state) {
+            //TODO RM Global Variables, make it as a renderer in Snow;
+            var H = S.dataHic2;
+            var B = S.dataBigwig;
+            var init = {
+                "bigwig": false,
+                "hic": false
+            }
+            //var paraNames = ["q"] //TODO, this is a example
+            var scope = {
+                "background": "#BBB"
+            };
+            var hic = {}
+
+
+            var dispatch = d3.dispatch("update", "brush")
+
+            var configPanel = d3.select(container.getElement()[0]).append("div")
+                .classed("cfg", true).style("position", "relative")
+            var hiccfg = configPanel.append("div")
+            //  var hicmonitor = main.append("div")
+            var sign = false;
+
+            layout.eventHub.on("hiccfg", function(data) {
+                hic.ctrl = H.chart().data(data)
+                //console.log("hic state", state.hicState)
+                hiccfg.call(hic.ctrl)
+                /*
+                if (state.hicState && sign == false) {
+                    hic.ctrl.state(state.hicState)
+                    sign = true; //load once.
+                }
+                */
+
+            })
+
+            var main = d3.select(container.getElement()[0])
+                .append("div")
+                .classed("content", true)
+                .style("position", "relative")
+
+
+            var canvas = main.append("canvas")
+            var svg = main.append("svg")
+            var div = main.append("div").style("position", "absolute")
+                .style("top", 10).style("left", 10).style("width", 30).style("height", 100)
+            /* CTRL Inside */
+            var btn = div.append("input")
+                .attr("type", "button")
+                .attr("value", "replot")
+                .on("click", function() {
+                    layout.eventHub.emit("replot")
+                })
+            var btnZoomOut = div.append("button")
+                .classed("btn", true)
+                .html('<small><span class="glyphicon glyphicon-zoom-out"></span></small>')
+                .on("click", function() {
+                    //var regions = region.ctrl.regions(); //or states?
+                    var regions = state.regions
+                    regions.forEach(function(d, i) {
+                        d.length = 500000000 //TODO FIXed; map for chromosome length;
+                        var l = d.end - d.start
+                        regions[i].start = d.start - l < 0 ? 0 : d.start - l
+                        regions[i].end = d.end + l > d.length ? d.length : d.end + l
+                    })
+                    regions = S.toolsFixRegions(regions)
+                    //dispatch.call("update", this, regions)
+                    layout.eventHub.emit("input", regions)
+                })
+
+            var btnZoomIn = div.append("button")
+                .classed("btn", true)
+                .html('<small><span class="glyphicon glyphicon-zoom-in"></span></small>')
+                .on("click", function() {
+                    var regions = state.regions
+                    regions.forEach(function(d, i) {
+                        var l = Math.round((d.end - d.start) / 3)
+                        regions[i].start = d.start + l
+                        regions[i].end = d.end - l
+                    })
+                    regions = S.toolsFixRegions(regions)
+                    //dispatch.call("update", this, regions)
+                    layout.eventHub.emit("input", regions) //TODO
+
+                })
+
+            var axesG = svg.append("g").attr("transform", "translate(10,0)")
+            console.log("axesG", axesG)
+            container.on("resize", function(e) {
+                canvas.attr("height", container.height)
+                    .attr("width", container.width)
+                svg.attr("height", container.height)
+                    .attr("width", container.width)
+                scope.edge = container.width - 40
+                scope.width = container.width
+                scope.height = container.height
+                layout.eventHub.emit("replot")
+            })
+
+            var URI = "/hic"
+            var testBeds = [{
+                    chr: "1",
+                    start: 0,
+                    end: 10000000
+                },
+                {
+                    chr: "2",
+                    start: 100000,
+                    end: 10000000
+                }
+            ]
+            var initHic = function(data) {
+                hic.opts = data;
+                layout.eventHub.emit("hiccfg", data)
+                init.hic = true;
+                var r = state.regions || testBeds
+                render(r) //TODO d3 queue ?
+            }
+
+            var bigwig;
+            var initBw = function(data) {
+                console.log("bigwig", data)
+                bigwig = data;
+                init.bigwig = true;
+            }
+            B.Get("/bw", initBw)
+            H.Get(URI, initHic)
+            var renderBigwig = function(regions) {
+                var bw = []
+                bigwig.trackIds.forEach(function(b, i) {
+                    bw.push(
+                        B.canvas()
+                        .URI("/bw") //set this?
+                        .id(b)
+                        .x(10)
+                        .y(scope.edge / 2 + 40 + i * 80)
+                        .width(scope.edge)
+                        .gap(20) //TODO REMV
+                        .regions(S.toolsAddChrPrefix(regions))
+                        .panel(main)
+                        .mode(1)
+                        .pos(i)
+                    )
+                })
+                dispatch.on("brush.local", function(e) {
+                    bw.forEach(function(b, i) {
+                        b.response(e)
+                    })
+                })
+                bw.forEach(function(b) {
+                    canvas.call(b)
+                })
+            }
+            var renderHic = function(regions) {
+                var scopebrush = S.scopebrush().width(scope.edge).on("brush", function(d) {
+                    dispatch.call("brush", this, d)
+                    layout.eventHub.emit("brush", d)
+                }).on("click", function(d) {
+                    dispatch.call("update", this, d)
+                }).regions(regions)
+                axesG.selectAll("*").remove()
+                axesG.call(scopebrush)
+                console.log("scopebrush", scopebrush)
+
+                var hicPara = function(d) {
+                    layout.eventHub.emit("hicmonitor", d)
+                    var ctx = canvas.node().getContext("2d");
+                    ctx.fillStyle = scope.background
+                    ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
+                }
+                hic.state = hic.ctrl.state();
+                hic.chart = H.canvas()
+                    .URI(URI)
+                    .norm(hic.state.norm)
+                    .unit(hic.state.unit)
+                    .bpres(hic.opts.bpres)
+                    .xoffset(10)
+                    .yoffset(scope.edge * 0.5)
+                    .width(scope.edge)
+                    .height(scope.edge)
+                    .regions(regions)
+                    .panel(main)
+                    .color1(hic.state.color1)
+                    .color2(hic.state.color2)
+                    .emit(function(d) {
+                        dispatch.call("brush", this, d)
+                    })
+                    .callback(hicPara)
+                canvas.call(hic.chart)
+                //TODO Fix OverFlow.
+
+
+
+            }
+            var render = function(d) {
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = scope.background
+                ctx.fillRect(0, 0, scope.width, scope.height)
+                var regions = d
+                regions = S.toolsFixRegions(regions)
+                container.extendState({
+                    "regions": d
+                });
+                state.regions = regions; //TODO FIXed
+                layout.eventHub.emit("update", d)
+                if (init.bigwig) {
+                    renderBigwig(regions)
+                }
+                if (init.hic) {
+                    renderHic(regions)
+                }
+            }
+
+            dispatch.on("update.local", function(d) {
+                render(d)
+            })
+
+            layout.eventHub.on("input", function(d) {
+                render(d)
+            })
+            layout.eventHub.on("replot", function(d) {
+                //layout.eventHub.emit("update", state.reigions || testBeds)
+                render(state.regions || testBeds)
+            })
+        }
+
+
+
+
+        var config = {
+            settings: {},
+            dimensions: {
+                borderWidth: 2
+            },
+            content: [{
+                type: 'row',
+                content: [{
+                        type: "component",
+                        componentName: "canvas",
+                        title: "canvas101",
+                        componentState: {
+                            "name": "101",
+                            "render": "hic",
+                            "server": "#"
+                        }
+                    },
+                    {
+                        type: "component",
+                        componentName: "canvas",
+                        title: "canvas102",
+                        componentState: {
+                            "name": "102",
+                            "render": "simple",
+                            "server": "#"
+
+                        }
+                    }
+                ]
+            }]
+        }
+        var stateId = "ScopeE5"
+        var renders = {
+            "simple": S.render.simple,
+            "3d": S.render.simple,
+            "network": S.render.simple,
+            "hic": hicRenderer
+        }
+        var dispatch = d3.dispatch("resize", "saveState", "add")
+        var initPanels = function(config) {
+            var layout = new GoldenLayout(config, $('#layoutContainer'));
+            layout.registerComponent("canvas", function(container, state) {
+                //TODO without templates.
+                /*
+                if (state.name) {
+                    container.getElement().html('<h3>' + state.name + '</h3>');
+                }
+                */
+                /*
+                var panel = $($('#panel').html())
+                container.getElement().append(panel)
+                console.log(state)
+                */
+                var r = renders[state.render] || S.render[state.render]
+                r(layout, container, state)
+                //TODO renderer...
+            });
+            layout.on('stackCreated', function(stack) {
+                var toggle = $($('#cfgbtn').html())
+                stack.header.controlsContainer.prepend(toggle);
+                toggle.on("click", function() {
+                    toggleConfig();
+                })
+                var toggleConfig = function() {
+                    var container = stack.getActiveContentItem().container;
+                    var toggled = !container.getState().configToggle
+                    container.extendState({
+                        configToggle: toggled
+                    });
+                    console.log("set config to ", toggled)
+                    if (toggled) {
+                        container.getElement().find(".cfg").show()
+                        /*
+                        container.extendState({
+                            "name": "New"
+                        })
+                        container.setTitle("New")
+                        */
+                        //d.show()
+                        /*
+                        d.html(
+                            JSON.stringify(container.getState(), 2)
+                            //TODO SET TITLE Change Config and Submit hide and show.
+                        )
+                        */
+                        container.getElement().find(".content").hide()
+
+                    } else {
+                        container.getElement().find(".cfg").hide()
+                        container.getElement().find(".content").show()
+                    }
+                };
+
+
+            });
+
+            layout.init()
+            /* TODO Fix to dispatch */
+            $("#test1").click(function() {
+                layout.eventHub.emit("update", [{
+                    "chr": "1",
+                    "start": 2,
+                    "end": 3
+                }])
+            })
+
+            /* for ctrl dispatch layout communication */
+
+            dispatch.on("add", function(d) {
+                layout.root.contentItems[0].addChild(d);
+            })
+
+            dispatch.on("resize.inner", function(d) {
+                console.log("resize")
+                layout.updateSize();
+            })
+            dispatch.on("saveState", function() {
+                console.log("save state")
+                var state = JSON.stringify(layout.toConfig());
+                localStorage.setItem(stateId, state);
+            })
+        }
+        initPanels(config)
+        $("#sideToggle").on("click", function() {
+            console.log("still click")
+            if ($('#menuContainer').css('display') == 'none') {
+                console.log("show")
+                $("#menuContainer").show();
+                $("#layoutContainer").css(
+                    "width", "80%"
+                ).css("left", "20%");
+            } else {
+                console.log("hide")
+                $("#menuContainer").hide();
+                $("#layoutContainer").css(
+                    "width", "100%"
+                ).css("left", "0%");
+            }
+            dispatch.call("resize", this, {})
+        })
+
+
+        var factory = function(d) {
+            return {
+                title: d,
+                type: 'component',
+                componentName: 'canvas',
+                componentState: {
+                    name: d,
+                    render: d
+                }
+            };
+        }
+        $("#save").on("click", function(d) {
+
+            dispatch.call("saveState")
+        })
+
+
+        $("#open").on("click", function(d) {
+            console.log("load state")
+            savedState = localStorage.getItem(stateId);
+            //console.log(JSON.parse(savedState))
+            $("#layoutContainer").empty()
+            initPanels(JSON.parse(savedState))
+            //layout.config(JSON.parse(savedState))
+
+        })
+        $("#simple").on("click", function() {
+            dispatch.call("add", this, factory("simple"))
+        })
+        $("#3d").on("click", function() {
+            dispatch.call("add", this, factory("3d"))
+        })
+        $("#network").on("click", function() {
+            dispatch.call("add", this, factory("network"))
+        })
+
+    }(jQuery, d3, snow))
+</script>
 
 </html>
 {{end}}

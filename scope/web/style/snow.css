@@ -75,3 +75,10 @@
 .cfg {
   display:none;
 }
+
+svg {
+  position: absolute;
+}
+canvas {
+  position: absolute;
+}
