@@ -1,7 +1,7 @@
 import regionText from "../tools/regionText"
 import regionsText from "../tools/regionsText"
 var defaultConfig = {
-  "color" : "#EED"
+  "color" : "#111"
 }
 export default function(layout, container, state) {
     //local event driven . cfg, content ...
@@ -19,17 +19,23 @@ export default function(layout, container, state) {
 
     var config = state.config || defaultConfig
     //TODO FORM state();
-    //change title form; 
+    //change title form;
+    var c = cfg.append("input")
+      .attr("type","color")
+      .attr("value",config.color)
     cfg.append("input")
        .attr("type","button")
        .attr("value","submit")
        .on("click",function(){
          cfg.style("display","none") //jQuery .hide()
          content.style("display","block") //jQuery .show()
+         console.log(c)
          container.extendState({
            "configToggle":false,
-           "config":config //TODO get config.state();
+           "config":{"color":c.node().value}
          })
+         config.color = c.node().value
+         div1.style("color",config.color) //TODO dispatch mode.
        })
 
     //container.extendState({"config":config})
@@ -37,6 +43,7 @@ export default function(layout, container, state) {
     /* render content */
     var brush = [] // instant states not store in container
     var update = state.regions || []
+    div1.style("color",config.color)
     layout.eventHub.on("brush", function(d) {
         brush = d
         if(!container.isHidden){
