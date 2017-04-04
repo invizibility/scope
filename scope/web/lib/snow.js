@@ -2806,20 +2806,31 @@ var hicMonitor = function(layout, container, state) {
     var sign = false;
     dispatch.on("cfg", function(data) {
               hic.ctrl = H.chart().data(data);
-              console.log("hic state", container.getState().state);
+              console.log("hic state", state.state);
               cfg.call(hic.ctrl);
-              if (container.getState().state && sign == false) {
+
+              if (state.state && sign == false) {
                   hic.ctrl.state(container.getState().state);
                   sign = true; //load once.
               } else {
                   container.extendState({"state":hic.ctrl.state()});
               }
+              var uri = cfg.append("input")
+                .attr("type","text")
+                .attr("value",state.URI || "/hic");
+
               cfg.append("input")
                 .attr("type","button")
                 .attr("value","submit")
                 .on("click", function(d){
                   container.extendState({"state":hic.ctrl.state()});
                   container.extendState({"configView":false});
+                  container.extendState({"URI":uri.node().value});
+                  if (uri.node().value != URI) {
+                      URI=uri.node().value;
+                      H.Get(URI,initHic);
+                  }
+
                   cfg.style("display","none");
                   main.style("display","block");
                   dispatch.call("replot",this,{});
@@ -2854,7 +2865,7 @@ var hicMonitor = function(layout, container, state) {
         dispatch.call("replot",this,{});
     });
 
-    var URI = "/hic"; //need to set it if could.
+    var URI = state.URI || "/hic"; //need to set it if could.
     var testBeds = [{
             chr: "1",
             start: 0,
