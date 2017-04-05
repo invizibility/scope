@@ -2358,7 +2358,7 @@ var trimChrPrefix = function(r) {
     return a
 };
 
-var toolsAddChrPrefix = function(r) { 
+var addChrPrefix = function(r) { 
     var s = [];
     r.forEach(function(d) {
         s.push({
@@ -2687,7 +2687,7 @@ var hic = function(layout, container, state) {
                 .y(scope.edge / 2 + 40 + i * 80)
                 .width(scope.edge)
                 .gap(20) //TODO REMV
-                .regions(toolsAddChrPrefix(regions))
+                .regions(addChrPrefix(regions))
                 .panel(main)
                 .mode(1)
                 .pos(i)
@@ -3102,6 +3102,9 @@ var hicMonitor = function(layout, container, state) {
 
 //import brush from "../scopebrush" //TODO
 
+//TODO: sort the regions first for response ,
+//TODO 2. don't refresh data if it is same
+
 var hicIcon = function(layout, container, state) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
@@ -3159,11 +3162,8 @@ var hicIcon = function(layout, container, state) {
     var svg = main.append("svg").style("position","absolute");
     var div = main.append("div").style("position", "absolute")
         .style("top", 10).style("left", 10).style("width", 50).style("height", 100);
-    var div1 = main.append("div").style("position", "absolute");
-        //.style("background-color","#FEF")
-
-    var div2 =  main.append("div").style("position", "absolute")
-        .style("top", 10).style("left", 3*container.width/4).style("width", container.width / 4).style("height", container.width/4)
+    var div1 = main.append("div").style("position", "absolute")
+        //.style("backgrounremoveyle("left", 3*container.width/4).style("width", container.width / 4).style("height", container.width/4)
         .style("background-color","#DFD");
 
 
@@ -3352,11 +3352,69 @@ var hicIcon = function(layout, container, state) {
     });
 };
 
+var defaultConfig$1 = {
+  "color" : "#111"
+};
+var ucsc = function(org,db,position) {
+  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)
+};
+var ucsclink = function(layout, container, state) {
+    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
+    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
+    var div1 = content.append("div");
+    var div2 = content.append("div");
+    //state.config parameters.
+    /* render config panel and configs */
+    var setdiv = function(div, title, d) {
+      div.selectAll("*").remove();
+      div.append("span").text(title);
+      var ul = div.append("ul");
+      var li = ul.selectAll("li").data(d);
+      li.enter()
+       .append("li")
+       .merge(li)
+       .append("a")
+       .attr("href",function(d){return ucsc("human","hg19",d)})
+       .attr("target","_blank")
+       .text(function(d,i){
+         return "Region "+(i+1)
+       });
+    };
+    var config = state.config || defaultConfig$1;
+    //TODO FORM state();
+    //change title form;
+
+
+    //container.extendState({"config":config})
+
+    /* render content */
+    var brush = []; // instant states not store in container
+    var update = state.regions || [];
+
+    div1.style("color",config.color);
+    layout.eventHub.on("brush", function(d) {
+        brush = addChrPrefix(d);
+        setdiv(div2,"brushing",brush);
+
+    });
+    layout.eventHub.on("update", function(d) {
+       update = addChrPrefix(d);
+       setdiv(div1,"current", update);
+       div2.selectAll("*").remove();
+    });
+
+    container.on("show",function(d) {
+      setdiv(div1,"current",update);
+      setdiv(div2,"brushing", brush);
+    });
+};
+
 var render = {
   simple : simple,
   hic : hic,
   hicMonitor : hicMonitor,
-  hicIcon : hicIcon
+  hicIcon : hicIcon,
+  ucsclink : ucsclink
 };
 
 exports.symbolTriangle = symbolTriangle;
@@ -3381,7 +3439,7 @@ exports.toolsAddPanelTo = addPanelTo;
 exports.toolsRegionText = regionText;
 exports.toolsRegionsText = regionsText;
 exports.toolsTrimChrPrefix = trimChrPrefix;
-exports.toolsAddChrPrefix = toolsAddChrPrefix;
+exports.toolsAddChrPrefix = addChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
 exports.render = render;

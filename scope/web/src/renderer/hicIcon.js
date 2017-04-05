@@ -6,6 +6,9 @@ import scaleScope from "../scaleScope"
 import symbolTriangle from "../symbol/triangle"
 //import brush from "../scopebrush" //TODO
 
+//TODO: sort the regions first for response ,
+//TODO 2. don't refresh data if it is same
+
 export default function(layout, container, state) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
@@ -64,10 +67,7 @@ export default function(layout, container, state) {
     var div = main.append("div").style("position", "absolute")
         .style("top", 10).style("left", 10).style("width", 50).style("height", 100)
     var div1 = main.append("div").style("position", "absolute")
-        //.style("background-color","#FEF")
-
-    var div2 =  main.append("div").style("position", "absolute")
-        .style("top", 10).style("left", 3*container.width/4).style("width", container.width / 4).style("height", container.width/4)
+        //.style("backgrounremoveyle("left", 3*container.width/4).style("width", container.width / 4).style("height", container.width/4)
         .style("background-color","#DFD")
 
 
