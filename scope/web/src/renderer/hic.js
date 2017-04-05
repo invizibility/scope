@@ -187,7 +187,7 @@ export default function(layout, container, state) {
         axesG.selectAll("*").remove()
         axesG.call(scopebrush)
 
-        var hicPara = function(d) {
+        var hicCb = function(d) {
             dispatch.call("monitor", this, d)
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = scope.background
@@ -210,7 +210,7 @@ export default function(layout, container, state) {
             .emit(function(d) {
                 dispatch.call("brush", this, d)
             })
-            .callback(hicPara)
+            .callback(hicCb)
         canvas.call(hic.chart)
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){

@@ -1,20 +1,18 @@
 import axis from "./axis"
 import brush from "./brush"
 import brushTri from "./brushtri"
+function nearby(a,b) {
+    if (a.chr!=b.chr) {return false}
+    var l = Math.max(a.end,b.end) - Math.min(a.start,b.start)
+    if (((a.end-a.start)+(b.end-b.start))/ l > 0.95) {
+      return true
+    }
+    return false
+}
+function merge(a,b) {
+    return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
+}
 export default function () {
-    function nearby(a,b) {
-        if (a.chr!=b.chr) {return false}
-        var l = Math.max(a.end,b.end) - Math.min(a.start,b.start)
-        if (((a.end-a.start)+(b.end-b.start))/ l > 0.95) {
-          return true
-        }
-        return false
-    }
-    function merge(a,b) {
-        console.log("a",a)
-        console.log("b",b)
-        return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
-    }
     var dispatch = d3.dispatch("brush", "click")
     var listeners = d3.dispatch("brush", "click")
     var width = 700
@@ -57,7 +55,6 @@ export default function () {
             var axisScale = d3.scaleLinear().domain(scale.domain()).range([scale.range()[0]/Math.SQRT2*2,scale.range()[1]/Math.SQRT2*2])
             var axis1 = axis().x(-l/Math.SQRT2).y(l/Math.SQRT2).scale(axisScale) //TODO
             selection.call(axis1)
-
             var g = selection.append("g").attr("transform", "translate(" + 0 + "," + 0 + ") rotate(45)") //TODO
             g.call(Bs[id])
         }

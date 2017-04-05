@@ -4,7 +4,7 @@
    (factory((global.snow = global.snow || {})));
 }(this, (function (exports) { 'use strict';
 
-var triangle = {
+var symbolTriangle = {
     draw: function (context, size) {
         context.moveTo(0, 0);
         context.lineTo(size, 0);
@@ -451,20 +451,18 @@ var symbolFlag = {
         return brush
     };
 
+function nearby(a,b) {
+    if (a.chr!=b.chr) {return false}
+    var l = Math.max(a.end,b.end) - Math.min(a.start,b.start);
+    if (((a.end-a.start)+(b.end-b.start))/ l > 0.95) {
+      return true
+    }
+    return false
+}
+function merge(a,b) {
+    return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
+}
 var brush$1 = function () {
-    function nearby(a,b) {
-        if (a.chr!=b.chr) {return false}
-        var l = Math.max(a.end,b.end) - Math.min(a.start,b.start);
-        if (((a.end-a.start)+(b.end-b.start))/ l > 0.95) {
-          return true
-        }
-        return false
-    }
-    function merge(a,b) {
-        console.log("a",a);
-        console.log("b",b);
-        return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
-    }
     var dispatch = d3.dispatch("brush", "click");
     var listeners = d3.dispatch("brush", "click");
     var width = 700;
@@ -507,7 +505,6 @@ var brush$1 = function () {
             var axisScale = d3.scaleLinear().domain(scale.domain()).range([scale.range()[0]/Math.SQRT2*2,scale.range()[1]/Math.SQRT2*2]);
             var axis1 = axis().x(-l/Math.SQRT2).y(l/Math.SQRT2).scale(axisScale); //TODO
             selection.call(axis1);
-
             var g = selection.append("g").attr("transform", "translate(" + 0 + "," + 0 + ") rotate(45)"); //TODO
             g.call(Bs[id]);
         };
@@ -2299,7 +2296,7 @@ var parseRegions = function(s) {
   return r
 };
 
-function nearby(a,b) {
+function nearby$1(a,b) {
     if (a.chr!=b.chr) {return false}
     var l = Math.max(a.end,b.end) - Math.min(a.start,b.start);
     if (((a.end-a.start)+(b.end-b.start))/ l > 0.95) {
@@ -2307,7 +2304,7 @@ function nearby(a,b) {
     }
     return false
 }
-function merge(a,b) {
+function merge$1(a,b) {
     return {"chr":a.chr,"start":Math.min(a.start,b.start),"end":Math.max(a.end,b.end)}
 }
 /* input :regions
@@ -2316,8 +2313,8 @@ function fixed(regions) {
   if (regions.length==1) {
     return regions;
   } //for now it use two only.//TODO multi regions.
-  if (nearby(regions[0],regions[1])) {
-    return [merge(regions[0],regions[1])]
+  if (nearby$1(regions[0],regions[1])) {
+    return [merge$1(regions[0],regions[1])]
   } else {
     return regions
   }
@@ -2715,7 +2712,7 @@ var hic = function(layout, container, state) {
         axesG.selectAll("*").remove();
         axesG.call(scopebrush);
 
-        var hicPara = function(d) {
+        var hicCb = function(d) {
             dispatch.call("monitor", this, d);
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = scope.background;
@@ -2738,7 +2735,7 @@ var hic = function(layout, container, state) {
             .emit(function(d) {
                 dispatch.call("brush", this, d);
             })
-            .callback(hicPara);
+            .callback(hicCb);
         canvas.call(hic.chart);
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){
@@ -2780,6 +2777,79 @@ var hic = function(layout, container, state) {
         //layout.eventHub.emit("update", state.reigions || testBeds)
         render(state.regions || testBeds);
     });
+};
+
+function overlap$1(a,b){
+  if (a.chr!=b.chr) {
+    return false
+  }
+  if (a.start > b.end || b.start > a.end) {
+    return false
+  }
+  return true
+}
+function _intersect(a,b) {
+  return {
+    "chr":a.chr,
+    "start":Math.max(a.start,b.start),
+    "end":Math.min(a.end,b.end)
+  }
+}
+var scaleScope = function() {
+  var domain; // regions {"chr":name,"start":x,"end":y}
+  var gap = 10; //TODO.
+  var range;　//[0,width] or any scale.
+
+  /*
+   * return [[start,end],[start,end] ...]
+   */
+  var scales = [];
+  var scale2d = [];
+  var init = false;
+  var initialize = function() {
+    scales = [];
+
+    init = true;
+    var l = 0;
+    console.log("inner domain",domain);
+    domain.forEach(function(d){
+      l += d.end-d.start;
+    });
+    var eW = range[1]-range[0] - gap * (domain.length-1);
+    var offset = range[0];
+    domain.forEach(function(d){
+      var w = eW * (+d.end-d.start) / l;
+      scales.push(d3.scaleLinear().domain([+d.start,+d.end]).range([offset,offset+w]));
+      console.log("init scales",scales);
+      offset += w+gap;
+
+    });
+
+
+  };
+  var chart = function(r) { //d = {"chr":name,"start":x,"end":y}
+      if (init==false) {
+        initialize();
+      }
+      var overlaps =[];
+      domain.forEach(function(d,i){
+          if (overlap$1(d,r)) {
+            var v = _intersect(d,r);
+            overlaps.push([scales[i](v.start),scales[i](v.end)]);
+          }
+      });
+      return overlaps;
+  };
+
+  chart.invert = function(value) { //TODO.
+
+  };
+  
+  chart.scales = function(_) { return arguments.length ? (scales= _, chart) : scales; };
+  chart.gap = function(_) { return arguments.length ? (gap= _, init=false, chart) : gap; };
+  chart.domain = function(_) { return arguments.length ? (domain= _,init=false, chart) : domain; };
+  chart.range = function(_) { return arguments.length ? (range= _,init=false, chart) : range; };
+  return chart
 };
 
 //import brush from "../scopebrush" //TODO
@@ -2850,6 +2920,8 @@ var hicMonitor = function(layout, container, state) {
 
 
     var axesG = svg.append("g").attr("transform", "translate(10,0)");
+    var scale = scaleScope();
+
     container.on("resize", function(e) {
         canvas.attr("height", container.height)
             .attr("width", container.width);
@@ -2862,6 +2934,9 @@ var hicMonitor = function(layout, container, state) {
         scope.edge = container.width - 40;
         scope.width = container.width;
         scope.height = container.height;
+
+        scale.range([0,scope.edge]);
+
         dispatch.call("replot",this,{});
     });
 
@@ -2887,16 +2962,17 @@ var hicMonitor = function(layout, container, state) {
 
 
     H.Get(URI, initHic);
+
     var renderHic = function(regions) {
 
-        var hicPara = function(d) {
+        var hicCb = function(d) {　
             dispatch.call("monitor", this, d);
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = scope.background;
             ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40);
         };
         hic.state = hic.ctrl.state();
-        hic.chart = H.canvas()
+        hic.chart = H.canvas()  //just for canvas view.
             .URI(URI)
             .norm(hic.state.norm)
             .unit(hic.state.unit)
@@ -2907,26 +2983,102 @@ var hicMonitor = function(layout, container, state) {
             .height(scope.edge)
             .regions(regions)
             .panel(main)
+            .gap(10)
             .color1(hic.state.color1)
             .color2(hic.state.color2)
-            .callback(hicPara);
+            .callback(hicCb);
         canvas.call(hic.chart);
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){
           hic.chart.domain(d);
           hic.chart.render();
         });
+        dispatch.on("brush",function(d){
+          var data =[];
+          var rectData = [];
+          d.forEach(function(d){
+            data.push(scale(d));
+          });
+          //assume data is sorted.
+          var r2 = svg.selectAll(".resp2")
+            .data([0]);
+          r2.enter()
+          .append("g")
+          .attr("class","resp2")
+          .attr("transform",function(d){
+            return "translate(" + (scope.edge/2+10) +",0) rotate(45)"
+          })
+          .merge(r2);
+          if (data.length > 1) {
+            var rx = data[0][0][0]/Math.SQRT2;
+            var rWidth = data[0][0][1]/Math.SQRT2 - rx;
+            var ry = data[1][0][1]/Math.SQRT2;
+            var rHeight = ry - data[1][0][0]/Math.SQRT2;
+            ry = scope.edge/Math.SQRT2 - ry;
+            var p2 = r2.selectAll("rect")
+            .data([0]);
+            p2.enter()
+              .append("rect")
+              .merge(p2)
+              .attr("x",rx )
+              .attr("y",ry)
+              .attr("width",rWidth)
+              .attr("height",rHeight)
+              .attr("opacity",0.2);
+            p2.exit().remove();
+          } else {
+            r2.selectAll("rect").remove();
+          }
+
+          var r = svg.selectAll(".resp")
+             .data(data);
+            /*
+            r.enter()
+             .append("rect")
+             .merge(r)
+             .attr("class","rectResp")
+             .attr("x", function(d){
+               return d[0][0]+10
+             })
+             .attr("y", scope.edge/2)
+             .attr("width",function(d){return d[0][1]-d[0][0]})
+             .attr("height",20)
+             .attr("opacity",0.2)
+            r.exit().remove()
+            */
+            r.enter()
+            .append("g")
+            .merge(r)
+            .attr("class","resp")
+            .attr("transform",function(d){
+              return "translate("+(d[0][0]+10)+","+scope.edge/2+")"
+            });
+            var p = r.selectAll("path").data(function(d){return [d[0]]});
+            p.enter()
+            .append("path")
+            .merge(p)
+            .attr("d",
+              d3.symbol().type(symbolTriangle).size(function(d){
+                return d[1]-d[0]
+              })
+            )
+            .style("opacity", 0.2);
+            r.exit().remove();
+        });
     };
     var render = function(d) {
         var ctx = canvas.node().getContext("2d");
         ctx.fillStyle = scope.background;
         ctx.fillRect(0, 0, scope.width, scope.height);
+        svg.selectAll(".resp").remove();
+        svg.selectAll(".resp2").remove();
         var regions = d;
         regions = toolsFixRegions(regions);
         container.extendState({
             "regions": d
         });
         state.regions = regions; //TODO FIXed
+        scale.domain(regions);
         if (init.hic) {
             renderHic(regions);
         }
@@ -2954,7 +3106,7 @@ var render = {
   hicMonitor : hicMonitor
 };
 
-exports.symbolTriangle = triangle;
+exports.symbolTriangle = symbolTriangle;
 exports.brush = brush;
 exports.axis = axis;
 exports.scopebrush = brush$1;

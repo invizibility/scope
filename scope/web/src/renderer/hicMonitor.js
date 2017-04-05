@@ -2,6 +2,8 @@ import B from "../data/bigwig"
 import H from "../data/hic2"
 import toolsFixRegions from "../tools/fixRegions"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
+import scaleScope from "../scaleScope"
+import symbolTriangle from "../symbol/triangle"
 //import brush from "../scopebrush" //TODO
 
 export default function(layout, container, state) {
@@ -70,6 +72,8 @@ export default function(layout, container, state) {
 
 
     var axesG = svg.append("g").attr("transform", "translate(10,0)")
+    var scale = scaleScope();
+
     container.on("resize", function(e) {
         canvas.attr("height", container.height)
             .attr("width", container.width)
@@ -82,6 +86,9 @@ export default function(layout, container, state) {
         scope.edge = container.width - 40
         scope.width = container.width
         scope.height = container.height
+
+        scale.range([0,scope.edge])
+
         dispatch.call("replot",this,{})
     })
 
@@ -107,16 +114,17 @@ export default function(layout, container, state) {
 
 
     H.Get(URI, initHic)
+
     var renderHic = function(regions) {
 
-        var hicPara = function(d) {
+        var hicCb = function(d) {　
             dispatch.call("monitor", this, d)
             var ctx = canvas.node().getContext("2d");
             ctx.fillStyle = scope.background
             ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
         }
         hic.state = hic.ctrl.state();
-        hic.chart = H.canvas()
+        hic.chart = H.canvas()  //just for canvas view.
             .URI(URI)
             .norm(hic.state.norm)
             .unit(hic.state.unit)
@@ -127,26 +135,102 @@ export default function(layout, container, state) {
             .height(scope.edge)
             .regions(regions)
             .panel(main)
+            .gap(10)
             .color1(hic.state.color1)
             .color2(hic.state.color2)
-            .callback(hicPara)
+            .callback(hicCb)
         canvas.call(hic.chart)
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){
           hic.chart.domain(d);
           hic.chart.render();
         })
+        dispatch.on("brush",function(d){
+          var data =[]
+          var rectData = []
+          d.forEach(function(d){
+            data.push(scale(d))
+          })
+          //assume data is sorted.
+          var r2 = svg.selectAll(".resp2")
+            .data([0])
+          r2.enter()
+          .append("g")
+          .attr("class","resp2")
+          .attr("transform",function(d){
+            return "translate(" + (scope.edge/2+10) +",0) rotate(45)"
+          })
+          .merge(r2)
+          if (data.length > 1) {
+            var rx = data[0][0][0]/Math.SQRT2
+            var rWidth = data[0][0][1]/Math.SQRT2 - rx
+            var ry = data[1][0][1]/Math.SQRT2
+            var rHeight = ry - data[1][0][0]/Math.SQRT2
+            ry = scope.edge/Math.SQRT2 - ry
+            var p2 = r2.selectAll("rect")
+            .data([0])
+            p2.enter()
+              .append("rect")
+              .merge(p2)
+              .attr("x",rx )
+              .attr("y",ry)
+              .attr("width",rWidth)
+              .attr("height",rHeight)
+              .attr("opacity",0.2)
+            p2.exit().remove()
+          } else {
+            r2.selectAll("rect").remove()
+          }
+
+          var r = svg.selectAll(".resp")
+             .data(data)
+            /*
+            r.enter()
+             .append("rect")
+             .merge(r)
+             .attr("class","rectResp")
+             .attr("x", function(d){
+               return d[0][0]+10
+             })
+             .attr("y", scope.edge/2)
+             .attr("width",function(d){return d[0][1]-d[0][0]})
+             .attr("height",20)
+             .attr("opacity",0.2)
+            r.exit().remove()
+            */
+            r.enter()
+            .append("g")
+            .merge(r)
+            .attr("class","resp")
+            .attr("transform",function(d){
+              return "translate("+(d[0][0]+10)+","+scope.edge/2+")"
+            })
+            var p = r.selectAll("path").data(function(d){return [d[0]]})
+            p.enter()
+            .append("path")
+            .merge(p)
+            .attr("d",
+              d3.symbol().type(symbolTriangle).size(function(d){
+                return d[1]-d[0]
+              })
+            )
+            .style("opacity", 0.2)
+            r.exit().remove();
+        })
     }
     var render = function(d) {
         var ctx = canvas.node().getContext("2d");
         ctx.fillStyle = scope.background
         ctx.fillRect(0, 0, scope.width, scope.height)
+        svg.selectAll(".resp").remove()
+        svg.selectAll(".resp2").remove()
         var regions = d
         regions = toolsFixRegions(regions)
         container.extendState({
             "regions": d
         });
         state.regions = regions; //TODO FIXed
+        scale.domain(regions)
         if (init.hic) {
             renderHic(regions)
         }
