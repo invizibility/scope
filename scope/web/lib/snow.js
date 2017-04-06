@@ -3441,6 +3441,7 @@ var ucsc$2 = function(layout, container, state) {
       scale.domain(d).range([10,container.width-10]); //padding = 10
       var gbdiv = div.selectAll(".gbdiv")
         .data(d);
+      svg.selectAll("rect").remove();
       gbdiv.selectAll("iframe").remove();
       gbdiv.enter().append("div")
         .classed("gbdiv",true)
@@ -3504,6 +3505,7 @@ var ucsc$2 = function(layout, container, state) {
 
     //div1.style("color",config.color)
     layout.eventHub.on("brush", function(d) {
+      if(!container.isHidden){
         brush = addChrPrefix(d);
         //TODO
         var pos=[];
@@ -3523,11 +3525,14 @@ var ucsc$2 = function(layout, container, state) {
         .attr("height",container.height)
         .attr("opacity",0.2);
         rect.exit().remove();
+      }
 
     });
     layout.eventHub.on("update", function(d) {
        update = addChrPrefix(d);
-       setiframe(div1, update);
+       if (!container.isHidden) {
+         setiframe(div1, update);
+       }
     });
 
     container.on("show",function(d) {
