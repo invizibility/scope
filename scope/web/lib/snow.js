@@ -3415,7 +3415,7 @@ var ucsc$1 = function(org,db,position,width) {
 var ucsc$2 = function(layout, container, state) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
-    var div1 = content.append("div").style("position","relative").style("overflow-y","scroll");
+    var div1 = content.append("div").style("position","relative");
     console.log(container.height);
     console.log(container.width);
     var svg = content.append("svg")
