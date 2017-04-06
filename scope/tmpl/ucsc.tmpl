@@ -13,6 +13,7 @@
     <div id="wrapper">
         <ul id="menuContainer">
             <li id="test1">TestInput1</li>
+            <li id="test2">TestInput2</li>
         </ul>
         <div id="layoutContainer"></div>
     </div>
@@ -118,6 +119,17 @@
             $("#test1").click(function() {
                 layout.eventHub.emit("update", [{
                     "chr": "1",
+                    "start": 2000000,
+                    "end": 3000000
+                }])
+            })
+            $("#test2").click(function() {
+                layout.eventHub.emit("update", [{
+                    "chr": "1",
+                    "start": 2000000,
+                    "end": 3000000
+                }, {
+                    "chr": "2",
                     "start": 2000000,
                     "end": 3000000
                 }])
