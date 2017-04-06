@@ -244,7 +244,7 @@ export default {
             scale = yscale;
             var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0])
             var color = d3.scaleOrdinal(d3.schemeCategory10);
-            var background = "#EEE"
+            var background = "#FFF"
             if (vertical) {
                 //renderRespVertical(); //TODO
                 var ctx = canvas.node().getContext("2d");

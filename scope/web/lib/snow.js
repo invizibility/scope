@@ -1172,7 +1172,7 @@ var B = {
             scale = yscale;
             var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0]);
             var color = d3.scaleOrdinal(d3.schemeCategory10);
-            var background = "#EEE";
+            var background = "#FFF";
             if (vertical) {
                 //renderRespVertical(); //TODO
                 var ctx = canvas.node().getContext("2d");
@@ -3066,6 +3066,7 @@ var hicMonitor = function(layout, container, state) {
             r.exit().remove();
         });
     };
+    init.panel = false;
     var render = function(d) {
         var ctx = canvas.node().getContext("2d");
         ctx.fillStyle = scope.background;
@@ -3079,7 +3080,7 @@ var hicMonitor = function(layout, container, state) {
         });
         state.regions = regions; //TODO FIXed
         scale.domain(regions);
-        if (init.hic) {
+        if (init.hic ) {
             renderHic(regions);
         }
     };
@@ -3089,10 +3090,23 @@ var hicMonitor = function(layout, container, state) {
     });
 
     layout.eventHub.on("update", function(d) {
+      if(!container.isHidden){
         render(d);
+      } else {
+        state.regions = toolsFixRegions(d);
+      }
     });
     layout.eventHub.on("brush", function(d) {
+      if(!container.isHidden){
        dispatch.call("brush",this,d);
+      }
+    });
+    container.on("show",function(d){
+      if(state.regions){
+        render(state.regions);
+      }
+      console.log("d",d);
+        //render(state.regions)
     });
     dispatch.on("replot", function(d) {
         //layout.eventHub.emit("update", state.reigions || testBeds)
