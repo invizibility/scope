@@ -9,7 +9,6 @@
     margin-bottom: 0px;
 }
 
-
 #wrapper {
     height: 100%;
     position: relative;
@@ -51,8 +50,7 @@
     box-shadow: -3px 0px 9px 0px rgba( 0, 0, 0, 0.4);
 }
 
-
-.config{
+.config {
     width: 10px;
     height: 10px;
     background: #fff;
@@ -60,25 +58,34 @@
     margin: 5px 5px 0 0;
     cursor: pointer;
     font-size: 10px;
-
-
 }
 
 .config {
     width: 10px;
     height: 10px;
 }
+
 .config:hover {
-  font-size: 12px;
+    font-size: 12px;
 }
 
 .cfg {
-  display:none;
+    display: none;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #444;
+    margin: 1em 0;
+    padding: 0;
 }
 
 svg {
-  position: absolute;
+    position: absolute;
 }
+
 canvas {
-  position: absolute;
+    position: absolute;
 }

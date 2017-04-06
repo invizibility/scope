@@ -11,9 +11,23 @@
 <body>
     {{template "menubar"}}
     <div id="wrapper">
-        <ul id="menuContainer">
-            <li id="test1">TestInput1</li>
-        </ul>
+        <div id="menuContainer">
+            <ul>
+                <li id="test1">Demo Input</li>
+            </ul>
+            <hr>
+            <div style="color:white;padding:10">
+                <label> Input Regions</label>
+                <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
+                <input type="button" value="submit" id="input" style="color:black" />
+            </div>
+            <hr>
+            <div style="color:white;padding:10">
+                <label>History</label>
+                <ul id="history">
+                </ul>
+            </div>
+        </div>
         <div id="layoutContainer"></div>
     </div>
     <template type="text/html" id="cfgbtn">
@@ -33,6 +47,8 @@
 <script>
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
+
+
         var config = {
             settings: {
                 showPopoutIcon: false
@@ -66,7 +82,7 @@
                 ]
             }]
         }
-        var stateId = "ScopeE5.V1"
+        var stateId = "ScopeE5.V2"
         var renders = {
             "simple": S.render.simple,
             "3d": S.render.simple,
@@ -81,6 +97,7 @@
         var dispatch = d3.dispatch("resize", "saveState", "add")
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
+            var history = []
             layout.registerComponent("canvas", function(container, state) {
                 var r = renders[state.render] || S.render[state.render]
                 r(layout, container, state)
@@ -127,7 +144,10 @@
                     "end": 3000000
                 }])
             })
-
+            $("#input").click(function() {
+                var v = $("#regions").val() || $("#regions").attr("placeholder");
+                layout.eventHub.emit("input", S.toolsTrimChrPrefix(S.toolsParseRegions(v)))
+            })
             /* for ctrl dispatch layout communication */
 
             dispatch.on("add", function(d) {
@@ -142,6 +162,32 @@
                 console.log("save state")
                 var state = JSON.stringify(layout.toConfig());
                 localStorage.setItem(stateId, state);
+            })
+            layout.eventHub.on("update", function(d) {
+                var sign = false;
+                history.forEach(function(d0) {
+                    if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
+                        sign = true;
+                    }
+                })
+                if (sign) {
+                    return;
+                }
+                history.push(d);
+                if (history.length > 8) {
+                    history.shift();
+                }
+                var ul = d3.select("#history")
+                var li = ul.selectAll("li").data(history.reverse())
+                li.enter().append("li").classed("h", true)
+                    .merge(li)
+                    .text(function(d) {
+                        return S.toolsRegionsText(d)
+                    })
+                    .on("click", function(d) {
+                        layout.eventHub.emit("input", d)
+                    })
+                li.exit().remove();
             })
         }
         initPanels(config, $('#layoutContainer'))
