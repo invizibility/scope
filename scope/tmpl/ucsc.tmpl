@@ -14,6 +14,7 @@
         <ul id="menuContainer">
             <li id="test1">TestInput1</li>
             <li id="test2">TestInput2</li>
+            <li id="test3">brushInput2</li>
         </ul>
         <div id="layoutContainer"></div>
     </div>
@@ -132,6 +133,17 @@
                     "chr": "2",
                     "start": 2000000,
                     "end": 3000000
+                }])
+            })
+            $("#test3").click(function() {
+                layout.eventHub.emit("brush", [{
+                    "chr": "1",
+                    "start": 2220000,
+                    "end": 2300000
+                }, {
+                    "chr": "1",
+                    "start": 2500000,
+                    "end": 2600000
                 }])
             })
             /* for ctrl dispatch layout communication */

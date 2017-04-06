@@ -87,6 +87,23 @@ export default function(layout, container, state) {
     layout.eventHub.on("brush", function(d) {
         brush = addChrPrefix(d)
         //TODO
+        var pos=[]
+        brush.forEach(function(d){
+          var p = scale(d)
+          var p0 = p[0]
+          pos.push(p0)
+          console.log("p0",p0)
+        })
+        var rect = svg.selectAll("rect").data(pos)
+
+        rect.enter().append("rect")
+        .merge(rect)
+        .attr("x",function(d){return d[0]})
+        .attr("y", 0)
+        .attr("width",function(d){return d[1]-d[0]})
+        .attr("height",container.height)
+        .attr("opacity",0.2)
+        rect.exit().remove()
 
     })
     layout.eventHub.on("update", function(d) {
