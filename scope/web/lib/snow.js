@@ -3417,7 +3417,8 @@ var ucsc$2 = function(layout, container, state) {
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
     var div1 = content.append("div").style("position","relative");
     var svg = content.append("svg")
-      .style("position","absolute");
+      .style("position","absolute")
+      .style("pointer-events","none");
     var scale = scaleScope();
 
     //state.config parameters.

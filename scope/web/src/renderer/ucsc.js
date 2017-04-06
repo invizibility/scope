@@ -14,6 +14,7 @@ export default function(layout, container, state) {
     var div1 = content.append("div").style("position","relative")
     var svg = content.append("svg")
       .style("position","absolute")
+      .style("pointer-events","none")
     var scale = scaleScope()
 
     //state.config parameters.
