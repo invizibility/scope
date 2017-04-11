@@ -128,19 +128,26 @@ var getPanelSize = function(){
 	initialHeight = container.height
 }
 
+scene = new THREE.Scene();
+camera = new THREE.PerspectiveCamera(75, 1, 1, 20000);
+renderer = new THREE.WebGLRenderer({ alpha: true });
+
 var rerender = function(){
 //d3.select(container.getElement()[0]).selectAll("*").remove()
 	getPanelSize();
 	console.log(width,height)
 	draw();
+	//renderer.setSize(Math.min(height,width) - 25, Math.min(height,width) - 25);
 
 }
 function init() {
 	//launch = false;
+
 	scene = new THREE.Scene();
 	camera = new THREE.PerspectiveCamera(75, 1, 1, 20000);
 	renderer = new THREE.WebGLRenderer({ alpha: true });
-	renderer.setSize(Math.min(height,width) - 25, Math.min(height,width) - 25);
+
+	renderer.setSize(Math.max(300,Math.min(height,width) - 25), Math.max(300,Math.min(height,width) - 25));
 	renderer.setClearColor(0x000000, 0);
 	container.getElement().find('.genome .model').append(renderer.domElement);//TODO FIX
 	controls = new THREE.TrackballControls(camera, renderer.domElement);
