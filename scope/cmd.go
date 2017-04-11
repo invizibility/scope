@@ -18,9 +18,9 @@ var (
 func main() {
 	app := cli.NewApp()
 	app.Version = VERSION
-	app.Name = "scope-bw"
-	app.Usage = "bigwig bigbed data server utils"
-	app.EnableBashCompletion = true
+	app.Name = "scope"
+	app.Usage = "system biology data scope"
+	app.EnableBashCompletion = true //TODO
 	// global level flags
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -33,7 +33,7 @@ func main() {
 	app.Commands = []cli.Command{
 		{
 			Name:   "serve",
-			Usage:  "bigwig data server",
+			Usage:  "start application in localhost",
 			Action: CmdServe,
 			Flags: []cli.Flag{
 				cli.StringFlag{

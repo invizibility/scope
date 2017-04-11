@@ -4,6 +4,7 @@ import hicMonitor from "./renderer/hicMonitor"
 import hicIcon from "./renderer/hicIcon"
 import ucsclink from "./renderer/ucsclink"
 import ucsc from "./renderer/ucsc"
+import dna3d from "./renderer/dna3d"
 
 export default {
   simple : simple,
@@ -11,5 +12,6 @@ export default {
   hicMonitor : hicMonitor,
   hicIcon : hicIcon,
   ucsclink : ucsclink,
-  ucsc : ucsc
+  ucsc : ucsc,
+  dna3d  : dna3d
 }

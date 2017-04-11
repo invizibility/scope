@@ -1,0 +1,9 @@
+{{define "dna3d"}}
+<script type='x-shader/x-vertex' id='vertexShader'>
+    varying vec2 vUv; varying float noise; attribute float alpha; varying float vAlpha; varying vec3 vColor; void main() { vAlpha = alpha; vUv = uv; vColor = color; gl_PointSize = 1.1; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    varying vec2 vUv; varying float noise; varying float vAlpha; varying vec3 vColor; uniform vec3 colorsa; void main() { gl_FragColor = vec4(vColor, vAlpha); } </script>
+{{end}}
