@@ -3541,16 +3541,14 @@ var ucsc$2 = function(layout, container, state) {
 };
 
 var dna3d = function(layout, container, state) {
-
-var initialize = function(){
-d3.select(container.getElement()[0]).selectAll("*").remove();
-var rainbow = d3.scaleOrdinal(d3.schemeCategory20),
-	width = container.width,
-    initialWidth = container.width,
-    height = container.height,
-    initialHeight = container.height,
-
-	pdb,
+var rainbow = d3.scaleOrdinal(d3.schemeCategory20);
+var dataURI = "/data/structure_3";
+var data;
+var width = 500,
+initialWidth = 500,
+height = 500,
+initialHeight = 500;
+var pdb,
 	resolution = '1Mb',
 	resolutionMult = 1000000,
 	genome = {},
@@ -3574,94 +3572,119 @@ var rainbow = d3.scaleOrdinal(d3.schemeCategory20),
 	shifting = false,
 	dragging = false,
 
-	launch = true;
-var dataURI = "/data/structure_3";
+	launch = true,
+	dataLoaded = false;
 
-$.get(dataURI, function(data){
-	pdb = data.split('\n');
-	var bins = [];
-	var chromosome = -1;
-	var pairCounter = 0;
-	var distance = 0;
-	var pairChromStartIndex = 0;
-	var offset = 0;
-	var chr = null;
-	var index = -1;
-	var model = "<div class='model' style='background-color:#000'></div>";
-	var title = "<div class='title'><div class = titleComponent>3D STRUCTURE<br></div></div>";
+var load = function(callback) {
+	$.get(dataURI, function(data){
+		pdb = data.split('\n');
+		var bins = [];
+		var chromosome = -1;
+		var pairCounter = 0;
+		var distance = 0;
+		var pairChromStartIndex = 0;
+		var offset = 0;
+		var chr = null;
+		var index = -1;
 
-	//load coordinates
-	for (var i = 0; i < pdb.length - 1; i++){
-		var row = pdb[i].split('\t');
-		var location = row[1].split(' ');	// should look like ["chr1","3000000"]
 
-        if (chr != location[0].substring(3)) { // case: new chromosome
-			chromosome++;
-			segments.push([index, i - 1]);
-			chromosomes.push(location[0].substring(3));
-			index = i;
-			chr = location[0].substring(3);
-			if (i != 0) {
-				pairSegments.push([pairChromStartIndex, pairCounter]);
-				pairChromStartIndex = pairCounter + 1;
+		//load coordinates
+		for (var i = 0; i < pdb.length - 1; i++){
+			var row = pdb[i].split('\t');
+			var location = row[1].split(' ');	// should look like ["chr1","3000000"]
 
-			}
-			distance = parseInt(location[1]);
-			pairCounter += distance; //
-        }
-        else { // case: same chromosome as previous line
-			if (i!=0){
-				offset = 1;
-			}
-			var prevPair = parseInt(pdb[i-1].split('\t')[1].split(' ')[1]);
-			distance = parseInt(location[1]) - prevPair;
-			pairCounter += distance;
-			if (distance != resolutionMult) {
-				console.log(prevPair + "," + location[1]); // these are the bins that have >resolutionMult basepairs. due to alignment problems.
-			}
-        }
-        all.push({
-			'chromosome': location[0].substring(3),
-			'chromosome_idx': chromosome,
-			'bin': i,
-			'pairCount': [pairCounter - distance + offset, pairCounter],
-			'active': false
-        });
-        bins.push({
-			'x': parseFloat(row[2]),
-			'y': parseFloat(row[3]),
-			'z': parseFloat(row[4]),
-        });
+					if (chr != location[0].substring(3)) { // case: new chromosome
+				chromosome++;
+				segments.push([index, i - 1]);
+				chromosomes.push(location[0].substring(3));
+				index = i;
+				chr = location[0].substring(3);
+				if (i != 0) {
+					pairSegments.push([pairChromStartIndex, pairCounter]);
+					pairChromStartIndex = pairCounter + 1;
+
+				}
+				distance = parseInt(location[1]);
+				pairCounter += distance; //
+					}
+					else { // case: same chromosome as previous line
+				if (i!=0){
+					offset = 1;
+				}
+				var prevPair = parseInt(pdb[i-1].split('\t')[1].split(' ')[1]);
+				distance = parseInt(location[1]) - prevPair;
+				pairCounter += distance;
+				if (distance != resolutionMult) {
+					console.log(prevPair + "," + location[1]); // these are the bins that have >resolutionMult basepairs. due to alignment problems.
+				}
+					}
+					all.push({
+				'chromosome': location[0].substring(3),
+				'chromosome_idx': chromosome,
+				'bin': i,
+				'pairCount': [pairCounter - distance + offset, pairCounter],
+				'active': false
+					});
+					bins.push({
+				'x': parseFloat(row[2]),
+				'y': parseFloat(row[3]),
+				'z': parseFloat(row[4]),
+					});
+		}
+		segments.shift();
+		segments.push([index, i - 1]);
+		pairSegments.push([pairChromStartIndex, pairCounter]);
+		genome = {
+			'bins': bins,
+			'chromosomes': []
+		};
+
+		dataLoaded = true;
+		callback();
+	});
+};
+
+
+var draw = function() {
+  console.log("dataLoaded",dataLoaded);
+	if (!dataLoaded) {
+		return
 	}
-	segments.shift();
-	segments.push([index, i - 1]);
-	pairSegments.push([pairChromStartIndex, pairCounter]);
-	genome = {
-		'bins': bins,
-		'chromosomes': []
-	};
+	getPanelSize();
+	var model = "<div class='model'></div>";
+	var title = "<div class='title'><div class = titleComponent>3D STRUCTURE<br></div></div>";
+	d3.select(container.getElement()[0]).selectAll(".genome").remove();
 	container.getElement().append(
 		"<div class = genome>"+ title + model + "</div>"
 	);
 	if (launch){
 		init();
 	}
-
 	modelGenome();
 	animate();
+};
+var getPanelSize = function(){
+  width = container.width;
+	initialWidth = container.width;
+	height = container.height;
+	initialHeight = container.height;
+};
 
+var rerender = function(){
+//d3.select(container.getElement()[0]).selectAll("*").remove()
+	getPanelSize();
+	console.log(width,height);
+	draw();
 
-});
-
+};
 function init() {
-	launch = false;
-
+	//launch = false;
 	scene = new THREE.Scene();
 	camera = new THREE.PerspectiveCamera(75, 1, 1, 20000);
 	renderer = new THREE.WebGLRenderer({ alpha: true });
-	renderer.setSize(height - 25, height - 25);
+	renderer.setSize(Math.min(height,width) - 25, Math.min(height,width) - 25);
 	renderer.setClearColor(0x000000, 0);
-	$('.genome .model').append(renderer.domElement);
+	container.getElement().find('.genome .model').append(renderer.domElement);//TODO FIX
 	controls = new THREE.TrackballControls(camera, renderer.domElement);
 	sphere = new THREE.Mesh(new THREE.SphereGeometry(11.5, 30, 30), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.1 }));
     sphere.visible = false;
@@ -3700,8 +3723,8 @@ function modelGenome() {
 		geometries[i].attributes.alpha = new THREE.BufferAttribute(alphas, 1);
 		geometries[i].attributes.color = new THREE.BufferAttribute(colors, 3);
 		var material = new THREE.ShaderMaterial({
-			vertexShader: document.getElementById('vertexShader').textContent,
-			fragmentShader: document.getElementById('fragmentShader').textContent,
+			vertexShader: document.getElementById('vertexShader').textContent, //TODO FIX
+			fragmentShader: document.getElementById('fragmentShader').textContent, //TODO FIX
 			vertexColors: THREE.VertexColors,
 			transparent: true
 		});
@@ -3778,6 +3801,7 @@ var chr2idx = function(d) {
 	return parseInt(d.replace("chr","").replace("Chr",""))-1 //TODO improve
 };
 var translate = function(d) {
+	console.log(pairSegments,d.chr,chr2idx(d.chr));
 	var range = pairSegments[chr2idx(d.chr)];
 	var start = Math.min(d.start+range[0],range[1]);
 	var end = Math.min(d.end+range[0],range[1]);
@@ -3796,16 +3820,7 @@ var alphaRegions = function(regions) {
 	alphaModel(0.8, visArrayChroms);
 	alphaSegments(0.8, visArrayChroms, visArrayBins);
 };
-/*
-var beds = [
-	{"chr":1,"start":4000000,"end":4400000},
-	{"chr":2,"start":4000000,"end":4400000},
-	{"chr":3,"start":4000000,"end":4400000},
-]
-window.test = function() {
-	alphaRegions(beds)
-}
-*/
+
 layout.eventHub.on("update",function(d){
 	alphaRegions(d);
 });
@@ -3832,10 +3847,12 @@ function animate() {
 function render() {
 	renderer.render(scene, camera);
 }
-};
+
 container.on("resize", function(e) {
-  initialize();
+  rerender();
 });
+
+load(draw);
 };
 
 var render = {
