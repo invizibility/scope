@@ -51,6 +51,38 @@ func serveBwURI(uri string, router *mux.Router, prefix string) {
 	}
 	AddBwsHandle(router, bwmap, prefix)
 }
+func readHic(uri string) *HiC.HiC {
+	reader, err := stream.NewSeekableStreamReader(uri)
+	checkErr(err)
+	hic, err := HiC.DataReader(reader)
+	checkErr(err)
+	return hic
+}
+
+func serveHicURI(uri string, router *mux.Router, prefix string) {
+	hicExt := strings.ToLower(path.Ext(uri))
+	hicmap := make(map[string]*HiC.HiC)
+	if hicExt == ".hic" || hicExt == ".HiC" { //Single BigWig File to Default
+		hicmap["default"] = readHic(uri) //TODO
+	} else if hicExt == ".txt" || hicExt == ".tsv" {
+		reader, err := stream.NewSeekableStreamReader(uri)
+		checkErr(err)
+		r := csv.NewReader(reader)
+		r.Comma = '\t'
+		for {
+			record, err := r.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println(record)
+			hicmap[record[0]] = readHic(record[1])
+		}
+	}
+	AddHicsHandle(router, hicmap, prefix)
+}
 
 /* CmdServe: serve bigwigs and hic, and static html
  *
@@ -65,11 +97,9 @@ func CmdServe(c *cli.Context) error {
 	serveBwURI(bwURI, router, "/bw")
 	/* TODO: multi hic files */
 	hicURI := c.String("H")
-	hicreader, err := stream.NewSeekableStreamReader(hicURI)
-	hic, err := HiC.DataReader(hicreader)
-	checkErr(err)
-	prefix := "/hic"
-	AddHicHandle(router, hic, prefix)
+	//hicreader, err := stream.NewSeekableStreamReader(hicURI)
+	//hic, err := HiC.DataReader(hicreader)
+	serveHicURI(hicURI, router, "/hic")
 
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))

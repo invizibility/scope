@@ -123,7 +123,7 @@ export default function(layout, container, state) {
         dispatch.call("replot",this,{})
     })
 
-    var URI = "/hic"
+    var URI = "/hic/default"
     var testBeds = [{
             chr: "1",
             start: 0,

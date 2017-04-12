@@ -2648,7 +2648,7 @@ var hic = function(layout, container, state) {
         dispatch.call("replot",this,{});
     });
 
-    var URI = "/hic";
+    var URI = "/hic/default";
     var testBeds = [{
             chr: "1",
             start: 0,
@@ -2887,7 +2887,7 @@ var hicMonitor = function(layout, container, state) {
               }
               var uri = cfg.append("input")
                 .attr("type","text")
-                .attr("value",state.URI || "/hic");
+                .attr("value",state.URI || "/hic/default");
 
               cfg.append("input")
                 .attr("type","button")
@@ -2940,7 +2940,7 @@ var hicMonitor = function(layout, container, state) {
         dispatch.call("replot",this,{});
     });
 
-    var URI = state.URI || "/hic"; //need to set it if could.
+    var URI = state.URI || "/hic/default"; //need to set it if could.
     var testBeds = [{
             chr: "1",
             start: 0,
@@ -3202,7 +3202,7 @@ var hicIcon = function(layout, container, state) {
         dispatch.call("replot",this,{});
     });
 
-    var URI = state.URI || "/hic"; //need to set it if could.
+    var URI = state.URI || "/hic/default"; //need to set it if could.
     var testBeds = [{
             chr: "1",
             start: 0,
