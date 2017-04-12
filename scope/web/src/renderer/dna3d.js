@@ -6,6 +6,12 @@ var width = 500,
 initialWidth = 500,
 height = 500,
 initialHeight = 500
+//container.getElement().remove(".content")
+//container.getElement().remove(".content")
+container.getElement().append("<div class='content'></div>")
+container.getElement().append("<div class='cfg'>CONFIG</div>")
+console.log(container.getElement())
+console.log("in render dna3d")
 var pdb,
 	resolution = '1Mb',
 	resolutionMult = 1000000,
@@ -111,8 +117,8 @@ var draw = function() {
 	getPanelSize()
 	var model = "<div class='model'></div>";
 	var title = "<div class='title'><div class = titleComponent>3D STRUCTURE<br></div></div>"
-	d3.select(container.getElement()[0]).selectAll(".genome").remove()
-	container.getElement().append(
+	container.getElement().find(".content .genome").remove()
+	container.getElement().find(".content").append(
 		"<div class = genome>"+ title + model + "</div>"
 	)
 	if (launch){
@@ -149,7 +155,8 @@ function init() {
 
 	renderer.setSize(Math.max(300,Math.min(height,width) - 25), Math.max(300,Math.min(height,width) - 25));
 	renderer.setClearColor(0x000000, 0);
-	container.getElement().find('.genome .model').append(renderer.domElement);//TODO FIX
+	container.getElement().find('.content .genome .model').append(renderer.domElement);//TODO FIX
+
 	controls = new THREE.TrackballControls(camera, renderer.domElement);
 	sphere = new THREE.Mesh(new THREE.SphereGeometry(11.5, 30, 30), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.1 }));
     sphere.visible = false;
@@ -287,7 +294,9 @@ var alphaRegions = function(regions) {
 }
 
 layout.eventHub.on("update",function(d){
-	alphaRegions(d)
+	if(dataLoaded) {
+		alphaRegions(d)
+	}
 })
 
 
