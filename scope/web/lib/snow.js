@@ -2495,7 +2495,7 @@ var simple = function(layout, container, state) {
          content.style("display","block"); //jQuery .show()
          console.log(c);
          container.extendState({
-           "configToggle":false,
+           "configView":false,
            "config":{"color":c.node().value}
          });
          config.color = c.node().value;
@@ -3542,7 +3542,10 @@ var ucsc$2 = function(layout, container, state) {
 
 var dna3d = function(layout, container, state) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20);
-var dataURI = "/data/structure_3";
+console.log(state);
+var dataURI = state.dataURI || "/data/structure_3";
+state.dataURI = dataURI;
+
 var data;
 var width = 500,
 initialWidth = 500,
@@ -3551,9 +3554,28 @@ initialHeight = 500;
 //container.getElement().remove(".content")
 //container.getElement().remove(".content")
 container.getElement().append("<div class='content'></div>");
-container.getElement().append("<div class='cfg'>CONFIG</div>");
-console.log(container.getElement());
-console.log("in render dna3d");
+container.getElement().append("<div class='cfg'>CONFIG<br><label>Data URI:</label><input type='text' class='uri'></input></div>");
+container.getElement().find(".cfg .uri").val(state.dataURI);
+d3.select(container.getElement()[0])
+.append("input")
+.attr("type","button")
+.attr("value","submit")
+.on("click", function(){
+	 var v = container.getElement().find(".cfg .uri").val();
+	 if (v!=state.dataURI) {
+		state.dataURI = v;
+		dataLoaded = false;
+		dataURI = v;
+		load(draw); //event load data? //todo
+	}
+	 container.extendState({
+		 "configView":false,
+		 "dataURI": v
+	 });
+	 container.getElement().find(".content").show();
+	 container.getElement().find(".cfg").hide();
+
+});
 var pdb,
 	resolution = '1Mb',
 	resolutionMult = 1000000,
@@ -3579,9 +3601,29 @@ var pdb,
 	dragging = false,
 
 	launch = true,
-	dataLoaded = false;
+	dataLoaded = false,
+	regions = [];
 
 var load = function(callback) {
+	resolution = '1Mb',
+	resolutionMult = 1000000,
+	genome = {},
+	segments = [],    						// range of bin indexes for each chromosome (ex [0, 193] for chrom 1)
+	pairSegments = [],						// range of base pairs for each chromosome (ex [0, 197000000] for chrom 1)
+	chromosomes = [],
+	labels = [],
+	all = [],       					//container for 3d model
+	geometries = [],					//container for geometry of each chromosome
+	meshes = [],
+	raycaster = new THREE.Raycaster(),
+	mouse = new THREE.Vector2(),
+	click = new THREE.Vector2(),
+	shifting = false,
+	dragging = false,
+	launch = true,
+	dataLoaded = false,
+	regions = [];
+
 	$.get(dataURI, function(data){
 		pdb = data.split('\n');
 		var bins = [];
@@ -3668,6 +3710,9 @@ var draw = function() {
 	}
 	modelGenome();
 	animate();
+	if(regions.length > 0) {
+		alphaRegions(regions);
+	}
 };
 var getPanelSize = function(){
   width = container.width;
@@ -3685,6 +3730,9 @@ var rerender = function(){
 	getPanelSize();
 	console.log(width,height);
 	draw();
+	if(dataLoaded && regions.length > 0) {
+		alphaRegions(regions);
+	}
 	//renderer.setSize(Math.min(height,width) - 25, Math.min(height,width) - 25);
 
 };
@@ -3836,6 +3884,7 @@ var alphaRegions = function(regions) {
 };
 
 layout.eventHub.on("update",function(d){
+	regions = d;
 	if(dataLoaded) {
 		alphaRegions(d);
 	}

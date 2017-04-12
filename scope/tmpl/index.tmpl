@@ -1,10 +1,16 @@
-{{define "title"}} ScopeE5 {{end}} {{define "html"}}
+{{define "title"}} ScopeE6 {{end}} {{define "html"}}
 <html>
 
 <head>
     <title>{{template "title"}}</title>
     {{template "css"}}
-    <link rel="stylesheet" href="/style0/snow.css"> {{template "lib"}}
+    <link rel="stylesheet" href="/style0/snow.css">
+    <link rel="stylesheet" href="/style0/dna3d.css"> {{template "lib"}}
+    <script src="/lib/three.min.js"></script>
+    <script src="/lib0/TrackballControls.js"></script>
+    <script src="/lib0/CanvasRenderer.js"></script>
+    <script src="/lib0/Projector.js"></script>
+
     <script src="/lib0/snow.js"></script>
 </head>
 
@@ -40,10 +46,11 @@
   </div>
   <div class="cfg">
   </div>
-</template>
+</template> {{template "dna3d"}}
 </body>
 <script type="text/javascript" src="/lib/dat.gui.min.js"></script>
 <link rel="stylesheet" href="/css/dat-gui-light-theme.css">
+
 <script>
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
@@ -75,7 +82,7 @@
                         componentState: {
                             "name": "102",
                             "render": "simple",
-                            "server": "#"
+                            "server": "#",
 
                         }
                     }
@@ -85,7 +92,7 @@
         var stateId = "ScopeE5.V2"
         var renders = {
             "simple": S.render.simple,
-            "3d": S.render.simple,
+            "3d": S.render.dna3d,
             "network": S.render.simple,
             "hic": S.render.hic,
             "hicMonitor": S.render.hicMonitor,

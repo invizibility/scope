@@ -31,7 +31,7 @@ export default function(layout, container, state) {
          content.style("display","block") //jQuery .show()
          console.log(c)
          container.extendState({
-           "configToggle":false,
+           "configView":false,
            "config":{"color":c.node().value}
          })
          config.color = c.node().value
