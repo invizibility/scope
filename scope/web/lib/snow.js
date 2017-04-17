@@ -2550,8 +2550,9 @@ var hic = function (layout, container, state) {
     var sign = false;
     dispatch.on("cfg", function (data) {
         hic.ctrl = H.chart().data(data);
-        console.log("hic state", container.getState().state);
-        cfg.call(hic.ctrl);
+        //console.log("hic state", container.getState().state)
+        //TODO add hics options.
+        cfg.call(hic.ctrl); //TODO add more config here
         if (container.getState().state && sign == false) {
             hic.ctrl.state(container.getState().state);
             sign = true; //load once.
@@ -2582,35 +2583,17 @@ var hic = function (layout, container, state) {
         .style("top", 10).style("left", 10).style("width", 50).style("height", 100);
     var div1 = main.append("div").style("position", "absolute");
     //.style("background-color","#FEF")
-    console.log("container", container);
-    console.log("title", container.title);
+    //console.log("container", container)
+    //console.log("title", container.title)
     //console.log("width",container.width)
-    console.log("state", state);
+    //console.log("state", state)
     /*
         var div2 =  main.append("div").style("position", "absolute")
             .style("top", 10).style("left", 3*container.width/4).style("width", container.width / 4).style("height", container.width/4)
             .style("background-color","#DFD")
 
         /* CTRL Inside */
-    /*
-    var btn0 = div.append("input")
-        .attr("type", "button")
-        .attr("value", "domain(0-100)")
-        .on("click", function () {
-            dispatch.call("domain", this, [0, 100])
-        })
-    */
-    //TODO
 
-    /*
-    var btn = div.append("input")
-        .attr("type", "button")
-        .attr("value", "replot")
-        .on("click", function () {
-            dispatch.call("replot", this, {})
-        })
-    */
-    //END TODO
     var btnPlay = div.append("button")
         .classed("btn", true)
         .html('<small><span class="glyphicon glyphicon-play"></span></small>')
@@ -2698,7 +2681,7 @@ var hic = function (layout, container, state) {
         bwconfig= JSON.parse(bwconfig);
     }
     B.Get("/bw", initBw);
-    H.Get(URI, initHic);
+    H.Get(URI, initHic); //TODO change hic.
     var renderBigwig = function (regions) {
         var bw = [];
         var tracks = [];
@@ -2803,10 +2786,10 @@ var hic = function (layout, container, state) {
     dispatch.on("monitor", function (d) {
         div1.html(JSON.stringify(d, 2, 2)); //TODO renders.
         var k0 = div1.append("div").style("padding-right","20px");
-        var k1 = k0.append("div").attr("id","slider101");
+        var k1 = k0.append("div");//.attr("id","slider101")
         var k2 = k0.append("div");
         var max = d.max>3000? 3000:d.max;
-        $("#slider101").slider({
+        $(k1.node()).slider({
           range: true,
           min: 0,
           max: max,

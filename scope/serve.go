@@ -62,6 +62,7 @@ func readHic(uri string) *HiC.HiC {
 func serveHicURI(uri string, router *mux.Router, prefix string) {
 	hicExt := strings.ToLower(path.Ext(uri))
 	hicmap := make(map[string]*HiC.HiC)
+	hicList := []string{}
 	if hicExt == ".hic" || hicExt == ".HiC" { //Single BigWig File to Default
 		hicmap["default"] = readHic(uri) //TODO
 	} else if hicExt == ".txt" || hicExt == ".tsv" {
@@ -79,7 +80,13 @@ func serveHicURI(uri string, router *mux.Router, prefix string) {
 			}
 			log.Println(record)
 			hicmap[record[0]] = readHic(record[1])
+			hicList = append(hicList, record[0])
 		}
+	}
+	if _, ok := hicmap["default"]; ok {
+		//has default
+	} else {
+		hicmap["default"] = hicmap[hicList[0]]
 	}
 	AddHicsHandle(router, hicmap, prefix)
 }
