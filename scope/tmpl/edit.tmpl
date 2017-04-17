@@ -50,8 +50,19 @@
         <ul id="menuContainer"></ul>
         <div id="layoutContainer" style="padding:20px">
             <div id="message"></div>
-            <div id="hic"></div>
-            <div id="bw"></div>
+            <div id="hic">
+                <label>HiC Data </label>
+                <select id="hicselect">
+              </select>
+            </div>
+            <div id="bw">
+                <label>BigWig Data </label>
+                <div id="bwdata">
+                </div>
+            </div>
+            <div>
+                <button id="submit">submit</button>
+            </div>
         </div>
     </div>
 </body>
@@ -120,7 +131,18 @@
             var bw = results[0];
             var hic = results[1];
             //d3.select("#bw").html(JSON.stringify(bw))
-            d3.select("#hic").html(JSON.stringify(hic))
+            d3.select("#hicselect")
+                .selectAll("option")
+                .data(hic)
+                .enter()
+                .append("option")
+                .attr("value", function(d) {
+                    return d
+                })
+                .append("text")
+                .text(function(d) {
+                    return d;
+                })
             //var data = []
             bw.forEach(function(d, i) {
                 data.push({
@@ -135,7 +157,7 @@
                 "metadata": metadata,
                 "data": data
             });
-            editableGrid.renderGrid("bw", "datagrid");
+            editableGrid.renderGrid("bwdata", "datagrid");
 
         }
         d3.queue(2)
@@ -166,6 +188,15 @@
                 }
             })
             editableGrid.renderGrid("bw", "datagrid");
+        })
+        $("#submit").on("click", function(d) {
+            var state = JSON.stringify({
+                "metadata": metadata,
+                "data": trans(editableGrid.data)
+            });
+            localStorage.setItem(stateId, state);
+            localStorage.setItem('hicId', $("#hicselect").val())
+            window.location.replace("/v1/index.html")
         })
 
     }
