@@ -2602,7 +2602,6 @@ var hic = function (layout, container, state) {
     */
     //TODO
 
-
     /*
     var btn = div.append("input")
         .attr("type", "button")
@@ -2612,6 +2611,12 @@ var hic = function (layout, container, state) {
         })
     */
     //END TODO
+    var btnPlay = div.append("button")
+        .classed("btn", true)
+        .html('<small><span class="glyphicon glyphicon-play"></span></small>')
+        .on("click", function () {
+            dispatch.call("replot", this, {});
+        });
 
     var btnZoomOut = div.append("button")
         .classed("btn", true)
@@ -2797,15 +2802,18 @@ var hic = function (layout, container, state) {
 
     dispatch.on("monitor", function (d) {
         div1.html(JSON.stringify(d, 2, 2)); //TODO renders.
-        var k = div1.append("div").attr("id","slider101");
-
+        var k0 = div1.append("div").style("padding-right","20px");
+        var k1 = k0.append("div").attr("id","slider101");
+        var k2 = k0.append("div");
+        var max = d.max>3000? 3000:d.max;
         $("#slider101").slider({
           range: true,
           min: 0,
-          max: 500,
-          values: [ 75, 300 ],
+          max: max,
+          values: [ 0, max ],
           slide: function( event, ui ) {
             //console.log(ui.values[0],ui.values[1])
+            k2.html(ui.values[0]+"-"+ui.values[1]);
             dispatch.call("domain",this,[ui.values[0],ui.values[1]]);
           }
         });
