@@ -67,12 +67,14 @@ export default function (layout, container, state) {
             .style("background-color","#DFD")
 
         /* CTRL Inside */
+    /*
     var btn0 = div.append("input")
         .attr("type", "button")
         .attr("value", "domain(0-100)")
         .on("click", function () {
             dispatch.call("domain", this, [0, 100])
         })
+    */
     //TODO
 
 
