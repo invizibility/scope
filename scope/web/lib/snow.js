@@ -2598,12 +2598,19 @@ var hic = function (layout, container, state) {
         .on("click", function () {
             dispatch.call("domain", this, [0, 100]);
         });
+    //TODO
+
+
+    /*
     var btn = div.append("input")
         .attr("type", "button")
         .attr("value", "replot")
         .on("click", function () {
-            dispatch.call("replot", this, {});
-        });
+            dispatch.call("replot", this, {})
+        })
+    */
+    //END TODO
+
     var btnZoomOut = div.append("button")
         .classed("btn", true)
         .html('<small><span class="glyphicon glyphicon-zoom-out"></span></small>')
@@ -2695,6 +2702,7 @@ var hic = function (layout, container, state) {
 
             });
         } else {
+
             bwconfig.data.forEach(function (d) {
                 if (d.values[1] == "show") {
                     tracks.push(d.values[0]);
@@ -2762,8 +2770,8 @@ var hic = function (layout, container, state) {
         canvas.call(hic.chart);
         //TODO Fix OverFlow.
         dispatch.on("domain", function (d) {
-            hic.chart.domain(d);
-            hic.chart.render();
+            hic.chart.domain(d); //local render.
+            hic.chart.render(true);
         });
     };
     var render = function (d) {
@@ -2787,6 +2795,18 @@ var hic = function (layout, container, state) {
 
     dispatch.on("monitor", function (d) {
         div1.html(JSON.stringify(d, 2, 2)); //TODO renders.
+        var k = div1.append("div").attr("id","slider101");
+
+        $("#slider101").slider({
+          range: true,
+          min: 0,
+          max: 500,
+          values: [ 75, 300 ],
+          slide: function( event, ui ) {
+            //console.log(ui.values[0],ui.values[1])
+            dispatch.call("domain",this,[ui.values[0],ui.values[1]]);
+          }
+        });
     });
 
     dispatch.on("update.local", function (d) {
