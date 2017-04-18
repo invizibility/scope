@@ -28,7 +28,7 @@ export default function(layout, container, state) {
     var sign = false
     dispatch.on("cfg", function(data) {
               hic.ctrl = H.chart().data(data)
-              console.log("hic state", state.state)
+              //console.log("hic state", state.state)
               cfg.call(hic.ctrl)
 
               if (state.state && sign == false) {
@@ -37,9 +37,7 @@ export default function(layout, container, state) {
               } else {
                   container.extendState({"state":hic.ctrl.state()})
               }
-              var uri = cfg.append("input")
-                .attr("type","text")
-                .attr("value",state.URI || "/hic/default")
+
 
               cfg.append("input")
                 .attr("type","button")
@@ -47,15 +45,25 @@ export default function(layout, container, state) {
                 .on("click", function(d){
                   container.extendState({"state":hic.ctrl.state()})
                   container.extendState({"configView":false})
-                  container.extendState({"URI":uri.node().value})
-                  if (uri.node().value != URI) {
-                      URI=uri.node().value;
-                      H.Get(URI,initHic)
-                  }
-
+                  //container.extendState({"URI":uri.node().value}
                   cfg.style("display","none")
                   main.style("display","block")
                   dispatch.call("replot",this,{})
+                })
+                cfg.append("hr")
+                var uri = cfg.append("input")
+                  .attr("type","text")
+                  .attr("value",state.URI || "/hic/default")
+                cfg.append("input")
+                .attr("type","button")
+                .attr("value","load new data")
+                .on("click", function(d){
+                  container.extendState({"URI":uri.node().value})
+                  if (uri.node().value != URI) {
+                      URI=uri.node().value;
+                      container.setTitle(URI)
+                      H.Get(URI,initHic)
+                  }
                 })
           })
 

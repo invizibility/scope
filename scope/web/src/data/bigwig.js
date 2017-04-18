@@ -38,7 +38,7 @@ export default {
         }
 
         /* is this a really a static function? */
-        var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color) {
+        var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color, ncolor) {
             //  var ctx = canvas.node().getContext("2d");
             //console.log(mat, mat.length)
 
@@ -66,12 +66,18 @@ export default {
                 var y1 = yscale(yv)
                 var ym = yv < 0 ? yscale(ymin) : yscale(ymax)
                 var y0 = yscale(0);
+                if (yv<0){
+                  ctx.fillStyle = ncolor
+                } else {
+                  ctx.fillStyle = color
+                }
                 //var y1 = barHeight - height
                 if (mode == 0 || mode == 1) {
                     if (y0 < 0) {
                         ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
                         //ctx.fillRect(x + xoffset + x1, y + yoffset , width, y1);
                     } else {
+
                         if (y1 > y0) {
                             ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
                         } else {
@@ -98,7 +104,7 @@ export default {
             }
         }
         //TODO get a simple rotated version.
-        var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color) {
+        var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color, ncolor) {
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color
                 var r = xscale.range();
@@ -120,6 +126,11 @@ export default {
                 var ymax = region[i].Max || region[i].Value
                 var ymin = region[i].Min || region[i].Value
                 var yv = region[i].Sum / region[i].Valid || region[i].Value
+                if (yv<0){
+                  ctx.fillStyle = ncolor
+                } else {
+                  ctx.fillStyle = color
+                }
                 var y1 = yscale(yv)
                 var ym = yv < 0 ? yscale(ymin) : yscale(ymax)
 
@@ -243,7 +254,7 @@ export default {
             var yscale = d3.scaleLinear().domain([Math.min(0, min), Math.max(max, 0)]).range([0, barHeight]) //TODO?
             scale = yscale;
             var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0])
-            var color = d3.scaleOrdinal(d3.schemeCategory10);
+            var color = d3.scaleOrdinal(d3.schemeCategory10);// TODO here.
             var background = "#FFF"
             if (vertical) {
                 //renderRespVertical(); //TODO
@@ -251,7 +262,7 @@ export default {
                 ctx.fillStyle = background
                 ctx.fillRect(x, y, barHeight, width)
                 results.forEach(function (region, i) {
-                    renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+                    renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, "#333","#666")
                 })
                 canvasToolXAxis(ctx, axisScale, x, y + width, barHeight, id)
             } else {
@@ -260,7 +271,7 @@ export default {
                 ctx.fillStyle = background
                 ctx.fillRect(x, y, width, barHeight)
                 results.forEach(function (region, i) {
-                    renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i))
+                    renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, "#333","#666")
                 })
 
                 canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id)

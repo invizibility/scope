@@ -5,6 +5,7 @@ import scaleScope from "../scaleScope"
 var defaultConfig = {
   "color" : "#111"
 }
+var labelLength = 105;
 var ucsc = function(org,db,position,width) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
 }
@@ -15,12 +16,12 @@ export default function(layout, container, state) {
     var svg = content.append("svg")
       .style("position","absolute")
       .style("pointer-events","none")
-    var scale = scaleScope()
+    var scale = scaleScope().gap(10+labelLength)
 
     //state.config parameters.
     /* render config panel and configs */
     var setiframe = function(div,  d) {
-      scale.domain(d).range([10,container.width-10]) //padding = 10
+      scale.domain(d).range([10+labelLength,container.width-10]) //padding = 10
       var gbdiv = div.selectAll(".gbdiv")
         .data(d)
       svg.selectAll("rect").remove();
@@ -32,11 +33,11 @@ export default function(layout, container, state) {
         .style("top",0)
         .style("left",function(d,i){
           var p = scale(d)
-          return p[0][0]
+          return p[0][0] - labelLength
         })
         .style("width",function(d,i){
           var p = scale(d)
-          return p[0][1]-p[0][0]
+          return p[0][1]-p[0][0] + labelLength
         })
         .style("height",container.height)
         .style("background-color","#FFF")
@@ -47,12 +48,12 @@ export default function(layout, container, state) {
         .style("border",0)
         .style("width",function(d){
           var p = scale(d)
-          return p[0][1]-p[0][0]
+          return p[0][1]-p[0][0] + labelLength
         })
         .style("height",container.height+200)
         .attr("src",function(d){
           var p = scale(d)
-          var w = p[0][1]-p[0][0]
+          var w = p[0][1]-p[0][0] + labelLength
           return ucsc("human","hg19",d,w)
         }
         )

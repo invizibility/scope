@@ -125,7 +125,16 @@ export default function (layout, container, state) {
         dispatch.call("replot", this, {})
     })
 
-    var URI = "/hic/default" //TODO This For All HiC selection.
+    var URI =   "/hic/default"  //TODO This For All HiC selection.
+    var hicId = localStorage.getItem("hicId")
+    if (hicId) {
+      URI = "/hic/"+hicId
+      container.setTitle(hicId)
+    } else {
+      hicId = ""
+    }
+
+
     var testBeds = [{
             chr: "1",
             start: 0,
@@ -151,12 +160,13 @@ export default function (layout, container, state) {
         bigwig = data;
         init.bigwig = true;
     }
-    var bwconfig = localStorage.getItem("bwconfig");
+    var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
     if (bwconfig) {
         bwconfig= JSON.parse(bwconfig)
     }
     B.Get("/bw", initBw)
-    H.Get(URI, initHic) //TODO change hic.
+    H.Get(URI, initHic) //TODO get localStorage hic id
+
     var renderBigwig = function (regions) {
         var bw = []
         var tracks = []

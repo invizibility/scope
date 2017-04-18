@@ -966,7 +966,7 @@ var B = {
         };
 
         /* is this a really a static function? */
-        var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color) {
+        var renderRegion = function (ctx, xoffset, yoffset, region, xscale, yscale, color, ncolor) {
             //  var ctx = canvas.node().getContext("2d");
             //console.log(mat, mat.length)
 
@@ -994,12 +994,18 @@ var B = {
                 var y1 = yscale(yv);
                 var ym = yv < 0 ? yscale(ymin) : yscale(ymax);
                 var y0 = yscale(0);
+                if (yv<0){
+                  ctx.fillStyle = ncolor;
+                } else {
+                  ctx.fillStyle = color;
+                }
                 //var y1 = barHeight - height
                 if (mode == 0 || mode == 1) {
                     if (y0 < 0) {
                         ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - 0);
                         //ctx.fillRect(x + xoffset + x1, y + yoffset , width, y1);
                     } else {
+
                         if (y1 > y0) {
                             ctx.fillRect(x + xoffset + x1, y + yoffset + (barHeight - y1), width, y1 - y0);
                         } else {
@@ -1026,7 +1032,7 @@ var B = {
             }
         };
         //TODO get a simple rotated version.
-        var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color) {
+        var renderRegionVertical = function (ctx, yoffset, xoffset, region, xscale, yscale, color, ncolor) {
             for (var i = 0; i < region.length; i++) {
                 ctx.fillStyle = color;
                 var r = xscale.range();
@@ -1048,6 +1054,11 @@ var B = {
                 var ymax = region[i].Max || region[i].Value;
                 var ymin = region[i].Min || region[i].Value;
                 var yv = region[i].Sum / region[i].Valid || region[i].Value;
+                if (yv<0){
+                  ctx.fillStyle = ncolor;
+                } else {
+                  ctx.fillStyle = color;
+                }
                 var y1 = yscale(yv);
                 var ym = yv < 0 ? yscale(ymin) : yscale(ymax);
 
@@ -1171,7 +1182,7 @@ var B = {
             var yscale = d3.scaleLinear().domain([Math.min(0, min), Math.max(max, 0)]).range([0, barHeight]); //TODO?
             scale = yscale;
             var axisScale = d3.scaleLinear().domain([min, max]).range([barHeight, 0]);
-            var color = d3.scaleOrdinal(d3.schemeCategory10);
+            var color = d3.scaleOrdinal(d3.schemeCategory10);// TODO here.
             var background = "#FFF";
             if (vertical) {
                 //renderRespVertical(); //TODO
@@ -1179,7 +1190,7 @@ var B = {
                 ctx.fillStyle = background;
                 ctx.fillRect(x, y, barHeight, width);
                 results.forEach(function (region, i) {
-                    renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i));
+                    renderRegionVertical(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, "#333","#666");
                 });
                 canvasToolXAxis(ctx, axisScale, x, y + width, barHeight, id);
             } else {
@@ -1188,7 +1199,7 @@ var B = {
                 ctx.fillStyle = background;
                 ctx.fillRect(x, y, width, barHeight);
                 results.forEach(function (region, i) {
-                    renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, color(i));
+                    renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, "#333","#666");
                 });
 
                 canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id);
@@ -2650,7 +2661,16 @@ var hic = function (layout, container, state) {
         dispatch.call("replot", this, {});
     });
 
-    var URI = "/hic/default"; //TODO This For All HiC selection.
+    var URI =   "/hic/default";  //TODO This For All HiC selection.
+    var hicId = localStorage.getItem("hicId");
+    if (hicId) {
+      URI = "/hic/"+hicId;
+      container.setTitle(hicId);
+    } else {
+      hicId = "";
+    }
+
+
     var testBeds = [{
             chr: "1",
             start: 0,
@@ -2676,12 +2696,13 @@ var hic = function (layout, container, state) {
         bigwig = data;
         init.bigwig = true;
     };
-    var bwconfig = localStorage.getItem("bwconfig");
+    var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
     if (bwconfig) {
         bwconfig= JSON.parse(bwconfig);
     }
     B.Get("/bw", initBw);
-    H.Get(URI, initHic); //TODO change hic.
+    H.Get(URI, initHic); //TODO get localStorage hic id
+
     var renderBigwig = function (regions) {
         var bw = [];
         var tracks = [];
@@ -2912,7 +2933,7 @@ var hicMonitor = function(layout, container, state) {
     var sign = false;
     dispatch.on("cfg", function(data) {
               hic.ctrl = H.chart().data(data);
-              console.log("hic state", state.state);
+              //console.log("hic state", state.state)
               cfg.call(hic.ctrl);
 
               if (state.state && sign == false) {
@@ -2921,9 +2942,7 @@ var hicMonitor = function(layout, container, state) {
               } else {
                   container.extendState({"state":hic.ctrl.state()});
               }
-              var uri = cfg.append("input")
-                .attr("type","text")
-                .attr("value",state.URI || "/hic/default");
+
 
               cfg.append("input")
                 .attr("type","button")
@@ -2931,15 +2950,25 @@ var hicMonitor = function(layout, container, state) {
                 .on("click", function(d){
                   container.extendState({"state":hic.ctrl.state()});
                   container.extendState({"configView":false});
-                  container.extendState({"URI":uri.node().value});
-                  if (uri.node().value != URI) {
-                      URI=uri.node().value;
-                      H.Get(URI,initHic);
-                  }
-
+                  //container.extendState({"URI":uri.node().value}
                   cfg.style("display","none");
                   main.style("display","block");
                   dispatch.call("replot",this,{});
+                });
+                cfg.append("hr");
+                var uri = cfg.append("input")
+                  .attr("type","text")
+                  .attr("value",state.URI || "/hic/default");
+                cfg.append("input")
+                .attr("type","button")
+                .attr("value","load new data")
+                .on("click", function(d){
+                  container.extendState({"URI":uri.node().value});
+                  if (uri.node().value != URI) {
+                      URI=uri.node().value;
+                      container.setTitle(URI);
+                      H.Get(URI,initHic);
+                  }
                 });
           });
 
@@ -3459,6 +3488,7 @@ var ucsclink = function(layout, container, state) {
     });
 };
 
+var labelLength = 105;
 var ucsc$1 = function(org,db,position,width) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
 };
@@ -3469,12 +3499,12 @@ var ucsc$2 = function(layout, container, state) {
     var svg = content.append("svg")
       .style("position","absolute")
       .style("pointer-events","none");
-    var scale = scaleScope();
+    var scale = scaleScope().gap(10+labelLength);
 
     //state.config parameters.
     /* render config panel and configs */
     var setiframe = function(div,  d) {
-      scale.domain(d).range([10,container.width-10]); //padding = 10
+      scale.domain(d).range([10+labelLength,container.width-10]); //padding = 10
       var gbdiv = div.selectAll(".gbdiv")
         .data(d);
       svg.selectAll("rect").remove();
@@ -3486,11 +3516,11 @@ var ucsc$2 = function(layout, container, state) {
         .style("top",0)
         .style("left",function(d,i){
           var p = scale(d);
-          return p[0][0]
+          return p[0][0] - labelLength
         })
         .style("width",function(d,i){
           var p = scale(d);
-          return p[0][1]-p[0][0]
+          return p[0][1]-p[0][0] + labelLength
         })
         .style("height",container.height)
         .style("background-color","#FFF")
@@ -3501,12 +3531,12 @@ var ucsc$2 = function(layout, container, state) {
         .style("border",0)
         .style("width",function(d){
           var p = scale(d);
-          return p[0][1]-p[0][0]
+          return p[0][1]-p[0][0] + labelLength
         })
         .style("height",container.height+200)
         .attr("src",function(d){
           var p = scale(d);
-          var w = p[0][1]-p[0][0];
+          var w = p[0][1]-p[0][0] + labelLength;
           return ucsc$1("human","hg19",d,w)
         }
         );
