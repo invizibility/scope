@@ -1,13 +1,9 @@
 package main
 
 import (
-	"encoding/csv"
-	"io"
 	"log"
 	"net/http"
-	"path"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/snowjs"
@@ -28,26 +24,10 @@ func readBw(uri string) *BigWigReader {
 }
 
 func serveBwURI(uri string, router *mux.Router, prefix string) {
-	bwExt := strings.ToLower(path.Ext(uri))
+	uriMap := LoadURI(uri)
 	bwmap := make(map[string]*BigWigReader)
-	if bwExt == ".bw" || bwExt == ".bigwig" { //Single BigWig File to Default
-		bwmap["default"] = readBw(uri)
-	} else if bwExt == ".txt" || bwExt == ".tsv" {
-		reader, err := stream.NewSeekableStreamReader(uri)
-		checkErr(err)
-		r := csv.NewReader(reader)
-		r.Comma = '\t'
-		for {
-			record, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Println(record)
-			bwmap[record[0]] = readBw(record[1])
-		}
+	for k, v := range uriMap {
+		bwmap[k] = readBw(v)
 	}
 	AddBwsHandle(router, bwmap, prefix)
 }
@@ -60,28 +40,12 @@ func readHic(uri string) *HiC.HiC {
 }
 
 func serveHicURI(uri string, router *mux.Router, prefix string) {
-	hicExt := strings.ToLower(path.Ext(uri))
+	//hicExt := strings.ToLower(path.Ext(uri))
+	uriMap := LoadURI(uri)
 	hicmap := make(map[string]*HiC.HiC)
 	hicList := []string{}
-	if hicExt == ".hic" || hicExt == ".HiC" { //Single BigWig File to Default
-		hicmap["default"] = readHic(uri) //TODO
-	} else if hicExt == ".txt" || hicExt == ".tsv" {
-		reader, err := stream.NewSeekableStreamReader(uri)
-		checkErr(err)
-		r := csv.NewReader(reader)
-		r.Comma = '\t'
-		for {
-			record, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Println(record)
-			hicmap[record[0]] = readHic(record[1])
-			hicList = append(hicList, record[0])
-		}
+	for k, v := range uriMap {
+		hicmap[k] = readHic(v)
 	}
 	if _, ok := hicmap["default"]; ok {
 		//has default
@@ -89,6 +53,12 @@ func serveHicURI(uri string, router *mux.Router, prefix string) {
 		hicmap["default"] = hicmap[hicList[0]]
 	}
 	AddHicsHandle(router, hicmap, prefix)
+}
+
+func serveStructURI(uri string, router *mux.Router, prefix string) {
+	//hicExt := strings.ToLower(path.Ext(uri))
+	uriMap := LoadURI(uri)
+	AddBuffersHandle(router, uriMap, prefix)
 }
 
 /* CmdServe: serve bigwigs and hic, and static html
@@ -101,12 +71,21 @@ func CmdServe(c *cli.Context) error {
 	AddStaticHandle(router)
 
 	bwURI := c.String("B")
-	serveBwURI(bwURI, router, "/bw")
+	if bwURI != "" {
+		serveBwURI(bwURI, router, "/bw")
+	}
 	/* TODO: multi hic files */
 	hicURI := c.String("H")
 	//hicreader, err := stream.NewSeekableStreamReader(hicURI)
 	//hic, err := HiC.DataReader(hicreader)
-	serveHicURI(hicURI, router, "/hic")
+	if hicURI != "" {
+		serveHicURI(hicURI, router, "/hic")
+
+	}
+	structURI := c.String("S")
+	if structURI != "" {
+		serveStructURI(structURI, router, "/3d")
+	}
 
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))

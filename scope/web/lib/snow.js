@@ -3629,7 +3629,7 @@ var ucsc$2 = function(layout, container, state) {
 var dna3d = function(layout, container, state) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20);
 console.log(state);
-var dataURI = state.dataURI || "/data/structure_3";
+var dataURI = state.dataURI || "/3d/get/default";
 state.dataURI = dataURI;
 
 var data;

@@ -39,11 +39,14 @@ func main() {
 				cli.StringFlag{
 					Name:  "bw,B",
 					Usage: "bigwig data file URI",
-					Value: testFile,
 				},
 				cli.StringFlag{
 					Name:  "hic,H",
 					Usage: "hic data file",
+				},
+				cli.StringFlag{
+					Name:  "struct,S",
+					Usage: "3d structure file",
 				},
 				cli.IntFlag{
 					Name:  "port,p",
