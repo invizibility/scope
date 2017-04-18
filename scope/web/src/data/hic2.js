@@ -16,7 +16,7 @@ export default {
             config.chrs = results[2]
             config.chr2idx = {}
             config.chrs.forEach(function (d, i) {
-                config.chr2idx[d] = i
+                config.chr2idx[d.Name] = i
             })
             config.bpres = results[3]
             callback(config)

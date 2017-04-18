@@ -3,4 +3,4 @@
  cd ..
  go generate
  go build
- ./scope serve -p 4040 -H ~/Data/hic/K562_combined.hic   -B bw.tsv -S structure_3
+ ./scope serve -p 4040 -H hics.txt   -B bw.tsv -S structure_3

@@ -48,6 +48,10 @@ func main() {
 					Name:  "struct,S",
 					Usage: "3d structure file",
 				},
+				cli.StringFlag{
+					Name:  "genome,G",
+					Usage: "chromSizes",
+				},
 				cli.IntFlag{
 					Name:  "port,p",
 					Usage: "data server port",

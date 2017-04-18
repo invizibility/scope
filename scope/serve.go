@@ -42,20 +42,23 @@ func readHic(uri string) *HiC.HiC {
 func serveHicURI(uri string, router *mux.Router, prefix string) {
 	//hicExt := strings.ToLower(path.Ext(uri))
 	uriMap := LoadURI(uri)
-	hicmap := make(map[string]*HiC.HiC)
+	hicMap := make(map[string]*HiC.HiC)
 	hicList := []string{}
 	for k, v := range uriMap {
-		hicmap[k] = readHic(v)
+		log.Println("key", k, "URI", v)
+		hicMap[k] = readHic(v)
+		hicList = append(hicList, k)
 	}
-	if _, ok := hicmap["default"]; ok {
+
+	if _, ok := hicMap["default"]; ok {
 		//has default
 	} else {
-		hicmap["default"] = hicmap[hicList[0]]
+		hicMap["default"] = hicMap[hicList[0]]
 	}
-	AddHicsHandle(router, hicmap, prefix)
+	AddHicsHandle(router, hicMap, prefix)
 }
 
-func serveStructURI(uri string, router *mux.Router, prefix string) {
+func serveBufferURI(uri string, router *mux.Router, prefix string) {
 	//hicExt := strings.ToLower(path.Ext(uri))
 	uriMap := LoadURI(uri)
 	AddBuffersHandle(router, uriMap, prefix)
@@ -80,11 +83,14 @@ func CmdServe(c *cli.Context) error {
 	//hic, err := HiC.DataReader(hicreader)
 	if hicURI != "" {
 		serveHicURI(hicURI, router, "/hic")
-
 	}
 	structURI := c.String("S")
 	if structURI != "" {
-		serveStructURI(structURI, router, "/3d")
+		serveBufferURI(structURI, router, "/3d")
+	}
+	genomeURI := c.String("G")
+	if genomeURI != "" {
+		serveBufferURI(genomeURI, router, "/genome")
 	}
 
 	log.Println("Listening...")

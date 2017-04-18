@@ -83,7 +83,7 @@ export default function (layout, container, state) {
             //var regions = region.ctrl.regions(); //or states?
             var regions = state.regions
             regions.forEach(function (d, i) {
-                d.length = 500000000 //TODO fix map for chromosome length;
+                d.length = getChrLength(d.chr) //TODO fix map for chromosome length;
                 var l = d.end - d.start
                 regions[i].start = d.start - l < 0 ? 0 : d.start - l
                 regions[i].end = d.end + l > d.length ? d.length : d.end + l
@@ -147,11 +147,16 @@ export default function (layout, container, state) {
         }
     ]
     var initHic = function (data) {
-        hic.opts = data;
+        hic.opts = data; //hic.opts.chrs
         dispatch.call("cfg", this, data)
         init.hic = true;
         var r = state.regions || testBeds
         render(r) //TODO d3 queue ?
+    }
+    var getChrLength = function(chr) {
+      console.log(hic.opts.chrs,hic.opts.chr2idx)
+      var i = hic.opts.chr2idx[chr.replace("chr","").replace("Chr","")]
+      return hic.opts.chrs[i].Length
     }
 
     var bigwig;
