@@ -63,6 +63,11 @@ export default function(layout, container, state) {
                       URI=uri.node().value;
                       container.setTitle(URI)
                       H.Get(URI,initHic)
+                      container.extendState({"configView":false})
+                      container.extendState({"URI":URI})
+                      cfg.style("display","none")
+                      main.style("display","block")
+                      dispatch.call("replot",this,{})
                   }
                 })
           })
@@ -246,7 +251,22 @@ export default function(layout, container, state) {
     }
 
     dispatch.on("monitor", function(d){
-      div1.html(JSON.stringify(d,2,2))//TODO renders.
+      div1.html(JSON.stringify(d, 2, 2)) //TODO renders.
+      var k0 = div1.append("div").style("padding-right","20px")
+      var k1 = k0.append("div")//.attr("id","slider101")
+      var k2 = k0.append("div")
+      var max = d.max>3000? 3000:d.max
+      $(k1.node()).slider({
+        range: true,
+        min: 0,
+        max: max,
+        values: [ 0, max ],
+        slide: function( event, ui ) {
+          //console.log(ui.values[0],ui.values[1])
+          k2.html(ui.values[0]+"-"+ui.values[1])
+          dispatch.call("domain",this,[ui.values[0],ui.values[1]])
+        }
+      });
     })
 
     layout.eventHub.on("update", function(d) {
