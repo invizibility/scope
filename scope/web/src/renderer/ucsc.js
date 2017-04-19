@@ -54,39 +54,17 @@ export default function(layout, container, state) {
         .attr("src",function(d){
           var p = scale(d)
           var w = p[0][1]-p[0][0] + labelLength
-          return ucsc("human","hg19",d,w)
+          return ucsc(state.species || "human",state.genome　|| "hg19",d,w)
         }
         )
       gbdiv.exit().remove();
-      /*
-      div.selectAll("iframe").remove()
-      var iframe = div.selectAll("iframe").data(d)
-      iframe.enter()
-       .append("iframe")
-       .style("position","absolute")
-       .style("top",-150)
-       .style("left",-10)
-       .style("border",0)
-       .style("width",container.width)
-       .style("height",container.height+150)
-       .merge(iframe)
-       .attr("src",function(d){return ucsc("human","hg19",d,container.width)}) //TODO set other org
-       */
+
        svg.attr("height",container.height+"px")
        .attr("width",container.width+"px")
     }
-    //var config = state.config || defaultConfig
-    //TODO FORM state();
-    //change title form;
-
-
-    //container.extendState({"config":config})
-
-    /* render content */
     var brush = [] // instant states not store in container
     var update = state.regions || []
 
-    //div1.style("color",config.color)
     layout.eventHub.on("brush", function(d) {
       if(!container.isHidden){
         brush = addChrPrefix(d)

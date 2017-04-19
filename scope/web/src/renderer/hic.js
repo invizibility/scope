@@ -300,8 +300,20 @@ export default function (layout, container, state) {
     dispatch.on("update.local", function (d) {
         render(d)
     })
-
+    var fixRegions = function(d) {
+      d.forEach(function(c,i){
+        if (c.start === undefined || c.start < 0) {
+          c.start = 0
+        }
+        var l = getChrLength(c.chr)
+        if (c.end === undefined || c.start > l) {
+          c.end = l
+        }
+      })
+      return d
+    }
     layout.eventHub.on("input", function (d) {
+        d = fixRegions(d)
         render(d)
     })
     dispatch.on("replot", function (d) {

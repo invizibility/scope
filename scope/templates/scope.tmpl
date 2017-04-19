@@ -45,9 +45,10 @@
   </div>
 </template> {{template "dna3d"}}
 </body>
+<!--
 <script type="text/javascript" src="/lib/dat.gui.min.js"></script>
 <link rel="stylesheet" href="/css/dat-gui-light-theme.css">
-
+-->
 <script>
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
@@ -57,14 +58,9 @@
 
 
         var renders = {
-            "simple": S.render.simple,
-            "3d": S.render.dna3d,
-            "network": S.render.simple,
-            "hic": S.render.hic,
-            "hicMonitor": S.render.hicMonitor,
-            "hicIcon": S.render.hicIcon,
+            "3d": S.render.dna3d
         }
-        var renderList = ["simple", "3d", "network", "hicMonitor", "hicIcon", "ucsclink", "ucsc"] //for monitors
+        var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsclink", "ucsc"] //for monitors
 
 
         var dispatch = d3.dispatch("resize", "saveState", "add", "exportState")

@@ -2295,11 +2295,19 @@ var randomString = function (length) {
 
 function parseRegion(s){
   var a = s.split(":");
+  if (a.length==1) {
+    return {
+      "chr": a[0],
+      "start": 0,
+      "end" : undefined
+    }
+
+  }
   var x = a[1].split("-");
   return {
       "chr": a[0],
       "start": +x[0],
-      "end": +x[1],
+      "end": +x[1]
   }
 }
 var parseRegions = function(s) {
@@ -2840,8 +2848,20 @@ var hic = function (layout, container, state) {
     dispatch.on("update.local", function (d) {
         render(d);
     });
-
+    var fixRegions = function(d) {
+      d.forEach(function(c,i){
+        if (c.start === undefined || c.start < 0) {
+          c.start = 0;
+        }
+        var l = getChrLength(c.chr);
+        if (c.end === undefined || c.start > l) {
+          c.end = l;
+        }
+      });
+      return d
+    };
     layout.eventHub.on("input", function (d) {
+        d = fixRegions(d);
         render(d);
     });
     dispatch.on("replot", function (d) {
@@ -3571,39 +3591,17 @@ var ucsc$2 = function(layout, container, state) {
         .attr("src",function(d){
           var p = scale(d);
           var w = p[0][1]-p[0][0] + labelLength;
-          return ucsc$1("human","hg19",d,w)
+          return ucsc$1(state.species || "human",state.genome　|| "hg19",d,w)
         }
         );
       gbdiv.exit().remove();
-      /*
-      div.selectAll("iframe").remove()
-      var iframe = div.selectAll("iframe").data(d)
-      iframe.enter()
-       .append("iframe")
-       .style("position","absolute")
-       .style("top",-150)
-       .style("left",-10)
-       .style("border",0)
-       .style("width",container.width)
-       .style("height",container.height+150)
-       .merge(iframe)
-       .attr("src",function(d){return ucsc("human","hg19",d,container.width)}) //TODO set other org
-       */
+
        svg.attr("height",container.height+"px")
        .attr("width",container.width+"px");
     };
-    //var config = state.config || defaultConfig
-    //TODO FORM state();
-    //change title form;
-
-
-    //container.extendState({"config":config})
-
-    /* render content */
     var brush = []; // instant states not store in container
     var update = state.regions || [];
 
-    //div1.style("color",config.color)
     layout.eventHub.on("brush", function(d) {
       if(!container.isHidden){
         brush = addChrPrefix(d);
