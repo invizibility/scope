@@ -886,7 +886,9 @@ var canvasToolYAxis = function (context, scale, x, y, height, label) {
     context.textAlign = "right";
     context.textBaseline = "top";
     context.font = "bold 10px sans-serif";
-    context.fillText(label, -10, -10);
+    if (label !== undefined) {
+        context.fillText(label, -10, -10);
+    }
     context.restore();
     context.restore();
 
@@ -1204,7 +1206,9 @@ var B = {
                     renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, "#333","#666");
                 });
 
-                canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id);
+                canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, undefined);
+
+                ctx.fillText(id, x+10, y+10);
             }
             callback({
                 "min": min,

@@ -274,7 +274,9 @@ export default {
                     renderRegion(ctx, xoffsets[i], yoffset, region, xscales[i], yscale, "#333","#666")
                 })
 
-                canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, id)
+                canvasToolYAxis(ctx, axisScale, x + width, y, barHeight, undefined)
+
+                ctx.fillText(id, x+10, y+10);
             }
             callback({
                 "min": min,

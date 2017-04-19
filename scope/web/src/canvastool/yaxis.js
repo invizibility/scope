@@ -35,7 +35,9 @@ export default function (context, scale, x, y, height, label) {
     context.textAlign = "right";
     context.textBaseline = "top";
     context.font = "bold 10px sans-serif";
-    context.fillText(label, -10, -10);
+    if (label !== undefined) {
+        context.fillText(label, -10, -10);
+    }
     context.restore();
     context.restore();
 
