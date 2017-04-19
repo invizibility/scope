@@ -1,14 +1,12 @@
-import regionText from "../tools/regionText"
-import regionsText from "../tools/regionsText"
 import addChrPrefix from "../tools/addChrPrefix"
 import scaleScope from "../scaleScope"
+import ucsc from "../tools/ucsclink"
+
 var defaultConfig = {
   "color" : "#111"
 }
 var labelLength = 105;
-var ucsc = function(org,db,position,width) {
-  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
-}
+
 export default function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
@@ -54,7 +52,7 @@ export default function(layout, container, state, app) {
         .attr("src",function(d){
           var p = scale(d)
           var w = p[0][1]-p[0][0] + labelLength
-          return ucsc(state.species || "human",state.genome　|| "hg19",d,w)
+          return ucsc(app.species ||  "human", app.genome || "hg19",d,w)
         }
         )
       gbdiv.exit().remove();

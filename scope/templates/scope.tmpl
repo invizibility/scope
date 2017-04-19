@@ -62,7 +62,11 @@
         }
         var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsclink", "ucsc"] //for monitors
 
-        var app = {} 
+        var app = {
+          "species":"human",
+          "genome":"hg19"
+        }
+
         var dispatch = d3.dispatch("resize", "saveState", "add", "exportState")
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);

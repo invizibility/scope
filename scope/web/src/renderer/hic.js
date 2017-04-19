@@ -4,6 +4,7 @@ import toolsFixRegions from "../tools/fixRegions"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
 import brush from "../scopebrush"
 
+
 export default function (layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
@@ -279,7 +280,18 @@ export default function (layout, container, state, app) {
     }
 
     dispatch.on("monitor", function (d) {
-        div1.html(JSON.stringify(d, 2, 2)) //TODO renders.
+        //div1.html(JSON.stringify(d, 2, 2)) //TODO renders.
+        div1.html("")
+        //var paratable = paraTable().data(d)
+        //div1.call(paratable)
+        var table = div1.append("table").classed("table",true)
+        .classed("table-condensed",true)
+        .classed("table-bordered",true)
+        var keys = Object.keys(d);
+        var tr = table.selectAll("tr").data(keys)
+        .enter().append("tr")
+        tr.append("td").text(function(d0){return d0})
+        tr.append("td").text(function(d0){return d[d0]})
         var k0 = div1.append("div").style("padding-right", "20px")
         var k1 = k0.append("div") //.attr("id","slider101")
         var k2 = k0.append("div")

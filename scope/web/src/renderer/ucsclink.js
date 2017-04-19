@@ -1,12 +1,10 @@
-import regionText from "../tools/regionText"
-import regionsText from "../tools/regionsText"
 import addChrPrefix from "../tools/addChrPrefix"
+import ucsc from "../tools/ucsclink"
+
 var defaultConfig = {
   "color" : "#111"
 }
-var ucsc = function(org,db,position) {
-  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)
-}
+
 export default function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
@@ -23,7 +21,9 @@ export default function(layout, container, state, app) {
        .append("li")
        .merge(li)
        .append("a")
-       .attr("href",function(d){return ucsc("human","hg19",d)}) //TODO set other org
+       .attr("href",function(d){
+        return ucsc( app.species || "human", app.genome || "hg19",d,800)
+       }) //TODO set other org
        .attr("target","_blank")
        .text(function(d,i){
          return "Region "+(i+1)

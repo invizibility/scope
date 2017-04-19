@@ -789,11 +789,13 @@ var region = function (d) { //regionForm
 var parameter = function () {
     var data = {};
     var chart = function (selection) {
-            var table = selection.selectAll(".para-table").data([data]);
-            table.enter().append("table").classed("para-table",true);
-            table.merge(table)
+            selection.selectAll(".paraTable").remove();
+            var table = selection.selectAll(".paraTable").data([data]);
+            table.enter().append("table")
+                .classed("paraTable",true)
+                .merge(table)
                 .classed("table", true);
-            table.selectAll("*").remove();
+            //table.selectAll("*").remove();
             var thead = table.append("thead");
             var tbody = table.append("tbody");
             var keys = Object.keys(data);
@@ -2552,7 +2554,7 @@ var simple = function(layout, container, state, app) {
     });
 };
 
-var hic = function (layout, container, state,app) {
+var hic = function (layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
         "background": "#BBB"
@@ -2673,13 +2675,13 @@ var hic = function (layout, container, state,app) {
         dispatch.call("replot", this, {});
     });
 
-    var URI =   "/hic/default";  //TODO This For All HiC selection.
+    var URI = "/hic/default"; //TODO This For All HiC selection.
     var hicId = localStorage.getItem("hicId");
     if (hicId) {
-      URI = "/hic/"+hicId;
-      container.setTitle(hicId);
+        URI = "/hic/" + hicId;
+        container.setTitle(hicId);
     } else {
-      hicId = "";
+        hicId = "";
     }
 
 
@@ -2701,10 +2703,10 @@ var hic = function (layout, container, state,app) {
         var r = state.regions || testBeds;
         render(r); //TODO d3 queue ?
     };
-    var getChrLength = function(chr) {
-      console.log(hic.opts.chrs,hic.opts.chr2idx);
-      var i = hic.opts.chr2idx[chr.replace("chr","").replace("Chr","")];
-      return hic.opts.chrs[i].Length
+    var getChrLength = function (chr) {
+        console.log(hic.opts.chrs, hic.opts.chr2idx);
+        var i = hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")];
+        return hic.opts.chrs[i].Length
     };
 
     var bigwig;
@@ -2715,7 +2717,7 @@ var hic = function (layout, container, state,app) {
     };
     var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
     if (bwconfig) {
-        bwconfig= JSON.parse(bwconfig);
+        bwconfig = JSON.parse(bwconfig);
     }
     B.Get("/bw", initBw);
     H.Get(URI, initHic); //TODO get localStorage hic id
@@ -2799,10 +2801,10 @@ var hic = function (layout, container, state,app) {
         //TODO Fix OverFlow.
         dispatch.on("domain", function (d) {
             hic.chart.domain(d); //local render.
-            hic.chart.render(function(){
-              var ctx = canvas.node().getContext("2d");
-              ctx.fillStyle = scope.background;
-              ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40);
+            hic.chart.render(function () {
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = scope.background;
+                ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40);
             });
 
         });
@@ -2827,38 +2829,49 @@ var hic = function (layout, container, state,app) {
     };
 
     dispatch.on("monitor", function (d) {
-        div1.html(JSON.stringify(d, 2, 2)); //TODO renders.
-        var k0 = div1.append("div").style("padding-right","20px");
-        var k1 = k0.append("div");//.attr("id","slider101")
+        //div1.html(JSON.stringify(d, 2, 2)) //TODO renders.
+        div1.html("");
+        //var paratable = paraTable().data(d)
+        //div1.call(paratable)
+        var table = div1.append("table").classed("table",true)
+        .classed("table-condensed",true)
+        .classed("table-bordered",true);
+        var keys = Object.keys(d);
+        var tr = table.selectAll("tr").data(keys)
+        .enter().append("tr");
+        tr.append("td").text(function(d0){return d0});
+        tr.append("td").text(function(d0){return d[d0]});
+        var k0 = div1.append("div").style("padding-right", "20px");
+        var k1 = k0.append("div"); //.attr("id","slider101")
         var k2 = k0.append("div");
-        var max = d.max>3000? 3000:d.max;
+        var max = d.max > 3000 ? 3000 : d.max;
         $(k1.node()).slider({
-          range: true,
-          min: 0,
-          max: max,
-          values: [ 0, max ],
-          slide: function( event, ui ) {
-            //console.log(ui.values[0],ui.values[1])
-            k2.html(ui.values[0]+"-"+ui.values[1]);
-            dispatch.call("domain",this,[ui.values[0],ui.values[1]]);
-          }
+            range: true,
+            min: 0,
+            max: max,
+            values: [0, max],
+            slide: function (event, ui) {
+                //console.log(ui.values[0],ui.values[1])
+                k2.html(ui.values[0] + "-" + ui.values[1]);
+                dispatch.call("domain", this, [ui.values[0], ui.values[1]]);
+            }
         });
     });
 
     dispatch.on("update.local", function (d) {
         render(d);
     });
-    var fixRegions = function(d) {
-      d.forEach(function(c,i){
-        if (c.start === undefined || c.start < 0) {
-          c.start = 0;
-        }
-        var l = getChrLength(c.chr);
-        if (c.end === undefined || c.start > l) {
-          c.end = l;
-        }
-      });
-      return d
+    var fixRegions = function (d) {
+        d.forEach(function (c, i) {
+            if (c.start === undefined || c.start < 0) {
+                c.start = 0;
+            }
+            var l = getChrLength(c.chr);
+            if (c.end === undefined || c.start > l) {
+                c.end = l;
+            }
+        });
+        return d
     };
     layout.eventHub.on("input", function (d) {
         d = fixRegions(d);
@@ -3485,12 +3498,14 @@ var hicIcon = function(layout, container, state, app) {
     });
 };
 
+var ucsc = function(org,db,position,width) {
+  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
+};
+
 var defaultConfig$1 = {
   "color" : "#111"
 };
-var ucsc = function(org,db,position) {
-  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)
-};
+
 var ucsclink = function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
@@ -3507,7 +3522,9 @@ var ucsclink = function(layout, container, state, app) {
        .append("li")
        .merge(li)
        .append("a")
-       .attr("href",function(d){return ucsc("human","hg19",d)}) //TODO set other org
+       .attr("href",function(d){
+        return ucsc( app.species || "human", app.genome || "hg19",d,800)
+       }) //TODO set other org
        .attr("target","_blank")
        .text(function(d,i){
          return "Region "+(i+1)
@@ -3543,10 +3560,8 @@ var ucsclink = function(layout, container, state, app) {
 };
 
 var labelLength = 105;
-var ucsc$1 = function(org,db,position,width) {
-  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
-};
-var ucsc$2 = function(layout, container, state, app) {
+
+var ucsc$1 = function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
     var div1 = content.append("div").style("position","relative");
@@ -3591,7 +3606,7 @@ var ucsc$2 = function(layout, container, state, app) {
         .attr("src",function(d){
           var p = scale(d);
           var w = p[0][1]-p[0][0] + labelLength;
-          return ucsc$1(state.species || "human",state.genome　|| "hg19",d,w)
+          return ucsc(app.species ||  "human", app.genome || "hg19",d,w)
         }
         );
       gbdiv.exit().remove();
@@ -4024,7 +4039,7 @@ var render = {
   hicMonitor : hicMonitor,
   hicIcon : hicIcon,
   ucsclink : ucsclink,
-  ucsc : ucsc$2,
+  ucsc : ucsc$1,
   dna3d  : dna3d
 };
 
