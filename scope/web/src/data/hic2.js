@@ -307,6 +307,10 @@ export default {
                   "min": min
               }) //callback to send parameters
 
+            } else {
+              if (typeof _ === 'function') {
+                _();
+              }
             }
 
         }

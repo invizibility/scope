@@ -1,262 +1,42 @@
-{{define "title"}} ScopeE6 {{end}} {{define "html"}}
-<html>
-
-<head>
-    <title>{{template "title"}}</title>
-    {{template "css"}}
-    <link rel="stylesheet" href="/style0/snow.css">
-    <link rel="stylesheet" href="/style0/dna3d.css"> {{template "lib"}}
-    <script src="/lib/three.min.js"></script>
-    <script src="/lib0/TrackballControls.js"></script>
-    <script src="/lib0/CanvasRenderer.js"></script>
-    <script src="/lib0/Projector.js"></script>
-
-    <script src="/lib0/snow.js"></script>
-</head>
-
-<body>
-    {{template "menubar"}}
-    <div id="wrapper">
-        <div id="menuContainer">
-            <ul>
-                <li id="test1">Demo Input</li>
-            </ul>
-            <hr>
-            <div style="color:white;padding:10">
-                <label> Input Regions</label>
-                <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
-                <input type="button" value="submit" id="input" style="color:black" />
-            </div>
-            <hr>
-            <div style="color:white;padding:10">
-                <label>History</label>
-                <ul id="history">
-                </ul>
-            </div>
-        </div>
-        <div id="layoutContainer"></div>
-    </div>
-    <template type="text/html" id="cfgbtn">
-  <div class='config'>
-    <span class='glyphicon glyphicon-cog'></span>
-  </div>
-</template>
-    <template type="text/html" id="panel">
-  <div class="content">
-  </div>
-  <div class="cfg">
-  </div>
-</template> {{template "dna3d"}}
-</body>
-<script type="text/javascript" src="/lib/dat.gui.min.js"></script>
-<link rel="stylesheet" href="/css/dat-gui-light-theme.css">
-
-<script>
-    (function($, d3, S) {
-        //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
-
-
-        var config = {
-            settings: {
-                showPopoutIcon: false
-            },
-            dimensions: {
-                borderWidth: 2
-            },
-            content: [{
-                type: 'row',
-                content: [{
-                        type: "component",
-                        componentName: "canvas",
-                        title: "canvas101",
-                        componentState: {
-                            "name": "101",
-                            "render": "hic",
-                            "server": "#"
-                        }
-                    },
-                    {
-                        type: "component",
-                        componentName: "canvas",
-                        title: "canvas102",
-                        componentState: {
-                            "name": "102",
-                            "render": "simple",
-                            "server": "#",
-
-                        }
-                    }
-                ]
-            }]
-        }
-        var stateId = "ScopeE5.V2"
-        var renders = {
-            "simple": S.render.simple,
-            "3d": S.render.dna3d,
-            "network": S.render.simple,
-            "hic": S.render.hic,
-            "hicMonitor": S.render.hicMonitor,
-            "hicIcon": S.render.hicIcon,
-        }
-        var renderList = ["simple", "3d", "network", "hicMonitor", "hicIcon", "ucsclink", "ucsc"] //for monitors
-
-
-        var dispatch = d3.dispatch("resize", "saveState", "add")
-        var initPanels = function(config, el) {
-            var layout = new GoldenLayout(config, el);
-            var history = []
-            layout.registerComponent("canvas", function(container, state) {
-                var r = renders[state.render] || S.render[state.render]
-                r(layout, container, state)
-                //TODO renderer...
-                var configContainer = container.getElement().find(".cfg")
-                var contentContainer = container.getElement().find(".content")
-                if (state.configView) {
-                    configContainer.show();
-                    contentContainer.hide();
-                } else {
-                    configContainer.hide();
-                    contentContainer.show();
-                }
-            });
-            layout.on('stackCreated', function(stack) {
-                var toggle = $($('#cfgbtn').html())
-                stack.header.controlsContainer.prepend(toggle);
-                toggle.on("click", function() {
-                    toggleConfig();
-                })
-                var toggleConfig = function() {
-                    var container = stack.getActiveContentItem().container;
-                    var toggled = !container.getState().configView
-                    container.extendState({
-                        configView: toggled
-                    });
-                    if (toggled) {
-                        container.getElement().find(".cfg").show()
-                        container.getElement().find(".content").hide()
-
-                    } else {
-                        container.getElement().find(".cfg").hide()
-                        container.getElement().find(".content").show()
-                    }
-                };
-            });
-
-            layout.init()
-            /* TODO Fix to dispatch */
-            $("#test1").click(function() {
-                layout.eventHub.emit("input", [{
-                    "chr": "1",
-                    "start": 2000000,
-                    "end": 3000000
-                }])
-            })
-            $("#input").click(function() {
-                var v = $("#regions").val() || $("#regions").attr("placeholder");
-                layout.eventHub.emit("input", S.toolsTrimChrPrefix(S.toolsParseRegions(v)))
-            })
-            /* for ctrl dispatch layout communication */
-
-            dispatch.on("add", function(d) {
-                layout.root.contentItems[0].addChild(d);
-            })
-
-            dispatch.on("resize.inner", function(d) {
-                console.log("resize")
-                layout.updateSize();
-            })
-            dispatch.on("saveState", function() {
-                console.log("save state")
-                var state = JSON.stringify(layout.toConfig());
-                localStorage.setItem(stateId, state);
-            })
-            layout.eventHub.on("update", function(d) {
-                var sign = false;
-                history.forEach(function(d0) {
-                    if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
-                        sign = true;
-                    }
-                })
-                if (sign) {
-                    return;
-                }
-                history.push(d);
-                if (history.length > 8) {
-                    history.shift();
-                }
-                var ul = d3.select("#history")
-                var li = ul.selectAll("li").data(history.reverse())
-                li.enter().append("li").classed("h", true)
-                    .merge(li)
-                    .text(function(d) {
-                        return S.toolsRegionsText(d)
-                    })
-                    .on("click", function(d) {
-                        layout.eventHub.emit("input", d)
-                    })
-                li.exit().remove();
-            })
-        }
-        initPanels(config, $('#layoutContainer'))
-        $("#sideToggle").on("click", function() {
-            console.log("still click")
-            if ($('#menuContainer').css('display') == 'none') {
-                console.log("show")
-                $("#menuContainer").show();
-                $("#layoutContainer").css(
-                    "width", "80%"
-                ).css("left", "20%");
-            } else {
-                console.log("hide")
-                $("#menuContainer").hide();
-                $("#layoutContainer").css(
-                    "width", "100%"
-                ).css("left", "0%");
-            }
-            dispatch.call("resize", this, {})
-        })
-
-
-        var factory = function(d) {
-            return {
-                title: d,
-                type: 'component',
-                componentName: 'canvas',
+{{define "config"}}
+{
+    settings: {
+        showPopoutIcon: false
+    },
+    dimensions: {
+        borderWidth: 2
+    },
+    content: [{
+        type: 'row',
+        content: [{
+                type: "component",
+                componentName: "canvas",
+                title: "canvas101",
+                isClosable: false,
                 componentState: {
-                    name: d,
-                    render: d
+                    "name": "101",
+                    "render": "hic",
+                    "server": "#"
                 }
-            };
-        }
-        $("#save").on("click", function(d) {
-            dispatch.call("saveState")
-        })
+            },
+            {
+                type: "component",
+                componentName: "canvas",
+                title: "canvas102",
+                componentState: {
+                    "name": "102",
+                    "render": "simple",
+                    "server": "#",
 
-        $("#open").on("click", function(d) {
-            console.log("load state")
-            savedState = localStorage.getItem(stateId);
-            $("#layoutContainer").empty()
-            initPanels(JSON.parse(savedState), $("#layoutContainer"))
-        })
-
-        d3.select("#renders").selectAll("li")
-            .data(renderList)
-            .enter()
-            .append("li")
-            .append("a")
-            .attr("id", function(d) {
-                return d
-            }).text(
-                function(d) {
-                    return d
                 }
-            ).on("click", function(d) {
-                dispatch.call("add", this, factory(d))
-            })
+            }
+        ]
+    }]
+}
+{{end}}
 
-
-    }(jQuery, d3, snow))
-</script>
-
-</html>
+{{define "title"}} ScopeE5 {{end}}
+{{define "id"}} "ScopeE5.V2"{{end}}
+{{define "html"}}
+  {{template "scope"}}
 {{end}}

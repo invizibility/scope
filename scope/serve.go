@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -72,10 +73,12 @@ func CmdServe(c *cli.Context) error {
 	router := mux.NewRouter()
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
+	entry := []string{}
 
 	bwURI := c.String("B")
 	if bwURI != "" {
 		serveBwURI(bwURI, router, "/bw")
+		entry = append(entry, "bw")
 	}
 	/* TODO: multi hic files */
 	hicURI := c.String("H")
@@ -83,16 +86,23 @@ func CmdServe(c *cli.Context) error {
 	//hic, err := HiC.DataReader(hicreader)
 	if hicURI != "" {
 		serveHicURI(hicURI, router, "/hic")
+		entry = append(entry, "hic")
 	}
 	structURI := c.String("S")
 	if structURI != "" {
 		serveBufferURI(structURI, router, "/3d")
+		entry = append(entry, "3d")
 	}
 	genomeURI := c.String("G")
 	if genomeURI != "" {
 		serveBufferURI(genomeURI, router, "/genome")
+		entry = append(entry, "genome")
 	}
-
+	router.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
+		e, _ := json.Marshal(entry)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write(e)
+	})
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))

@@ -251,7 +251,12 @@ export default function (layout, container, state) {
         //TODO Fix OverFlow.
         dispatch.on("domain", function (d) {
             hic.chart.domain(d); //local render.
-            hic.chart.render(true);
+            hic.chart.render(function(){
+              var ctx = canvas.node().getContext("2d");
+              ctx.fillStyle = scope.background
+              ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
+            });
+
         })
     }
     var render = function (d) {
