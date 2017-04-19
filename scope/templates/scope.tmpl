@@ -62,14 +62,14 @@
         }
         var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsclink", "ucsc"] //for monitors
 
-
+        var app = {} 
         var dispatch = d3.dispatch("resize", "saveState", "add", "exportState")
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
             var history = []
             layout.registerComponent("canvas", function(container, state) {
                 var r = renders[state.render] || S.render[state.render]
-                r(layout, container, state)
+                r(layout, container, state, app)
                 //TODO renderer...
                 var configContainer = container.getElement().find(".cfg")
                 var contentContainer = container.getElement().find(".content")

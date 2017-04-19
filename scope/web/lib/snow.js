@@ -2490,7 +2490,7 @@ var panel = function () {
 var defaultConfig = {
   "color" : "#111"
 };
-var simple = function(layout, container, state) {
+var simple = function(layout, container, state, app) {
     //local event driven . cfg, content ...
     // not d3.call but registerComponent render.
     // similar with d3.call.
@@ -2552,7 +2552,7 @@ var simple = function(layout, container, state) {
     });
 };
 
-var hic = function (layout, container, state) {
+var hic = function (layout, container, state,app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
         "background": "#BBB"
@@ -2945,7 +2945,7 @@ var scaleScope = function() {
 
 //import brush from "../scopebrush" //TODO
 
-var hicMonitor = function(layout, container, state) {
+var hicMonitor = function(layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
       "background":"#BBB"
@@ -3238,7 +3238,7 @@ var hicMonitor = function(layout, container, state) {
 //TODO: sort the regions first for response ,
 //TODO 2. don't refresh data if it is same
 
-var hicIcon = function(layout, container, state) {
+var hicIcon = function(layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
       "background":"#BBB"
@@ -3491,7 +3491,7 @@ var defaultConfig$1 = {
 var ucsc = function(org,db,position) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)
 };
-var ucsclink = function(layout, container, state) {
+var ucsclink = function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
     var div1 = content.append("div");
@@ -3546,7 +3546,7 @@ var labelLength = 105;
 var ucsc$1 = function(org,db,position,width) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
 };
-var ucsc$2 = function(layout, container, state) {
+var ucsc$2 = function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
     var div1 = content.append("div").style("position","relative");
@@ -3638,7 +3638,7 @@ var ucsc$2 = function(layout, container, state) {
     });
 };
 
-var dna3d = function(layout, container, state) {
+var dna3d = function(layout, container, state, app) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20);
 console.log(state);
 var dataURI = state.dataURI || "/3d/get/default";

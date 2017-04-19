@@ -3,7 +3,7 @@ import regionsText from "../tools/regionsText"
 var defaultConfig = {
   "color" : "#111"
 }
-export default function(layout, container, state) {
+export default function(layout, container, state, app) {
     //local event driven . cfg, content ...
     // not d3.call but registerComponent render.
     // similar with d3.call.

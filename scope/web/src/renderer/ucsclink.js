@@ -7,7 +7,7 @@ var defaultConfig = {
 var ucsc = function(org,db,position) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)
 }
-export default function(layout, container, state) {
+export default function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
     var div1 = content.append("div");

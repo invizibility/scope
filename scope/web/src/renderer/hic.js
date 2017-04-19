@@ -4,7 +4,7 @@ import toolsFixRegions from "../tools/fixRegions"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
 import brush from "../scopebrush"
 
-export default function (layout, container, state) {
+export default function (layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
         "background": "#BBB"
@@ -125,13 +125,13 @@ export default function (layout, container, state) {
         dispatch.call("replot", this, {})
     })
 
-    var URI =   "/hic/default"  //TODO This For All HiC selection.
+    var URI = "/hic/default" //TODO This For All HiC selection.
     var hicId = localStorage.getItem("hicId")
     if (hicId) {
-      URI = "/hic/"+hicId
-      container.setTitle(hicId)
+        URI = "/hic/" + hicId
+        container.setTitle(hicId)
     } else {
-      hicId = ""
+        hicId = ""
     }
 
 
@@ -153,10 +153,10 @@ export default function (layout, container, state) {
         var r = state.regions || testBeds
         render(r) //TODO d3 queue ?
     }
-    var getChrLength = function(chr) {
-      console.log(hic.opts.chrs,hic.opts.chr2idx)
-      var i = hic.opts.chr2idx[chr.replace("chr","").replace("Chr","")]
-      return hic.opts.chrs[i].Length
+    var getChrLength = function (chr) {
+        console.log(hic.opts.chrs, hic.opts.chr2idx)
+        var i = hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")]
+        return hic.opts.chrs[i].Length
     }
 
     var bigwig;
@@ -167,7 +167,7 @@ export default function (layout, container, state) {
     }
     var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
     if (bwconfig) {
-        bwconfig= JSON.parse(bwconfig)
+        bwconfig = JSON.parse(bwconfig)
     }
     B.Get("/bw", initBw)
     H.Get(URI, initHic) //TODO get localStorage hic id
@@ -251,10 +251,10 @@ export default function (layout, container, state) {
         //TODO Fix OverFlow.
         dispatch.on("domain", function (d) {
             hic.chart.domain(d); //local render.
-            hic.chart.render(function(){
-              var ctx = canvas.node().getContext("2d");
-              ctx.fillStyle = scope.background
-              ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
+            hic.chart.render(function () {
+                var ctx = canvas.node().getContext("2d");
+                ctx.fillStyle = scope.background
+                ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
             });
 
         })
@@ -280,37 +280,37 @@ export default function (layout, container, state) {
 
     dispatch.on("monitor", function (d) {
         div1.html(JSON.stringify(d, 2, 2)) //TODO renders.
-        var k0 = div1.append("div").style("padding-right","20px")
-        var k1 = k0.append("div")//.attr("id","slider101")
+        var k0 = div1.append("div").style("padding-right", "20px")
+        var k1 = k0.append("div") //.attr("id","slider101")
         var k2 = k0.append("div")
-        var max = d.max>3000? 3000:d.max
+        var max = d.max > 3000 ? 3000 : d.max
         $(k1.node()).slider({
-          range: true,
-          min: 0,
-          max: max,
-          values: [ 0, max ],
-          slide: function( event, ui ) {
-            //console.log(ui.values[0],ui.values[1])
-            k2.html(ui.values[0]+"-"+ui.values[1])
-            dispatch.call("domain",this,[ui.values[0],ui.values[1]])
-          }
+            range: true,
+            min: 0,
+            max: max,
+            values: [0, max],
+            slide: function (event, ui) {
+                //console.log(ui.values[0],ui.values[1])
+                k2.html(ui.values[0] + "-" + ui.values[1])
+                dispatch.call("domain", this, [ui.values[0], ui.values[1]])
+            }
         });
     })
 
     dispatch.on("update.local", function (d) {
         render(d)
     })
-    var fixRegions = function(d) {
-      d.forEach(function(c,i){
-        if (c.start === undefined || c.start < 0) {
-          c.start = 0
-        }
-        var l = getChrLength(c.chr)
-        if (c.end === undefined || c.start > l) {
-          c.end = l
-        }
-      })
-      return d
+    var fixRegions = function (d) {
+        d.forEach(function (c, i) {
+            if (c.start === undefined || c.start < 0) {
+                c.start = 0
+            }
+            var l = getChrLength(c.chr)
+            if (c.end === undefined || c.start > l) {
+                c.end = l
+            }
+        })
+        return d
     }
     layout.eventHub.on("input", function (d) {
         d = fixRegions(d)

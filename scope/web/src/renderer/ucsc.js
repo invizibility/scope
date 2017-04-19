@@ -9,7 +9,7 @@ var labelLength = 105;
 var ucsc = function(org,db,position,width) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
 }
-export default function(layout, container, state) {
+export default function(layout, container, state, app) {
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
     var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
     var div1 = content.append("div").style("position","relative")

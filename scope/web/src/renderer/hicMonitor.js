@@ -6,7 +6,7 @@ import scaleScope from "../scaleScope"
 import symbolTriangle from "../symbol/triangle"
 //import brush from "../scopebrush" //TODO
 
-export default function(layout, container, state) {
+export default function(layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
       "background":"#BBB"

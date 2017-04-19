@@ -9,7 +9,7 @@ import symbolTriangle from "../symbol/triangle"
 //TODO: sort the regions first for response ,
 //TODO 2. don't refresh data if it is same
 
-export default function(layout, container, state) {
+export default function(layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
       "background":"#BBB"
