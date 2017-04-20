@@ -125,7 +125,13 @@ export default function (layout, container, state, app) {
 
         })
     var axesG = svg.append("g").attr("transform", "translate(10,0)")
+
+    var TO = false //resize delay
+    var resizePanel = function() {  
+      dispatch.call("replot", this, {})
+    }
     container.on("resize", function (e) {
+        if(TO!==false) clearTimeout(TO)
         canvas.attr("height", container.height)
             .attr("width", container.width)
         svg.attr("height", container.height)
@@ -138,7 +144,7 @@ export default function (layout, container, state, app) {
         scope.edge = container.width - 40
         scope.width = container.width
         scope.height = container.height
-        dispatch.call("replot", this, {})
+        TO = setTimeout(resizePanel,200)
     })
 
     var URI = "/hic/default" //TODO This For All HiC selection.
