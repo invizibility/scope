@@ -156,7 +156,11 @@ export default function(layout, container, state, app) {
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){
           hic.chart.domain(d);
-          hic.chart.render(true);
+          hic.chart.render(function () {
+              var ctx = canvas.node().getContext("2d");
+              ctx.fillStyle = scope.background
+              ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
+          });
         })
         dispatch.on("brush",function(d){
           var data =[]
@@ -271,7 +275,6 @@ export default function(layout, container, state, app) {
         max: max,
         values: [ 0, max ],
         slide: function( event, ui ) {
-          console.log(ui.values[0],ui.values[1])
           k2.html(ui.values[0]+"-"+ui.values[1])
           dispatch.call("domain",this,[ui.values[0],ui.values[1]])
         }

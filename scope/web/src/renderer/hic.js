@@ -52,7 +52,7 @@ export default function (layout, container, state, app) {
                 dispatch.call("replot", this, {})
             })
     })
-
+    //console.log("container",container)
     var canvas = main.append("canvas").style("position", "absolute")
     var svg = main.append("svg").style("position", "absolute")
     var div = main.append("div").style("position", "absolute")
@@ -69,6 +69,21 @@ export default function (layout, container, state, app) {
             .style("background-color","#DFD")
 
         /* CTRL Inside */
+    var btnPrint = div.append("button")
+    .classed("btn", true)
+    .html('<small><span class="glyphicon glyphicon-print"></span></small>')
+    .on('click',function(){
+        div.selectAll("a").remove()
+      var a = div.append("a")
+      .attr("href",canvas.node().toDataURL())
+      .attr("download","scope.png")
+      .text("")
+      a.node().click()
+      a.remove()
+
+    })
+
+
 
     var btnPlay = div.append("button")
         .classed("btn", true)

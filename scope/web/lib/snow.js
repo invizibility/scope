@@ -2605,7 +2605,7 @@ var hic = function (layout, container, state, app) {
                 dispatch.call("replot", this, {});
             });
     });
-
+    //console.log("container",container)
     var canvas = main.append("canvas").style("position", "absolute");
     var svg = main.append("svg").style("position", "absolute");
     var div = main.append("div").style("position", "absolute")
@@ -2622,6 +2622,21 @@ var hic = function (layout, container, state, app) {
             .style("background-color","#DFD")
 
         /* CTRL Inside */
+    var btnPrint = div.append("button")
+    .classed("btn", true)
+    .html('<small><span class="glyphicon glyphicon-print"></span></small>')
+    .on('click',function(){
+        div.selectAll("a").remove();
+      var a = div.append("a")
+      .attr("href",canvas.node().toDataURL())
+      .attr("download","scope.png")
+      .text("");
+      a.node().click();
+      a.remove();
+
+    });
+
+
 
     var btnPlay = div.append("button")
         .classed("btn", true)
@@ -3112,7 +3127,11 @@ var hicMonitor = function(layout, container, state, app) {
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){
           hic.chart.domain(d);
-          hic.chart.render(true);
+          hic.chart.render(function () {
+              var ctx = canvas.node().getContext("2d");
+              ctx.fillStyle = scope.background;
+              ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40);
+          });
         });
         dispatch.on("brush",function(d){
           var data =[];
@@ -3227,7 +3246,6 @@ var hicMonitor = function(layout, container, state, app) {
         max: max,
         values: [ 0, max ],
         slide: function( event, ui ) {
-          console.log(ui.values[0],ui.values[1]);
           k2.html(ui.values[0]+"-"+ui.values[1]);
           dispatch.call("domain",this,[ui.values[0],ui.values[1]]);
         }
