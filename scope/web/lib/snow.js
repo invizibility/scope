@@ -3112,7 +3112,7 @@ var hicMonitor = function(layout, container, state, app) {
         //TODO Fix OverFlow.
         dispatch.on("domain",function(d){
           hic.chart.domain(d);
-          hic.chart.render();
+          hic.chart.render(true);
         });
         dispatch.on("brush",function(d){
           var data =[];
@@ -3207,18 +3207,27 @@ var hicMonitor = function(layout, container, state, app) {
     };
 
     dispatch.on("monitor", function(d){
-      div1.html(JSON.stringify(d, 2, 2)); //TODO renders.
+      div1.html("");
+      var table = div1.append("table").classed("table",true)
+      .classed("table-condensed",true)
+      .classed("table-bordered",true);
+      var keys = Object.keys(d);
+      var tr = table.selectAll("tr").data(keys)
+      .enter().append("tr");
+      tr.append("td").text(function(d0){return d0});
+      tr.append("td").text(function(d0){return d[d0]});
       var k0 = div1.append("div").style("padding-right","20px");
       var k1 = k0.append("div");//.attr("id","slider101")
       var k2 = k0.append("div");
-      var max = d.max>3000? 3000:d.max;
+      var max = d.max>30000? 30000:d.max;
+      k2.html("0-"+max);
       $(k1.node()).slider({
         range: true,
         min: 0,
         max: max,
         values: [ 0, max ],
         slide: function( event, ui ) {
-          //console.log(ui.values[0],ui.values[1])
+          console.log(ui.values[0],ui.values[1]);
           k2.html(ui.values[0]+"-"+ui.values[1]);
           dispatch.call("domain",this,[ui.values[0],ui.values[1]]);
         }
