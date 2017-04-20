@@ -1,5 +1,6 @@
 {{define "scope"}}
 <html>
+
 <head>
     <title>{{template "title"}}</title>
     {{template "css"}}
@@ -53,8 +54,8 @@
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
 
-        var config = {{template "config"}}
-        var stateId = {{template "id"}}
+        var config = {{ template "config" }}
+        var stateId = {{ template "id"}}
 
 
         var renders = {
@@ -63,8 +64,8 @@
         var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsclink", "ucsc"] //for monitors
 
         var app = {
-          "species":"human",
-          "genome":"hg19"
+            "species": "human",
+            "genome": "hg19"
         }
 
         var dispatch = d3.dispatch("resize", "saveState", "add", "exportState")
