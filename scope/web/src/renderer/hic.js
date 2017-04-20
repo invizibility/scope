@@ -295,7 +295,7 @@ export default function (layout, container, state, app) {
         var k0 = div1.append("div").style("padding-right", "20px")
         var k1 = k0.append("div") //.attr("id","slider101")
         var k2 = k0.append("div")
-        var max = d.max > 3000 ? 3000 : d.max
+        var max = d.max > 30000 ? 30000 : d.max
         $(k1.node()).slider({
             range: true,
             min: 0,
