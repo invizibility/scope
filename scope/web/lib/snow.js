@@ -2680,7 +2680,7 @@ var hic = function (layout, container, state, app) {
     var axesG = svg.append("g").attr("transform", "translate(10,0)");
 
     var TO = false; //resize delay
-    var resizePanel = function() {  
+    var resizePanel = function() {
       dispatch.call("replot", this, {});
     };
     container.on("resize", function (e) {
@@ -2870,6 +2870,7 @@ var hic = function (layout, container, state, app) {
         var k1 = k0.append("div"); //.attr("id","slider101")
         var k2 = k0.append("div");
         var max = d.max > 30000 ? 30000 : d.max;
+        k2.html("0-"+max);
         $(k1.node()).slider({
             range: true,
             min: 0,
@@ -3192,20 +3193,7 @@ var hicMonitor = function (layout, container, state, app) {
 
             var r = svg.selectAll(".resp")
                 .data(data);
-            /*
-            r.enter()
-             .append("rect")
-             .merge(r)
-             .attr("class","rectResp")
-             .attr("x", function(d){
-               return d[0][0]+10
-             })
-             .attr("y", scope.edge/2)
-             .attr("width",function(d){return d[0][1]-d[0][0]})
-             .attr("height",20)
-             .attr("opacity",0.2)
-            r.exit().remove()
-            */
+          
             r.enter()
                 .append("g")
                 .merge(r)

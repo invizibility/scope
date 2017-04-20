@@ -215,20 +215,7 @@ export default function (layout, container, state, app) {
 
             var r = svg.selectAll(".resp")
                 .data(data)
-            /*
-            r.enter()
-             .append("rect")
-             .merge(r)
-             .attr("class","rectResp")
-             .attr("x", function(d){
-               return d[0][0]+10
-             })
-             .attr("y", scope.edge/2)
-             .attr("width",function(d){return d[0][1]-d[0][0]})
-             .attr("height",20)
-             .attr("opacity",0.2)
-            r.exit().remove()
-            */
+          
             r.enter()
                 .append("g")
                 .merge(r)

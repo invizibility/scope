@@ -127,7 +127,7 @@ export default function (layout, container, state, app) {
     var axesG = svg.append("g").attr("transform", "translate(10,0)")
 
     var TO = false //resize delay
-    var resizePanel = function() {  
+    var resizePanel = function() {
       dispatch.call("replot", this, {})
     }
     container.on("resize", function (e) {
@@ -317,6 +317,7 @@ export default function (layout, container, state, app) {
         var k1 = k0.append("div") //.attr("id","slider101")
         var k2 = k0.append("div")
         var max = d.max > 30000 ? 30000 : d.max
+        k2.html("0-"+max)
         $(k1.node()).slider({
             range: true,
             min: 0,
