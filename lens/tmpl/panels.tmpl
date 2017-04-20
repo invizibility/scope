@@ -1,0 +1,144 @@
+{{define "html"}}
+<html>
+
+<head>
+  {{template "lib"}}
+  {{template "css"}}
+<style>
+.config {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    float: left;
+    margin: 5px 5px 0 0;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.config {
+    width: 10px;
+    height: 10px;
+}
+
+.config:hover {
+    font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+    <h1> Panels 101 </h1> Version: {{.Version}}
+</body>
+<script>
+(function(){
+
+var renderMap = {
+  "simple": function(layout,container,state,app){
+    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
+    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
+    cfg.html("config")
+    content.html("content")
+  }
+}
+
+var scope = function() {
+  var renders = {}
+  var config;
+  var dispatch;
+  var history;
+  var el
+  var layout
+  var app = {}
+  var chart = function(selection){
+    el = $(selection.node())
+    var layout = new GoldenLayout(config, el);
+    var history = []
+    layout.registerComponent("canvas", function(container, state) {
+        var r = renders[state.render] || renderMap[state.render]
+        r(layout, container, state, app)
+        //TODO renderer...
+        var configContainer = container.getElement().find(".cfg")
+        var contentContainer = container.getElement().find(".content")
+        if (state.configView) {
+            configContainer.show();
+            contentContainer.hide();
+        } else {
+            configContainer.hide();
+            contentContainer.show();
+        }
+    });
+    layout.on('stackCreated', function(stack) {
+        var toggle = $("<div class='config'><span class='glyphicon glyphicon-cog'></span></div>")
+        stack.header.controlsContainer.prepend(toggle);
+        toggle.on("click", function() {
+            toggleConfig();
+        })
+        var toggleConfig = function() {
+            var container = stack.getActiveContentItem().container;
+            var toggled = !container.getState().configView
+            container.extendState({
+                configView: toggled
+            });
+            if (toggled) {
+                container.getElement().find(".cfg").show()
+                container.getElement().find(".content").hide()
+
+            } else {
+                container.getElement().find(".cfg").hide()
+                container.getElement().find(".content").show()
+            }
+        };
+    });
+
+    layout.init()
+  }
+  chart.config = function(_) { return arguments.length ? (config= _, chart) : config; }
+  chart.dispatch = function(_) { return arguments.length ? (dispatch= _, chart) : dispatch; }
+  chart.history = function(_) { return arguments.length ? (history= _, chart) : history; }
+  chart.renderMap = function(_) { return arguments.length ? (renderMap= _, chart) : renderMap; }
+  chart.layout = function(_) { return arguments.length ? (layout= _, chart) : layout; }
+  return chart;
+}
+
+var config = {
+    settings: {
+        showPopoutIcon: false
+    },
+    dimensions: {
+        borderWidth: 2
+    },
+    content: [{
+        type: 'row',
+        content: [{
+                type: "component",
+                componentName: "canvas",
+                title: "canvas101",
+                isClosable: false,
+                componentState: {
+                    "name": "101",
+                    "render": "simple",
+                    "server": "#"
+                }
+            },
+            {
+                type: "component",
+                componentName: "canvas",
+                title: "canvas102",
+                componentState: {
+                    "name": "102",
+                    "render": "simple",
+                    "server": "#",
+
+                }
+            }
+        ]
+    }]
+}
+var c = scope().config(config);
+
+d3.select("body").call(c)
+
+})()
+</script>
+</html>
+{{end}}

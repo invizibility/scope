@@ -30,7 +30,7 @@ func AddGET(router *gin.Engine) {
 		if err != nil {
 			log.Println("error parse template")
 		}
-		err = tmpl.Execute(c.Writer, gin.H{"Version": "test"}) //constant
+		err = tmpl.Execute(c.Writer, gin.H{"Version": VERSION}) //constant
 		if err != nil {
 			log.Println("error executing template")
 		}
