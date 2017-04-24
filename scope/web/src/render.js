@@ -4,6 +4,7 @@ import hicMonitor from "./renderer/hicMonitor"
 import hicIcon from "./renderer/hicIcon"
 import ucsclink from "./renderer/ucsclink"
 import washulink from "./renderer/washulink"
+import daslink from "./renderer/daslink"
 import ucsc from "./renderer/ucsc"
 import dna3d from "./renderer/dna3d"
 
@@ -15,5 +16,6 @@ export default {
   ucsclink : ucsclink,
   ucsc : ucsc,
   dna3d  : dna3d,
-  washulink : washulink
+  washulink : washulink,
+  daslink : daslink
 }
