@@ -3666,7 +3666,7 @@ var washulink = function(layout, container, state, app) {
 };
 
 function das(db,coords,type) {
-  return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","")+";type="+type
+  return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","").replace("-",",")+";type="+type
 }
 var defaultConfig$3 = {
   "color" : "#111"

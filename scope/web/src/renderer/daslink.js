@@ -1,7 +1,7 @@
 import addChrPrefix from "../tools/addChrPrefix"
 import regionText from "../tools/regionText"
 function das(db,coords,type) {
-  return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","")+";type="+type
+  return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","").replace("-",",")+";type="+type
 }
 var defaultConfig = {
   "color" : "#111"
