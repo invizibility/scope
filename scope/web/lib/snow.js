@@ -3543,200 +3543,18 @@ var hicIcon = function(layout, container, state, app) {
     });
 };
 
-var ucsc = function(org,db,position,width) {
-  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
-};
-
-var defaultConfig$1 = {
-  "color" : "#111"
-};
-
-var ucsclink = function(layout, container, state, app) {
-    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
-    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
-    var div1 = content.append("div");
-    var div2 = content.append("div");
-    //state.config parameters.
-    /* render config panel and configs */
-    var setdiv = function(div, title, d) {
-      div.selectAll("*").remove();
-      div.append("span").text(title);
-      var ul = div.append("ul");
-      var li = ul.selectAll("li").data(d);
-      li.enter()
-       .append("li")
-       .merge(li)
-       .append("a")
-       .attr("href",function(d){
-        return ucsc( app.species || "human", app.genome || "hg19",d,800)
-       }) //TODO set other org
-       .attr("target","_blank")
-       .text(function(d,i){
-         return "Region "+(i+1)
-       });
-    };
-    var config = state.config || defaultConfig$1;
-    //TODO FORM state();
-    //change title form;
-
-
-    //container.extendState({"config":config})
-
-    /* render content */
-    var brush = []; // instant states not store in container
-    var update = state.regions || [];
-
-    div1.style("color",config.color);
-    layout.eventHub.on("brush", function(d) {
-        brush = addChrPrefix(d);
-        setdiv(div2,"brushing",brush);
-
-    });
-    layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
-       setdiv(div1,"current", update);
-       div2.selectAll("*").remove();
-    });
-
-    container.on("show",function(d) {
-      setdiv(div1,"current",update);
-      setdiv(div2,"brushing", brush);
-    });
-};
-
-var washu = function(db,position) {
-  return "http://epigenomegateway.wustl.edu/browser/?genome="+db+"&coordinate="+regionText(position)
-};
-
-var defaultConfig$2 = {
-  "color" : "#111"
-};
-
-var washulink = function(layout, container, state, app) {
-    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
-    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
-    var div1 = content.append("div");
-    var div2 = content.append("div");
-    //state.config parameters.
-    /* render config panel and configs */
-    var setdiv = function(div, title, d) {
-      div.selectAll("*").remove();
-      div.append("span").text(title);
-      var ul = div.append("ul");
-      var li = ul.selectAll("li").data(d);
-      li.enter()
-       .append("li")
-       .merge(li)
-       .append("a")
-       .attr("href",function(d){
-        return washu( app.genome || "hg19",d)
-       }) //TODO set other org
-       .attr("target","_blank")
-       .text(function(d,i){
-         return "Region "+(i+1)
-       });
-    };
-    var config = state.config || defaultConfig$2;
-    //TODO FORM state();
-    //change title form;
-
-
-    //container.extendState({"config":config})
-
-    /* render content */
-    var brush = []; // instant states not store in container
-    var update = state.regions || [];
-
-    div1.style("color",config.color);
-    layout.eventHub.on("brush", function(d) {
-        brush = addChrPrefix(d);
-        setdiv(div2,"brushing",brush);
-
-    });
-    layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
-       setdiv(div1,"current", update);
-       div2.selectAll("*").remove();
-    });
-
-    container.on("show",function(d) {
-      setdiv(div1,"current",update);
-      setdiv(div2,"brushing", brush);
-    });
-};
+//TODO replace daslink ucsclink and washulink. add customized templates.
 
 function das(db,coords,type) {
   return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","").replace("-",",")+";type="+type
 }
-var defaultConfig$3 = {
-  "color" : "#111"
-};
-
-var daslink = function(layout, container, state, app) {
-    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
-    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
-    var div1 = content.append("div");
-    var div2 = content.append("div");
-    //state.config parameters.
-    /* render config panel and configs */
-    var setdiv = function(div, title, d) {
-      div.selectAll("*").remove();
-      div.append("span").text(title);
-      var ul = div.append("ul");
-      var li = ul.selectAll("li").data(d);
-      li.enter()
-       .append("li")
-       .merge(li)
-       .append("a")
-       .attr("href",function(d){
-        return das(app.genome || "hg19",d, app.dasType || "refGene")
-       }) //TODO set other org
-       .attr("target","_blank")
-       .text(function(d,i){
-         return "Region "+(i+1)
-       });
-    };
-    var config = state.config || defaultConfig$3;
-    //TODO FORM state();
-    //change title form;
-
-
-    //container.extendState({"config":config})
-
-    /* render content */
-    var brush = []; // instant states not store in container
-    var update = state.regions || [];
-
-    div1.style("color",config.color);
-    layout.eventHub.on("brush", function(d) {
-        brush = addChrPrefix(d);
-        setdiv(div2,"brushing",brush);
-
-    });
-    layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
-       setdiv(div1,"current", update);
-       div2.selectAll("*").remove();
-    });
-
-    container.on("show",function(d) {
-      setdiv(div1,"current",update);
-      setdiv(div2,"brushing", brush);
-    });
-};
-
-//TODO replace daslink ucsclink and washulink. add customized templates.
-
-function das$1(db,coords,type) {
-  return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","").replace("-",",")+";type="+type
-}
-function ucsc$1(org,db,position,width) {
+function ucsc(org,db,position,width) {
   return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
 }
-function washu$1(db,position) {
+function washu(db,position) {
   return "http://epigenomegateway.wustl.edu/browser/?genome="+db+"&coordinate="+regionText(position)
 }
-var defaultConfig$4 = {
+var defaultConfig$1 = {
   "color" : "#111",
   "server" : "ucsc"
 };
@@ -3763,13 +3581,13 @@ var links = function(layout, container, state, app) {
          var url="#";
          switch(config.server) {
            case "ucsc":
-              url = ucsc$1( app.species || "human", app.genome || "hg19",d,800);
+              url = ucsc( app.species || "human", app.genome || "hg19",d,800);
               break;
            case "das":
-              url = das$1(app.genome || "hg19",d, app.dasType || "refGene");
+              url = das(app.genome || "hg19",d, app.dasType || "refGene");
               break;
            case "washu":
-              url = washu$1( app.genome || "hg19",d);
+              url = washu( app.genome || "hg19",d);
               break;
            default:
               url = "#";
@@ -3781,7 +3599,7 @@ var links = function(layout, container, state, app) {
          return "Region "+(i+1)
        });
     };
-    var config = state.config || defaultConfig$4;
+    var config = state.config || defaultConfig$1;
     /* render content */
     var brush = []; // instant states not store in container
     var update = state.regions || [];
@@ -3832,6 +3650,127 @@ var links = function(layout, container, state, app) {
     });
 };
 
+//TODO replace daslink ucsclink and washulink. add customized templates.
+
+function das$1(db,coords,type) {
+  return "http://genome.ucsc.edu/cgi-bin/das/"+db+"/features?segment="+regionText(coords).replace("chr","").replace("-",",")+";type="+type
+}
+function ucsc$1(org,db,position,width) {
+  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
+}
+function washu$1(db,position) {
+  return "http://epigenomegateway.wustl.edu/browser/?genome="+db+"&coordinate="+regionText(position)
+}
+var defaultConfig$2 = {
+  "color" : "#111",
+  "server" : "ucsc"
+};
+
+var ml$1 = ["ucsc","washu","das"];
+
+var popouts = function(layout, container, state, app) {
+    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
+    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
+    var div1 = content.append("div");
+    var div2 = content.append("div");
+    //state.config parameters.
+    /* render config panel and configs */
+    var setdiv = function(div, title, d) {
+      div.selectAll("*").remove();
+      div.append("span").text(title);
+      var ul = div.append("ul");
+      var li = ul.selectAll("li").data(d);
+      li.enter()
+       .append("li")
+       .merge(li)
+       .on("click",function(d){
+         var url="#";
+         switch(config.server) {
+           case "ucsc":
+              url = ucsc$1( app.species || "human", app.genome || "hg19",d,800);
+              break;
+           case "das":
+              url = das$1(app.genome || "hg19",d, app.dasType || "refGene");
+              break;
+           case "washu":
+              url = washu$1( app.genome || "hg19",d);
+              break;
+           default:
+              url = "#";
+         }
+         var newWindow = window.open(url, "", "width=800,height=500");
+         layout.eventHub.on("update",function(){
+           newWindow.close();
+         });
+         //return url//TODO SET CONFIG STATE
+       }) //TODO set other org
+       //.attr("target","_blank")
+       .on("mouseover",function(d){
+         d3.select(this).style("color","red");
+       })
+       .on("mouseout",function(d){
+         d3.select(this).style("color","black");
+       })
+       .text(function(d,i){
+         return "Region "+(i+1)
+       });
+    };
+    var config = state.config || defaultConfig$2;
+    /* render content */
+    var brush = []; // instant states not store in container
+    var update = state.regions || [];
+    container.setTitle(config.server +" links"|| "links");
+    var c = cfg.append("input")
+      .attr("type","color")
+      .attr("value",config.color);
+    var s = cfg.append("select");
+    s.selectAll("option").data(ml$1).enter()
+    .append("option").attr("value",function(d){
+      return d
+    }).text(function(d){return d});
+    cfg.append("input")
+       .attr("type","button")
+       .attr("value","submit")
+       .on("click",function(){
+         cfg.style("display","none"); //jQuery .hide()
+         content.style("display","block"); //jQuery .show()
+         container.extendState({
+           "configView":false,
+           "config":{"color":c.node().value, "server": s.node().value}
+         });
+         config.color = c.node().value;
+         config.server = s.node().value;
+         setdiv(div1,"current",update);
+         if (brush !== undefined) {
+           setdiv(div2,"brushing", brush);
+         }
+         container.setTitle(config.server+" links");
+         div1.style("color",config.color); //TODO dispatch mode.
+       });
+
+    div1.style("color",config.color); // TODO.
+    layout.eventHub.on("brush", function(d) {
+        brush = addChrPrefix(d);
+        setdiv(div2,"brushing",brush);
+
+    });
+    layout.eventHub.on("update", function(d) {
+       update = addChrPrefix(d);
+       setdiv(div1,"current", update);
+       div2.selectAll("*").remove();
+    });
+
+    container.on("show",function(d) {
+      setdiv(div1,"current",update);
+      setdiv(div2,"brushing", brush);
+    });
+    
+};
+
+var ucsc$3 = function(org,db,position,width) {
+  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
+};
+
 var labelLength = 105;
 
 var ucsc$2 = function(layout, container, state, app) {
@@ -3879,7 +3818,7 @@ var ucsc$2 = function(layout, container, state, app) {
         .attr("src",function(d){
           var p = scale(d);
           var w = p[0][1]-p[0][0] + labelLength;
-          return ucsc(app.species ||  "human", app.genome || "hg19",d,w)
+          return ucsc$3(app.species ||  "human", app.genome || "hg19",d,w)
         }
         );
       gbdiv.exit().remove();
@@ -4306,17 +4245,78 @@ container.on("resize", function(e) {
 load(draw);
 };
 
+//TODO replace daslink ucsclink and washulink. add customized templates.
+
+function ucsc$4(org,db,position,width) {
+  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
+}
+var defaultConfig$4 = {
+  "color" : "#111",
+  "server" : "ucsc"
+};
+
+var external = function(layout, container, state, app) {
+    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
+    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
+    var div1 = content.append("div");
+    var div2 = content.append("div");
+    //state.config parameters.
+    /* render config panel and configs */
+    var windows = [];
+
+    windows.push(window.open("", "", "width=800,height=500"));
+    windows.push(window.open("", "", "width=800,height=500"));
+    layout.eventHub.on("update",function(d){
+      //newWindow.close();
+      var r = addChrPrefix(d);
+      windows[0].location.href=ucsc$4(app.species || "human", app.genome || "hg19",r[0],800);
+      if (r.length > 1) {
+        windows[1].location.href=ucsc$4(app.species || "human", app.genome || "hg19",r[1],800);
+      } else {
+        windows[1].location.href="/v1/version.html";
+      }
+    });
+    container.on("destroy",function(){
+      console.log("close container");
+      windows[0].close();
+      windows[1].close();
+    });
+    var setdiv = function(div, title, regions) {
+
+    };
+    var config = state.config || defaultConfig$4;
+    /* render content */
+    var brush = []; // instant states not store in container
+    var update = state.regions || [];
+
+
+    div1.style("color",config.color); // TODO.
+    layout.eventHub.on("brush", function(d) {
+        brush = addChrPrefix(d);
+        setdiv(div2,"brushing",brush);
+
+    });
+    layout.eventHub.on("update", function(d) {
+       update = addChrPrefix(d);
+       setdiv(div1,"current", update);
+       div2.selectAll("*").remove();
+    });
+    container.on("show",function(d) {
+      setdiv(div1,"current",update);
+      setdiv(div2,"brushing", brush);
+    });
+};
+
 var render = {
   simple : simple,
+  links : links,
+  popouts : popouts,
   hic : hic,
   hicMonitor : hicMonitor,
   hicIcon : hicIcon,
-  ucsclink : ucsclink,
   ucsc : ucsc$2,
   dna3d  : dna3d,
-  washulink : washulink,
-  daslink : daslink,
-  links : links
+  external : external
 };
 
 exports.symbolTriangle = symbolTriangle;
