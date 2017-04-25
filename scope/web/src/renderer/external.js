@@ -25,19 +25,28 @@ export default function(layout, container, state, app) {
     var div2 = content.append("div");
     //state.config parameters.
     /* render config panel and configs */
-    var windows = []
-
-    windows.push(window.open("", "", "width=800,height=500"))
-    windows.push(window.open("", "", "width=800,height=500"))
-    layout.eventHub.on("update",function(d){
-      //newWindow.close();
+    var windows = [window.open("", "", "width=800,height=500"),window.open("", "", "width=800,height=500")]
+    var updated = function(d)  {
       var r = addChrPrefix(d)
+      console.log(windows)
       windows[0].location.href=ucsc(app.species || "human", app.genome || "hg19",r[0],800)
-      if (r.length > 1) {
+      if (r.length > 1 && windows[1]!=undefined) {
         windows[1].location.href=ucsc(app.species || "human", app.genome || "hg19",r[1],800)
       } else {
         windows[1].location.href="/v1/version.html"
       }
+    }
+    layout.eventHub.on("update",function(d){
+      //newWindow.close();
+      if (!windows[1]) {
+        //console.log("wait for init") // block out should open in
+        //setTimeout(function(){updated(d)},10000)
+        windows[1]=window.open("","","width=800;height=700")
+        updated(d)
+      } else {
+        updated(d)
+      }
+
     })
     container.on("destroy",function(){
       console.log("close container")
