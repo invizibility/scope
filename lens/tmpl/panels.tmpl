@@ -30,8 +30,7 @@
     <h1> Panels 101 </h1> Version: {{.Version}}
 </body>
 <script>
-(function(){
-
+(function($,d3){
 var renderMap = {
   "simple": function(layout,container,state,app){
     var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
@@ -138,7 +137,7 @@ var c = scope().config(config);
 
 d3.select("body").call(c)
 
-})()
+})(jQuery,d3)
 </script>
 </html>
 {{end}}

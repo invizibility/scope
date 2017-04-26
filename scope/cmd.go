@@ -71,6 +71,34 @@ func main() {
 				},
 			},
 		},
+		{
+			Name:   "app",
+			Usage:  "start application",
+			Action: CmdApp,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "bw,B",
+					Usage: "bigwig data file URI",
+				},
+				cli.StringFlag{
+					Name:  "hic,H",
+					Usage: "hic data file",
+				},
+				cli.StringFlag{
+					Name:  "struct,S",
+					Usage: "3d structure file",
+				},
+				cli.StringFlag{
+					Name:  "genome,G",
+					Usage: "chromSizes",
+				},
+				cli.IntFlag{
+					Name:  "port,p",
+					Usage: "data server port",
+					Value: 5050,
+				},
+			},
+		},
 	}
 	app.Run(os.Args)
 }

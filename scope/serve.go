@@ -2,15 +2,20 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
+	astilectron "github.com/asticode/go-astilectron"
+	astilog "github.com/asticode/go-astilog"
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/snowjs"
 	"github.com/nimezhu/stream"
 	. "github.com/nimezhu/stream/bigwig"
 	HiC "github.com/nimezhu/stream/hic"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
 
@@ -117,5 +122,45 @@ func CmdHttp(c *cli.Context) error {
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))
+	return nil
+}
+
+func CmdApp(c *cli.Context) error {
+	go CmdServe(c)
+	log.Println("continue app")
+	port := c.Int("port")
+	// Create astilectron
+	var a *astilectron.Astilectron
+	var err error
+	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples"}); err != nil {
+		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
+	}
+	defer a.Close()
+	a.HandleSignals()
+	a.On(astilectron.EventNameAppStop, func(e astilectron.Event) (deleteListener bool) {
+		a.Stop()
+		return
+	})
+
+	// Start
+	if err = a.Start(); err != nil {
+		astilog.Fatal(errors.Wrap(err, "starting failed"))
+	}
+
+	// Create window
+	var w *astilectron.Window
+	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
+		Center: astilectron.PtrBool(true),
+		Height: astilectron.PtrInt(600),
+		Width:  astilectron.PtrInt(600),
+	}); err != nil {
+		astilog.Fatal(errors.Wrap(err, "new window failed"))
+	}
+	if err = w.Create(); err != nil {
+		astilog.Fatal(errors.Wrap(err, "creating window failed"))
+	}
+
+	// Blocking pattern
+	a.Wait()
 	return nil
 }

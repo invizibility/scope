@@ -4276,7 +4276,7 @@ var external = function(layout, container, state, app) {
     layout.eventHub.on("update",function(d){
       //newWindow.close();
       if (!windows[1]) {
-        //console.log("wait for init")
+        //console.log("wait for init") // block out should open in
         //setTimeout(function(){updated(d)},10000)
         windows[1]=window.open("","","width=800;height=700");
         updated(d);
