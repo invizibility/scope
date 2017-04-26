@@ -4247,50 +4247,61 @@ load(draw);
 
 //TODO replace daslink ucsclink and washulink. add customized templates.
 
-function ucsc$4(org,db,position,width) {
-  return "http://genome.ucsc.edu/cgi-bin/hgTracks?org="+org+"&db="+db+"&position="+regionText(position)+"&pix="+width
+function ucsc$4(org, db, position, width) {
+    return "http://genome.ucsc.edu/cgi-bin/hgTracks?org=" + org + "&db=" + db + "&position=" + regionText(position) + "&pix=" + width
 }
+
 var defaultConfig$4 = {
-  "color" : "#111",
-  "server" : "ucsc"
+    "color": "#111",
+    "server": "ucsc"
 };
 
-var external = function(layout, container, state, app) {
-    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
-    var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
+var external = function (layout, container, state, app) {
+    var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg", true);
+    var content = d3.select(container.getElement()[0]).append("div").classed("content", true);
     var div1 = content.append("div");
     var div2 = content.append("div");
     //state.config parameters.
     /* render config panel and configs */
-    var windows = [window.open("", "", "width=800,height=500"),window.open("", "", "width=800,height=500")];
-    var updated = function(d)  {
-      var r = addChrPrefix(d);
-      console.log(windows);
-      windows[0].location.href=ucsc$4(app.species || "human", app.genome || "hg19",r[0],800);
-      if (r.length > 1 && windows[1]!=undefined) {
-        windows[1].location.href=ucsc$4(app.species || "human", app.genome || "hg19",r[1],800);
-      } else {
-        windows[1].location.href="/v1/version.html";
-      }
+    var windows = [window.open("", "", "width=800,height=500"), window.open("", "", "width=800,height=500")];
+    var updated = function (d) {
+        var r = addChrPrefix(d);
+        console.log(windows);
+        if (!windows[0].location.href) {
+            windows[0].location = ucsc$4(app.species || "human", app.genome || "hg19", r[0], 800);
+            if (r.length > 1 && windows[1] != undefined) {
+                windows[1].location = ucsc$4(app.species || "human", app.genome || "hg19", r[1], 800);
+            } else {
+                windows[1].location = "/v1/version.html";
+            }
+
+        } else {
+            windows[0].location.href = ucsc$4(app.species || "human", app.genome || "hg19", r[0], 800);
+            if (r.length > 1 && windows[1] != undefined) {
+                windows[1].location.href = ucsc$4(app.species || "human", app.genome || "hg19", r[1], 800);
+            } else {
+                windows[1].location.href = "/v1/version.html";
+            }
+        }
     };
-    layout.eventHub.on("update",function(d){
-      //newWindow.close();
-      if (!windows[1]) {
-        //console.log("wait for init") // block out should open in
-        //setTimeout(function(){updated(d)},10000)
-        windows[1]=window.open("","","width=800;height=700");
-        updated(d);
-      } else {
-        updated(d);
-      }
+    layout.eventHub.on("update", function (d) {
+        //newWindow.close();
+        if (!windows[1]) {
+            //console.log("wait for init") // block out should open in
+            //setTimeout(function(){updated(d)},10000)
+            windows[1] = window.open("", "", "width=800;height=700");
+            updated(d);
+        } else {
+            updated(d);
+        }
 
     });
-    container.on("destroy",function(){
-      console.log("close container");
-      windows[0].close();
-      windows[1].close();
+    container.on("destroy", function () {
+        console.log("close container");
+        windows[0].close();
+        windows[1].close();
     });
-    var setdiv = function(div, title, regions) {
+    var setdiv = function (div, title, regions) {
 
     };
     var config = state.config || defaultConfig$4;
@@ -4299,20 +4310,20 @@ var external = function(layout, container, state, app) {
     var update = state.regions || [];
 
 
-    div1.style("color",config.color); // TODO.
-    layout.eventHub.on("brush", function(d) {
+    div1.style("color", config.color); // TODO.
+    layout.eventHub.on("brush", function (d) {
         brush = addChrPrefix(d);
-        setdiv(div2,"brushing",brush);
+        setdiv(div2, "brushing", brush);
 
     });
-    layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
-       setdiv(div1,"current", update);
-       div2.selectAll("*").remove();
+    layout.eventHub.on("update", function (d) {
+        update = addChrPrefix(d);
+        setdiv(div1, "current", update);
+        div2.selectAll("*").remove();
     });
-    container.on("show",function(d) {
-      setdiv(div1,"current",update);
-      setdiv(div2,"brushing", brush);
+    container.on("show", function (d) {
+        setdiv(div1, "current", update);
+        setdiv(div2, "brushing", brush);
     });
 };
 
