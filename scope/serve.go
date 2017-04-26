@@ -73,13 +73,8 @@ func serveBufferURI(uri string, router *mux.Router, prefix string) {
 /* CmdServe: serve bigwigs and hic, and static html
  *
  */
-func CmdServe(c *cli.Context) error {
-	port := c.Int("port")
-	router := mux.NewRouter()
-	snowjs.AddHandlers(router, "")
-	AddStaticHandle(router)
+func addData(c *cli.Context, router *mux.Router) error {
 	entry := []string{}
-
 	bwURI := c.String("B")
 	if bwURI != "" {
 		serveBwURI(bwURI, router, "/bw")
@@ -87,8 +82,6 @@ func CmdServe(c *cli.Context) error {
 	}
 	/* TODO: multi hic files */
 	hicURI := c.String("H")
-	//hicreader, err := stream.NewSeekableStreamReader(hicURI)
-	//hic, err := HiC.DataReader(hicreader)
 	if hicURI != "" {
 		serveHicURI(hicURI, router, "/hic")
 		entry = append(entry, "hic")
@@ -108,6 +101,16 @@ func CmdServe(c *cli.Context) error {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(e)
 	})
+	return nil
+}
+
+func CmdServe(c *cli.Context) error {
+	port := c.Int("port")
+	router := mux.NewRouter()
+	snowjs.AddHandlers(router, "")
+	AddStaticHandle(router)
+	addData(c, router)
+
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))
@@ -126,13 +129,19 @@ func CmdHttp(c *cli.Context) error {
 }
 
 func CmdApp(c *cli.Context) error {
-	go CmdServe(c)
-	log.Println("continue app")
 	port := c.Int("port")
+	router := mux.NewRouter()
+	snowjs.AddHandlers(router, "")
+	AddStaticHandle(router)
+	addData(c, router)
+	log.Println("Listening...")
+	go http.ListenAndServe(":"+strconv.Itoa(port), router)
+	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	// Create astilectron
+	log.Print("start app")
 	var a *astilectron.Astilectron
 	var err error
-	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples"}); err != nil {
+	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("HOME") + "/lib"}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
 	}
 	defer a.Close()
@@ -151,8 +160,8 @@ func CmdApp(c *cli.Context) error {
 	var w *astilectron.Window
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
-		Height: astilectron.PtrInt(600),
-		Width:  astilectron.PtrInt(600),
+		Height: astilectron.PtrInt(618),
+		Width:  astilectron.PtrInt(1000),
 	}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "new window failed"))
 	}

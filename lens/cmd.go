@@ -76,7 +76,7 @@ func CmdApp(c *cli.Context) error {
 	// Create astilectron
 	var a *astilectron.Astilectron
 	var err error
-	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples"}); err != nil {
+	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("HOME") + "/lib"}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
 	}
 	defer a.Close()
