@@ -49,7 +49,7 @@ export default function (layout, container, state, app) {
             }
         }
     }
-    layout.eventHub.on("update", function (d) {
+    var updateMain =  function (d) {
         //newWindow.close();
         if (!windows[1]) {
             //console.log("wait for init") // block out should open in
@@ -60,12 +60,9 @@ export default function (layout, container, state, app) {
             updated(d)
         }
 
-    })
-    container.on("destroy", function () {
-        console.log("close container")
-        windows[0].close();
-        windows[1].close();
-    })
+    }
+    layout.eventHub.on("update",updateMain)
+
     var setdiv = function (div, title, regions) {
 
     }
@@ -76,18 +73,27 @@ export default function (layout, container, state, app) {
 
 
     div1.style("color", config.color) // TODO.
+    /*
     layout.eventHub.on("brush", function (d) {
         brush = addChrPrefix(d)
         setdiv(div2, "brushing", brush)
 
     })
-    layout.eventHub.on("update", function (d) {
+    var update = function (d) {
         update = addChrPrefix(d);
         setdiv(div1, "current", update)
         div2.selectAll("*").remove();
-    })
+    }
+    layout.eventHub.on("update", update )
+    */
     container.on("show", function (d) {
         setdiv(div1, "current", update)
         setdiv(div2, "brushing", brush)
+    })
+    container.on("destroy", function () {
+        console.log("close container")
+        windows[0].close();
+        windows[1].close();
+        layout.eventHub.off("update",updateMain)
     })
 }
