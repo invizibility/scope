@@ -168,7 +168,17 @@ func CmdApp(c *cli.Context) error {
 	if err = w.Create(); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating window failed"))
 	}
-
+	w.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
+		astilog.Info("Window resized")
+		w.Send("resize")
+		return
+	})
+	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
+		var m string
+		e.Message.Unmarshal(&m)
+		astilog.Infof("Received message %s", m)
+		return
+	})
 	// Blocking pattern
 	a.Wait()
 	return nil

@@ -19,6 +19,7 @@
     <div id="wrapper">
         <div id="menuContainer">
 
+            </div>
             <div style="color:white;padding:10">
                 <label> Input Regions</label>
                 <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
@@ -69,6 +70,15 @@
         }
 
         var dispatch = d3.dispatch("resize", "saveState", "add", "exportState")
+        document.addEventListener('astilectron-ready', function() {
+                        // This will listen to messages sent by GO
+                        astilectron.listen(function(message) {
+                            // document.getElementById('message').innerHTML = message
+                            // This will send a message back to GO
+                            // astilectron.send("I'm good bro")
+                            dispatch.call("resize")
+                        });
+                    })
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
             var history = []
