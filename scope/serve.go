@@ -157,6 +157,7 @@ func CmdApp(c *cli.Context) error {
 	}
 
 	// Create window
+	w1 := createNewWindow(a, port) //simple monitor 1
 	var w *astilectron.Window
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
@@ -177,9 +178,38 @@ func CmdApp(c *cli.Context) error {
 		var m string
 		e.Message.Unmarshal(&m)
 		astilog.Infof("Received message %s", m)
+		/*
+
+		 */
+		//go createNewWindow(a, port)
+		w1.Send(m)
 		return
 	})
 	// Blocking pattern
+
+	//createNewWindow(a, port)
+
 	a.Wait()
 	return nil
+}
+
+func createNewWindow(a *astilectron.Astilectron, port int) *astilectron.Window {
+	var w1 *astilectron.Window
+	var err error
+	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/simple.html", port), &astilectron.WindowOptions{
+		Center: astilectron.PtrBool(true),
+		Height: astilectron.PtrInt(200),
+		Width:  astilectron.PtrInt(300),
+	}); err != nil {
+		astilog.Fatal(errors.Wrap(err, "new window failed"))
+	}
+	if err := w1.Create(); err != nil {
+		astilog.Fatal(errors.Wrap(err, "creating window failed"))
+	}
+	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
+		astilog.Info("w1 Window resized")
+		w1.Send("w1 resize")
+		return
+	})
+	return w1
 }

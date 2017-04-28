@@ -18,8 +18,6 @@
     {{template "menubar"}}
     <div id="wrapper">
         <div id="menuContainer">
-
-            </div>
             <div style="color:white;padding:10">
                 <label> Input Regions</label>
                 <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
@@ -69,14 +67,20 @@
             "genome": "hg19"
         }
 
-        var dispatch = d3.dispatch("resize", "saveState", "add", "exportState")
+        var dispatch = d3.dispatch("resize", "saveState", "add", "exportState","saveToElectron", "sendToElectron")
         document.addEventListener('astilectron-ready', function() {
                         // This will listen to messages sent by GO
                         astilectron.listen(function(message) {
                             // document.getElementById('message').innerHTML = message
                             // This will send a message back to GO
                             // astilectron.send("I'm good bro")
-                            dispatch.call("resize")
+                            if (message=="resize") {
+                              dispatch.call("resize")
+                            }
+                        });
+
+                        dispatch.on("sendToElectron",function(d){
+                          astilectron.send(d)
                         });
                     })
         var initPanels = function(config, el) {
@@ -140,9 +144,14 @@
                 console.log("save state")
                 var state = JSON.stringify(layout.toConfig());
                 localStorage.setItem(stateId, state);
+                var c = {"code":"save","data":layout.toConfig()}
+                dispatch.call("sendToElectron",this,JSON.stringify(c))
             })
             dispatch.on("exportState", function() {
                 console.log(layout.toConfig()) //TODO export json file.
+            })
+            layout.eventHub.on("brush", function(d){
+              dispatch.call("sendToElectron",this,JSON.stringify({"code":"brush","data":S.toolsRegionsText(d)}))
             })
             layout.eventHub.on("update", function(d) {
                 var sign = false;
@@ -169,6 +178,7 @@
                         layout.eventHub.emit("input", d)
                     })
                 li.exit().remove();
+                dispatch.call("sendToElectron",this,JSON.stringify({"code":"update","data":S.toolsRegionsText(d)}))
             })
         }
         initPanels(config, $('#layoutContainer'))
