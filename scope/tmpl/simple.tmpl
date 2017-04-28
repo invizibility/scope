@@ -1,0 +1,26 @@
+{{define "html"}}
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <h1> Scope 101 </h1> Version: {{.Version}}
+    <div id='message'></div>
+</body>
+<script>
+    // This will wait for the astilectron namespace to be ready
+    document.addEventListener('astilectron-ready', function() {
+
+        // This will listes to messages sent by GO
+        astilectron.listen(function(message) {
+
+            // This will send a message back to GO
+            // astilectron.send("I'm good bro")
+            document.getElementById('message').innerHTML = message
+        });
+    })
+</script>
+</html>
+{{end}}
