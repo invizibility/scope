@@ -29,6 +29,9 @@
                 <ul id="history">
                 </ul>
             </div>
+            <div>
+                <input type="button" value="test" id="testOpen"  style="color:black" />
+            </div>
 
         </div>
         <div id="layoutContainer"></div>
@@ -50,9 +53,13 @@
 <link rel="stylesheet" href="/css/dat-gui-light-theme.css">
 -->
 <script>
+    var eventHub;
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
-
+        $("#testOpen").on("click",function(){
+          window.open("http://127.0.0.1:4040/v1/simple2web.html")
+        }
+      )
         var config = {{ template "config" }}
         var stateId = {{ template "id"}}
 
@@ -66,8 +73,8 @@
             "species": "human",
             "genome": "hg19"
         }
+      var dispatch = d3.dispatch("resize", "saveState", "add", "exportState","saveToElectron", "sendToElectron")
 
-        var dispatch = d3.dispatch("resize", "saveState", "add", "exportState","saveToElectron", "sendToElectron")
         document.addEventListener('astilectron-ready', function() {
                         // This will listen to messages sent by GO
                         astilectron.listen(function(message) {
@@ -86,6 +93,7 @@
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
             var history = []
+            eventHub = layout.eventHub
             layout.registerComponent("canvas", function(container, state) {
                 var r = renders[state.render] || S.render[state.render]
                 r(layout, container, state, app)
