@@ -1,17 +1,114 @@
-{{define "title"}} UCSC {{end}}
-
+{{define "title"}}simple2{{end}}
 {{define "html"}}
 <html>
-
 <head>
-    <title>{{template "title"}}</title>
-    {{template "css"}}
-    <link rel="stylesheet" href="/style0/snow.css"> {{template "lib"}}
-    <script src="/lib0/snow.js"></script>
+<title>{{template "title"}}</title>
+{{template "lib"}}
+{{template "css"}}
+<script src="/lib0/snow.js"></script>
+<link rel="stylesheet" href="/style0/snow.css">
 </head>
-
 <body>
+  <div id="container" style="height:100%"></div>
 </body>
+<template type="text/html" id="cfgbtn">
+<div class='config'>
+<span class='glyphicon glyphicon-cog'></span>
+</div>
+</template>
+<template type="text/html" id="panel">
+<div class="content">
+</div>
+<div class="cfg">
+</div>
+</template>
+<script>
+    (function(S,d3,jQuery){
+      var dispatch = d3.dispatch("brush","update")
+      document.addEventListener('astilectron-ready', function() {
 
+          // This will listes to messages sent by GO
+          astilectron.listen(function(message) {
+
+              // This will send a message back to GO
+              // astilectron.send("I'm good bro")
+              //document.getElementById('message').innerHTML = message
+              var d = JSON.parse(message)
+              dispatch.call(d.code,this,S.toolsAddChrPrefix(S.toolsParseRegions(d.data)))
+          });
+      })
+        var config = {
+            settings: {
+                showPopoutIcon: false
+            },
+            dimensions: {
+                borderWidth: 2
+            },
+            content: [{
+                type: 'row',
+                content: [{
+                        type: "component",
+                        componentName: "canvas",
+                        title: "canvas101",
+                        isClosable: false,
+                        componentState: {
+                            "name": "101",
+                            "render": "ucsc",
+                            "server": "#"
+                        }
+                    }
+                ]
+            }]
+        }
+        var layout = new GoldenLayout(config, $("#container"));
+        var renders = {}
+        var app = {}
+        console.log(layout)
+        dispatch.on("brush",function(d){
+          layout.eventHub.emit("brush",d)
+        })
+        dispatch.on("update",function(d){
+          layout.eventHub.emit("update",d)
+        })
+        layout.registerComponent("canvas", function(container, state) {
+            var r = renders[state.render] || S.render[state.render]
+            r(layout, container, state, app)
+            //TODO renderer...
+            var configContainer = container.getElement().find(".cfg")
+            var contentContainer = container.getElement().find(".content")
+            if (state.configView) {
+                configContainer.show();
+                contentContainer.hide();
+            } else {
+                configContainer.hide();
+                contentContainer.show();
+            }
+        });
+        layout.on('stackCreated', function(stack) {
+            var toggle = $($('#cfgbtn').html())
+            stack.header.controlsContainer.prepend(toggle);
+            toggle.on("click", function() {
+                toggleConfig();
+            })
+            var toggleConfig = function() {
+                var container = stack.getActiveContentItem().container;
+                var toggled = !container.getState().configView
+                container.extendState({
+                    configView: toggled
+                });
+                if (toggled) {
+                    container.getElement().find(".cfg").show()
+                    container.getElement().find(".content").hide()
+
+                } else {
+                    container.getElement().find(".cfg").hide()
+                    container.getElement().find(".content").show()
+                }
+            };
+        });
+
+        layout.init()
+    })(snow,d3,jQuery)
+</script>
 </html>
 {{end}}

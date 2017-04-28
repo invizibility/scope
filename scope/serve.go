@@ -157,7 +157,7 @@ func CmdApp(c *cli.Context) error {
 	}
 
 	// Create window
-	w1 := createNewWindow(a, port) //simple monitor 1
+	w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
 	var w *astilectron.Window
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
@@ -193,13 +193,13 @@ func CmdApp(c *cli.Context) error {
 	return nil
 }
 
-func createNewWindow(a *astilectron.Astilectron, port int) *astilectron.Window {
+func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string) *astilectron.Window {
 	var w1 *astilectron.Window
 	var err error
-	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/simple.html", port), &astilectron.WindowOptions{
+	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html", port, page), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
-		Height: astilectron.PtrInt(200),
-		Width:  astilectron.PtrInt(300),
+		Height: astilectron.PtrInt(height),
+		Width:  astilectron.PtrInt(width),
 	}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "new window failed"))
 	}

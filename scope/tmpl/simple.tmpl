@@ -8,6 +8,7 @@
 <body>
     <h1> Scope 101 </h1> Version: {{.Version}}
     <div id='message'></div>
+    <div id='container'></div>
 </body>
 <script>
     // This will wait for the astilectron namespace to be ready
@@ -21,6 +22,7 @@
             document.getElementById('message').innerHTML = message
         });
     })
+
 </script>
 </html>
 {{end}}
