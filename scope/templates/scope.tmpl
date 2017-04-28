@@ -154,15 +154,19 @@
               dispatch.call("sendToElectron",this,JSON.stringify({"code":"brush","data":S.toolsRegionsText(d)}))
             })
             layout.eventHub.on("update", function(d) {
+                dispatch.call("sendToElectron",this,JSON.stringify({"code":"update","data":S.toolsRegionsText(d)}))
+                /*
                 var sign = false;
                 history.forEach(function(d0) {
                     if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
                         sign = true;
+                        console.log(d0,"=",d)
                     }
                 })
                 if (sign) {
                     return;
                 }
+                */
                 history.push(d);
                 if (history.length > 8) {
                     history.shift();
@@ -178,7 +182,7 @@
                         layout.eventHub.emit("input", d)
                     })
                 li.exit().remove();
-                dispatch.call("sendToElectron",this,JSON.stringify({"code":"update","data":S.toolsRegionsText(d)}))
+
             })
         }
         initPanels(config, $('#layoutContainer'))

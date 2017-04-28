@@ -2658,8 +2658,8 @@ var hic = function (layout, container, state, app) {
                 regions[i].end = d.end + l > d.length ? d.length : d.end + l;
             });
             regions = toolsFixRegions(regions);
-            //dispatch.call("update", this, regions)
-            layout.eventHub.emit("input", regions);
+            dispatch.call("update", this, regions);
+            //layout.eventHub.emit("input", regions)
         });
 
     var btnZoomIn = div.append("button")
@@ -2673,8 +2673,8 @@ var hic = function (layout, container, state, app) {
                 regions[i].end = d.end - l;
             });
             regions = toolsFixRegions(regions);
-            //dispatch.call("update", this, regions)
-            layout.eventHub.emit("input", regions); //TODO
+            dispatch.call("update", this, regions);
+            //layout.eventHub.emit("input", regions) //TODO
 
         });
     var axesG = svg.append("g").attr("transform", "translate(10,0)");
@@ -2852,7 +2852,9 @@ var hic = function (layout, container, state, app) {
             renderHic(regions);
         }
     };
-
+    layout.eventHub.on("update",function(d){
+      console.log("update eventHub",d);
+    });
     dispatch.on("monitor", function (d) {
         //div1.html(JSON.stringify(d, 2, 2)) //TODO renders.
         div1.html("");
@@ -2885,6 +2887,7 @@ var hic = function (layout, container, state, app) {
     });
 
     dispatch.on("update.local", function (d) {
+        console.log("update.local",d);
         render(d);
     });
     var fixRegions = function (d) {
