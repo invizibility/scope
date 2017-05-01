@@ -30,7 +30,7 @@
                 </ul>
             </div>
             <div>
-                <input type="button" value="test" id="testOpen"  style="color:black" />
+                <input type="button" value="Add External Window" id="openExt" style="color:black" />
             </div>
 
         </div>
@@ -54,42 +54,52 @@
 -->
 <script>
     var eventHub;
+    var isAstilectron = false;
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
-        $("#testOpen").on("click",function(){
-          window.open("http://127.0.0.1:4040/v1/simple2web.html")
-        }
-      )
+
         var config = {{ template "config" }}
-        var stateId = {{ template "id"}}
+        var stateId = {{ template "id"  }}
 
 
         var renders = {
             "3d": S.render.dna3d
         }
-        var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc","links","popouts","external"] //for monitors
+        var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
 
         var app = {
             "species": "human",
             "genome": "hg19"
         }
-      var dispatch = d3.dispatch("resize", "saveState", "add", "exportState","saveToElectron", "sendToElectron")
+        var dispatch = d3.dispatch("resize", "saveState", "add", "exportState", "saveToElectron", "sendToElectron")
 
         document.addEventListener('astilectron-ready', function() {
-                        // This will listen to messages sent by GO
-                        astilectron.listen(function(message) {
-                            // document.getElementById('message').innerHTML = message
-                            // This will send a message back to GO
-                            // astilectron.send("I'm good bro")
-                            if (message=="resize") {
-                              dispatch.call("resize")
-                            }
-                        });
+            // This will listen to messages sent by GO
+            isAstilectron = true;
+            astilectron.listen(function(message) {
+                // document.getElementById('message').innerHTML = message
+                // This will send a message back to GO
+                // astilectron.send("I'm good bro")
+                if (message == "resize") {
+                    dispatch.call("resize")
+                }
+            });
 
-                        dispatch.on("sendToElectron",function(d){
-                          astilectron.send(d)
-                        });
-                    })
+            dispatch.on("sendToElectron", function(d) {
+                astilectron.send(d)
+            });
+        })
+
+        $("#openExt").on("click", function() {
+            if (isAstilectron) {
+                astilectron.send(JSON.stringify({
+                    "code": "openExt",
+                    "data": []
+                }))
+            } else {
+                window.open("/v1/external.html")
+            }
+        })
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
             var history = []
@@ -152,17 +162,26 @@
                 console.log("save state")
                 var state = JSON.stringify(layout.toConfig());
                 localStorage.setItem(stateId, state);
-                var c = {"code":"save","data":layout.toConfig()}
-                dispatch.call("sendToElectron",this,JSON.stringify(c))
+                var c = {
+                    "code": "save",
+                    "data": layout.toConfig()
+                }
+                dispatch.call("sendToElectron", this, JSON.stringify(c))
             })
             dispatch.on("exportState", function() {
                 console.log(layout.toConfig()) //TODO export json file.
             })
-            layout.eventHub.on("brush", function(d){
-              dispatch.call("sendToElectron",this,JSON.stringify({"code":"brush","data":S.toolsRegionsText(d)}))
+            layout.eventHub.on("brush", function(d) {
+                dispatch.call("sendToElectron", this, JSON.stringify({
+                    "code": "brush",
+                    "data": S.toolsRegionsText(d)
+                }))
             })
             layout.eventHub.on("update", function(d) {
-                dispatch.call("sendToElectron",this,JSON.stringify({"code":"update","data":S.toolsRegionsText(d)}))
+                dispatch.call("sendToElectron", this, JSON.stringify({
+                    "code": "update",
+                    "data": S.toolsRegionsText(d)
+                }))
                 /*
                 var sign = false;
                 history.forEach(function(d0) {
@@ -252,7 +271,9 @@
             ).on("click", function(d) {
                 dispatch.call("add", this, factory(d))
             })
-
+        window.onresize = function() {
+            dispatch.call("resize", this, {})
+        }
 
     }(jQuery, d3, snow))
 </script>

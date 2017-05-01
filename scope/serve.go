@@ -157,7 +157,9 @@ func CmdApp(c *cli.Context) error {
 	}
 
 	// Create window
-	w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
+	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
+	ws := make(map[int]*astilectron.Window)
+	idx := 0
 	var w *astilectron.Window
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
@@ -176,13 +178,30 @@ func CmdApp(c *cli.Context) error {
 	})
 	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
 		var m string
+		//var m map[string]interface{}
 		e.Message.Unmarshal(&m)
 		astilog.Infof("Received message %s", m)
 		/*
 
 		 */
+		var dat map[string]interface{}
+		if err := json.Unmarshal([]byte(m), &dat); err != nil {
+			panic(err)
+		}
+		if dat["code"] == "openExt" {
+			go createNewWindow(a, port, 1000, 700, "external", ws, idx)
+			idx++
+			astilog.Infof("window %d", idx)
+		}
+
 		//go createNewWindow(a, port)
-		w1.Send(m)
+		//w1.Send(m)
+		if dat["code"] == "brush" || dat["code"] == "update" {
+			for _, w1 := range ws {
+				w1.Send(m)
+			}
+		}
+
 		return
 	})
 	// Blocking pattern
@@ -193,7 +212,7 @@ func CmdApp(c *cli.Context) error {
 	return nil
 }
 
-func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string) *astilectron.Window {
+func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int) error {
 	var w1 *astilectron.Window
 	var err error
 	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html", port, page), &astilectron.WindowOptions{
@@ -211,5 +230,6 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 		w1.Send("w1 resize")
 		return
 	})
-	return w1
+	ws[idx] = w1
+	return nil
 }

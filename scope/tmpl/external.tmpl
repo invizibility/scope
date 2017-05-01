@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/style0/snow.css">
 </head>
 <body>
+   {{template "menubar"}}
   <div id="container" style="height:100%"></div>
 </body>
 <template type="text/html" id="cfgbtn">
@@ -26,9 +27,17 @@
 
 
     (function(S,d3,jQuery){
-      var eventHub = window.opener.eventHub;
+      var eventHub
+      var isAstilectron = false;
+      if (window.opener) {
+        eventHub = window.opener.eventHub;
+      }
+      var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
+      var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron")
+      dispatch.on("add", function(d) {
+          layout.root.contentItems[0].addChild(d);
+      })
 
-      var dispatch = d3.dispatch("update","brush")
      if(eventHub!=undefined){
        eventHub.on("brush",function(d){
          dispatch.call("brush",this,d)
@@ -42,12 +51,14 @@
       document.addEventListener('astilectron-ready', function() {
 
           // This will listes to messages sent by GO
+          isAstilectron = true;
           astilectron.listen(function(message) {
 
               // This will send a message back to GO
               // astilectron.send("I'm good bro")
               //document.getElementById('message').innerHTML = message
               var d = JSON.parse(message)
+              console.log("message",d)
               dispatch.call(d.code,this,S.toolsParseRegions(d.data))
           });
       })
@@ -83,6 +94,10 @@
         })
         dispatch.on("update",function(d){
           layout.eventHub.emit("update",d)
+        })
+        dispatch.on("resize.inner", function(d) {
+            //console.log("resize")
+            layout.updateSize();
         })
         layout.registerComponent("canvas", function(container, state) {
             var r = renders[state.render] || S.render[state.render]
@@ -122,6 +137,34 @@
         });
 
         layout.init()
+        var factory = function(d) {
+            return {
+                title: d,
+                type: 'component',
+                componentName: 'canvas',
+                componentState: {
+                    name: d,
+                    render: d
+                }
+            };
+        }
+        d3.select("#renders").selectAll("li")
+            .data(renderList)
+            .enter()
+            .append("li")
+            .append("a")
+            .attr("id", function(d) {
+                return d
+            }).text(
+                function(d) {
+                    return d
+                }
+            ).on("click", function(d) {
+                dispatch.call("add", this, factory(d))
+            })
+            window.onresize = function() {
+              dispatch.call("resize",this,{})
+            }
     })(snow,d3,jQuery)
 </script>
 </html>
