@@ -204,6 +204,13 @@ func CmdApp(c *cli.Context) error {
 
 		return
 	})
+	w.On(astilectron.EventNameWindowCmdClose, func(e astilectron.Event) (deleteListener bool) {
+		fmt.Printf("Closeing Win")
+		for _, w1 := range ws {
+			w1.Close()
+		}
+		return
+	})
 	// Blocking pattern
 
 	//createNewWindow(a, port)
@@ -227,11 +234,12 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 		astilog.Fatal(errors.Wrap(err, "creating window failed"))
 	}
 	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
-		astilog.Info("w1 Window resized")
+		astilog.Info("w1 Window resize")
 		w1.Send("w1 resize") // TODO
 		return
 	})
-	w1.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
+	w1.On(astilectron.EventNameWindowCmdClose, func(e astilectron.Event) (deleteListener bool) {
+		astilog.Info("w1 Window close")
 		delete(ws, id)
 		return
 	})

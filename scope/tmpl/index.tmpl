@@ -92,7 +92,14 @@
                 astilectron.send(d)
             });
         })
-
+        var ws = {}
+        var idx = 0
+        window.onbeforeunload = function() {
+            for (var key in ws) {
+              ws[key].close()
+            }
+            ws = {}
+        }
         $("#openExt").on("click", function() {
             if (isAstilectron) {
                 astilectron.send(JSON.stringify({
@@ -101,9 +108,14 @@
                 }))
             } else {
                 var w = window.open("/v1/external.html")
+                var id = idx
                 w.onbeforeunload = function(){
+                  ws.delete(id)
                 }
+                ws[id] = w
+                idx+=1
             }
+
         })
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
