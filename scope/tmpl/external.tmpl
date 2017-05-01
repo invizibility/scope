@@ -37,16 +37,21 @@
       dispatch.on("add", function(d) {
           layout.root.contentItems[0].addChild(d);
       })
-
+      var brush = function(d) {
+        dispatch.call("brush",this,d)
+      }
+      var update = function(d){
+        dispatch.call("update",this,d)
+      }
      if(eventHub!=undefined){
-       eventHub.on("brush",function(d){
-         dispatch.call("brush",this,d)
-       })
-       eventHub.on("update",function(d){
-         dispatch.call("update",this,d)
-       })
+       eventHub.on("brush",brush)
+       eventHub.on("update",update)
+       window.onbeforeunload = function(){
+            // Do something
+            eventHub.off("brush",brush)
+            eventHub.off("update",update)
+      }
      }
-
 
       document.addEventListener('astilectron-ready', function() {
 

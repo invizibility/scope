@@ -215,6 +215,7 @@ func CmdApp(c *cli.Context) error {
 func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int) error {
 	var w1 *astilectron.Window
 	var err error
+	id := idx
 	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html", port, page), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(height),
@@ -227,7 +228,11 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 	}
 	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
 		astilog.Info("w1 Window resized")
-		w1.Send("w1 resize")
+		w1.Send("w1 resize") // TODO
+		return
+	})
+	w1.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
+		delete(ws, id)
 		return
 	})
 	ws[idx] = w1
