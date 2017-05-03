@@ -144,9 +144,10 @@ func CmdApp(c *cli.Context) error {
 	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("HOME") + "/lib"}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
 	}
+	a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
 	defer a.Close()
 	a.HandleSignals()
-	a.On(astilectron.EventNameAppStop, func(e astilectron.Event) (deleteListener bool) {
+	a.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
 		a.Stop()
 		return
 	})
@@ -204,12 +205,12 @@ func CmdApp(c *cli.Context) error {
 
 		return
 	})
-	w.On(astilectron.EventNameWindowCmdClose, func(e astilectron.Event) (deleteListener bool) {
-		fmt.Printf("Closeing Win")
-		for _, w1 := range ws {
-			w1.Close()
-		}
+
+	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
+
+		a.Stop() //TODO fix javascript error
 		return
+
 	})
 	// Blocking pattern
 
@@ -225,6 +226,7 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 	id := idx
 	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html", port, page), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
+		Icon:   astilectron.PtrStr(os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples/6.icons/gopher.png"),
 		Height: astilectron.PtrInt(height),
 		Width:  astilectron.PtrInt(width),
 	}); err != nil {
@@ -238,11 +240,12 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 		w1.Send("w1 resize") // TODO
 		return
 	})
-	w1.On(astilectron.EventNameWindowCmdClose, func(e astilectron.Event) (deleteListener bool) {
-		astilog.Info("w1 Window close")
+	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
+		astilog.Info("w1 Window close") //TODO?
 		delete(ws, id)
 		return
 	})
-	ws[idx] = w1
+	ws[id] = w1
+
 	return nil
 }

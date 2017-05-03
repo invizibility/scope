@@ -1,0 +1,50 @@
+{{define "title"}} open file dialog {{end}}
+ {{define "html"}}
+<html>
+
+<head>
+  {{template "lib"}}
+  {{template "css"}}
+
+</head>
+
+<body>
+    <h1> Scope 102 </h1> Version: {{.Version}}
+    <div id='message'></div>
+    <div id='container'>
+      <input type="button" id="openfile" value="open file"></input>
+    </div>
+</body>
+<script>
+    // This will wait for the astilectron namespace to be ready
+    var dispatch = d3.dispatch("openfile");
+    $("#openfile").on("click",function(){
+      dispatch.call("openfile",this,{})
+    })
+    document.addEventListener('astilectron-ready', function() {
+
+        // This will listes to messages sent by GO
+        astilectron.listen(function(message) {
+            document.getElementById('message').innerHTML = message
+        });
+        var dialog = require("electron").remote.dialog;
+        console.log(dialog)
+        dispatch.on("openfile",function(_){
+          dialog.showOpenDialog({
+              properties: ['openFile'],
+              filters: [{
+                  extensions: ['txt']
+              }]
+          }, function(d) {
+              console.log(d)
+              //dispatch.call("open",this,d)
+          })
+        })
+
+
+    })
+
+</script>
+
+</html>
+{{end}}
