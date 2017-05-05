@@ -134,14 +134,10 @@
             editable: false
         });
         metadata.push({
-            name: "view",
-            label: "VIEW",
+            name: "url",
+            label: "URL",
             datatype: "string",
-            editable: true,
-            values: {
-                "hidden": "hidden",
-                "show": "show"
-            }
+            editable: false
         })
         metadata.push({
             name: "action",
@@ -174,7 +170,7 @@
           dispatch.call("openfile",this,function(d){
             console.log("callback",d)
             var n = d[0].split("/")
-            editableGrid.append(editableGrid.data.length, { 'shortLabel': n[n.length-1] }, true);
+            editableGrid.append(editableGrid.data.length, { 'shortLabel': n[n.length-1],'url':d[0] }, true);
             dispatch.call("sendToElectron",this, JSON.stringify({
               "code":"loadBw",
               "data":d[0]
@@ -206,7 +202,7 @@
           dispatch.call("openfile",this,function(d){
             console.log("callback",d)
             var n = d[0].split("/")
-            hicGrid.append(hicGrid.data.length, { 'shortLabel': n[n.length-1] }, true);
+            hicGrid.append(hicGrid.data.length, { 'shortLabel': n[n.length-1], 'url':d[0]}, true);
             dispatch.call("sendToElectron",this, JSON.stringify({
               "code":"loadHic",
               "data":d[0]
@@ -219,46 +215,34 @@
             if (error) throw error;
             var bw = results[0];
             var hic = results[1];
-            //d3.select("#bw").html(JSON.stringify(bw))
-            /*
-            d3.select("#hicselect")
-                .selectAll("option")
-                .data(hic)
-                .enter()
-                .append("option")
-                .attr("value", function(d) {
-                    return d
-                })
-                .append("text")
-                .text(function(d) {
-                    return d;
-                })
-            */
+            console.log("WARNNN",bw,hic)
             var hicdata = []
-            hic.forEach(function(d, i) {
-                hicdata.push({
-                    id: i + 1,
-                    values: {
-                        shortLabel: d,
-                        view: "show"
-                    }
-                })
-            })
+            var i=0
+            for (var k in hic) {
+              hicdata.push({
+                  id: i + 1,
+                  values: {
+                      shortLabel: k,
+                      url: hic[k]
+                  }
+              })
+            }
             hicGrid.load({
               "metadata": metadata,
               "data":hicdata
             })
             hicGrid.renderGrid("hicdata","datagrid")
             //var data = []
-            bw.forEach(function(d, i) {
-                data.push({
-                    id: i + 1,
-                    values: {
-                        shortLabel: d,
-                        view: "show"
-                    }
-                })
-            })
+            var i=0
+            for (var k in bw) {
+              data.push({
+                  id: i + 1,
+                  values: {
+                      shortLabel: k,
+                      url: bw[k]
+                  }
+              })
+            }
             editableGrid.load({
                 "metadata": metadata,
                 "data": data
@@ -267,8 +251,8 @@
 
         }
         d3.queue(2)
-            .defer(d3.json, URI + "/bw/list")
-            .defer(d3.json, URI + "/hic/list")
+            .defer(d3.json, URI + "/bw/ls")
+            .defer(d3.json, URI + "/hic/ls")
             .awaitAll(ready);
 
         $("#save").on("click", function(d) {
@@ -300,8 +284,8 @@
                 "metadata": metadata,
                 "data": trans(editableGrid.data)
             });
-            localStorage.setItem(stateId, state);
-            localStorage.setItem('hicId', $("#hicselect").val())
+            //localStorage.setItem(stateId, state);
+            //localStorage.setItem('hicId', $("#hicselect").val())
             window.location.replace("/v1/index.html")
         })
 
