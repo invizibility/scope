@@ -13,39 +13,10 @@ import (
 	astilog "github.com/asticode/go-astilog"
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/snowjs"
-	"github.com/nimezhu/stream"
 
-	HiC "github.com/nimezhu/stream/hic"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
-
-func readHic(uri string) *HiC.HiC {
-	reader, err := stream.NewSeekableStreamReader(uri)
-	checkErr(err)
-	hic, err := HiC.DataReader(reader)
-	checkErr(err)
-	return hic
-}
-
-func serveHicURI(uri string, router *mux.Router, prefix string) {
-	//hicExt := strings.ToLower(path.Ext(uri))
-	uriMap := LoadURI(uri)
-	hicMap := make(map[string]*HiC.HiC)
-	hicList := []string{}
-	for k, v := range uriMap {
-		log.Println("key", k, "URI", v)
-		hicMap[k] = readHic(v)
-		hicList = append(hicList, k)
-	}
-
-	if _, ok := hicMap["default"]; ok {
-		//has default
-	} else {
-		hicMap["default"] = hicMap[hicList[0]]
-	}
-	AddHicsHandle(router, hicMap, prefix)
-}
 
 func serveBufferURI(uri string, router *mux.Router, prefix string) {
 	//hicExt := strings.ToLower(path.Ext(uri))
@@ -56,7 +27,7 @@ func serveBufferURI(uri string, router *mux.Router, prefix string) {
 /* CmdServe: serve bigwigs and hic, and static html
  *
  */
-func addData(c *cli.Context, router *mux.Router) (*BigWigManager, error) {
+func addData(c *cli.Context, router *mux.Router) (*BigWigManager, *HicManager, error) {
 	entry := []string{}
 	bwURI := c.String("B")
 	var bwM *BigWigManager
@@ -68,8 +39,9 @@ func addData(c *cli.Context, router *mux.Router) (*BigWigManager, error) {
 	}
 	/* TODO: multi hic files */
 	hicURI := c.String("H")
+	var hicM *HicManager
 	if hicURI != "" {
-		serveHicURI(hicURI, router, "/hic")
+		hicM = NewHicManager(hicURI, router, "/hic")
 		entry = append(entry, "hic")
 	}
 	structURI := c.String("S")
@@ -87,7 +59,7 @@ func addData(c *cli.Context, router *mux.Router) (*BigWigManager, error) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(e)
 	})
-	return bwM, nil
+	return bwM, hicM, nil
 }
 
 func CmdServe(c *cli.Context) error {
@@ -119,7 +91,7 @@ func CmdApp(c *cli.Context) error {
 	router := mux.NewRouter()
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	bwManager, _ := addData(c, router) //TODO.
+	bwManager, hicManager, _ := addData(c, router) //TODO.
 	log.Println("Listening...")
 	go http.ListenAndServe(":"+strconv.Itoa(port), router)
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
@@ -195,6 +167,12 @@ func CmdApp(c *cli.Context) error {
 			bwManager.AddURI(d, a[len(a)-1])
 		}
 
+		if dat["code"] == "loadHic" {
+			d, _ := dat["data"].(string)
+			fmt.Println("window message : load hic ", d)
+			a := strings.Split(d, "/")
+			hicManager.AddURI(d, a[len(a)-1])
+		}
 		return
 	})
 

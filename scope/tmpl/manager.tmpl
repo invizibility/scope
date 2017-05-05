@@ -56,6 +56,9 @@
                 <label>HiC Data </label>
                 <div id="hicdata">
               </div>
+              <div>
+                <input type="button" value="add" id="addHic"></input>
+              </div>
             </div>
             <div id="bw">
                 <label>BigWig Data </label>
@@ -197,6 +200,18 @@
           },
           pageSize: 10
 
+        })
+        $("#addHic").on("click",function(){
+
+          dispatch.call("openfile",this,function(d){
+            console.log("callback",d)
+            var n = d[0].split("/")
+            hicGrid.append(hicGrid.data.length, { 'shortLabel': n[n.length-1] }, true);
+            dispatch.call("sendToElectron",this, JSON.stringify({
+              "code":"loadHic",
+              "data":d[0]
+            }))
+          })
         })
 
         var data = []
