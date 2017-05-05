@@ -32,7 +32,7 @@
                 <ul id="history">
                 </ul>
             </div>
-            <div>
+            <div style="padding:10">
                 <input type="button" value="Add External Window" id="openExt" style="color:black" />
             </div>
 
@@ -59,7 +59,7 @@
 <script>
     var eventHub;
     var isAstilectron = false;
-    
+
 
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
@@ -93,6 +93,12 @@
             dispatch.on("sendToElectron", function(d) {
                 astilectron.send(d)
             });
+            d3.select("#myNavLeft").append("li")
+                .append("a")
+                .attr("href","/v1/manager.html")
+                .append("span")
+                .attr("class","glyphicon glyphicon-wrench")
+                .text("Manager")
         })
         var ws = {}
         var idx = 0
@@ -109,7 +115,7 @@
                     "data": []
                 }))
             } else {
-                var w = window.open("/v1/external.html")
+                var w = window.open("/v1/external.html","external_"+idx,"width=1000,height=618")
                 var id = idx
                 w.onbeforeunload = function(){
                   ws.delete(id)

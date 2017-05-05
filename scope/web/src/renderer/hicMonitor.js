@@ -59,6 +59,7 @@ export default function (layout, container, state, app) {
         var uri = cfg.append("input")
             .attr("type", "text")
             .attr("value", state.URI || "/hic/default")
+        //var fixed = false;
         cfg.append("input")
             .attr("type", "button")
             .attr("value", "load new data")
@@ -215,7 +216,7 @@ export default function (layout, container, state, app) {
 
             var r = svg.selectAll(".resp")
                 .data(data)
-          
+
             r.enter()
                 .append("g")
                 .merge(r)
@@ -289,6 +290,11 @@ export default function (layout, container, state, app) {
     })
 
     layout.eventHub.on("update", function (d) {
+        /*
+        if (fixed){
+          return
+        }
+        */
         if (!container.isHidden) {
             render(d)
         } else {
