@@ -13,7 +13,7 @@ import (
 /*HicManager implement DataManager Inteface */
 type HicManager struct {
 	uriMap  map[string]string
-	dataMap map[string]*hic.Hic
+	dataMap map[string]*hic.HiC
 	prefix  string
 }
 
@@ -42,22 +42,24 @@ func (m *HicManager) List() []string {
 func (m *HicManager) ServeTo(router *mux.Router) {
 	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		jsonHic := json.Marshal(m.uriMap)
+		jsonHic, _ := json.Marshal(m.uriMap)
 		w.Write(jsonHic)
 	})
-	AddhicsHandle(router, m.dataMap, m.prefix)
+	AddHicsHandle(router, m.dataMap, m.prefix)
 }
 
 func NewHicManager(uri string, router *mux.Router, prefix string) *HicManager {
 	uriMap := LoadURI(uri)
-	dataMap := make(map[string]*hic.Hic)
+	dataMap := make(map[string]*hic.HiC)
+	dataList := []string{}
 	for k, v := range uriMap {
 		dataMap[k] = readhic(v)
+		dataList = append(dataList, k)
 	}
 	if _, ok := dataMap["default"]; ok {
 		//has default
 	} else {
-		dataMap["default"] = dataMap[hicList[0]]
+		dataMap["default"] = dataMap[dataList[0]]
 	}
 	m := HicManager{
 		uriMap,
@@ -68,10 +70,10 @@ func NewHicManager(uri string, router *mux.Router, prefix string) *HicManager {
 	return &m
 }
 
-func readhic(uri string) *HiC.HiC {
+func readhic(uri string) *hic.HiC {
 	reader, err := stream.NewSeekableStreamReader(uri)
 	checkErr(err)
-	hic, err := HiC.DataReader(reader)
+	vhic, err := hic.DataReader(reader)
 	checkErr(err)
-	return hic
+	return vhic
 }

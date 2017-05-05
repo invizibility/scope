@@ -52,7 +52,7 @@ func (m *BigWigManager) List() []string {
 func (m *BigWigManager) ServeTo(router *mux.Router) {
 	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		jsonHic := json.Marshal(m.uriMap)
+		jsonHic, _ := json.Marshal(m.uriMap)
 		w.Write(jsonHic)
 	})
 	AddBwsHandle(router, m.bwMap, m.prefix)
