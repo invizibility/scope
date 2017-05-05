@@ -55,6 +55,7 @@ func AddHicsHandle(router *mux.Router, hicMap map[string]*HiC, prefix string) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		id := params["id"]
+		log.Println(id)
 		units := hicMap[id].Footer.Units
 		a := []int{}
 		for k, _ := range units {
