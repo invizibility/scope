@@ -14,61 +14,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/snowjs"
 	"github.com/nimezhu/stream"
-	. "github.com/nimezhu/stream/bigwig"
+
 	HiC "github.com/nimezhu/stream/hic"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
 
-func readBw(uri string) *BigWigReader {
-	reader, err := stream.NewSeekableStreamReader(uri)
-	checkErr(err)
-	bwf := NewBbiReader(reader)
-	bwf.InitIndex()
-	log.Println("in reading idx of", uri)
-	bw := NewBigWigReader(bwf)
-	return bw
-}
-
-type bwManager struct {
-	uriMap map[string]string
-	bwMap  map[string]*BigWigReader
-	prefix string
-	router *mux.Router
-}
-
-func (m *bwManager) AddURI(uri string, key string) error {
-	m.uriMap[key] = uri
-	m.bwMap[key] = readBw(uri)
-	log.Println("add uri", uri, key)
-	return nil
-}
-func (m *bwManager) Del(key string) error {
-	delete(m.uriMap, key)
-	delete(m.bwMap, key)
-	return nil
-}
-
-func (m *bwManager) Serve() {
-	AddBwsHandle(m.router, m.bwMap, m.prefix)
-}
-
-func NewBwManager(uri string, router *mux.Router, prefix string) *bwManager {
-	uriMap := LoadURI(uri)
-	bwmap := make(map[string]*BigWigReader)
-	for k, v := range uriMap {
-		bwmap[k] = readBw(v)
-	}
-	AddBwsHandle(router, bwmap, prefix)
-
-	m := bwManager{
-		uriMap,
-		bwmap,
-		prefix,
-		router,
-	}
-	return &m
-}
 func readHic(uri string) *HiC.HiC {
 	reader, err := stream.NewSeekableStreamReader(uri)
 	checkErr(err)
@@ -105,13 +56,13 @@ func serveBufferURI(uri string, router *mux.Router, prefix string) {
 /* CmdServe: serve bigwigs and hic, and static html
  *
  */
-func addData(c *cli.Context, router *mux.Router) (*bwManager, error) {
+func addData(c *cli.Context, router *mux.Router) (*BigWigManager, error) {
 	entry := []string{}
 	bwURI := c.String("B")
-	var bwM *bwManager
+	var bwM *BigWigManager
 	if bwURI != "" {
 		//serveBwURI(bwURI, router, "/bw")
-		bwM = NewBwManager(bwURI, router, "/bw")
+		bwM = NewBigWigManager(bwURI, router, "/bw")
 		log.Println("bw manager", bwM)
 		entry = append(entry, "bw")
 	}
@@ -179,7 +130,7 @@ func CmdApp(c *cli.Context) error {
 	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("HOME") + "/lib"}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
 	}
-	a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
+	//a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
 	defer a.Close()
 	a.HandleSignals()
 	a.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
