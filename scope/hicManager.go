@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/stream"
@@ -38,6 +40,11 @@ func (m *HicManager) List() []string {
 	return keys
 }
 func (m *HicManager) ServeTo(router *mux.Router) {
+	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		jsonHic := json.Marshal(m.uriMap)
+		w.Write(jsonHic)
+	})
 	AddhicsHandle(router, m.dataMap, m.prefix)
 }
 

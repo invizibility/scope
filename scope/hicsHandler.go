@@ -29,6 +29,7 @@ func AddHicsHandle(router *mux.Router, hicMap map[string]*HiC, prefix string) {
 		jsonHic, _ := json.Marshal(keys)
 		w.Write(jsonHic)
 	})
+
 	router.HandleFunc(prefix+"/{id}/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		/*
