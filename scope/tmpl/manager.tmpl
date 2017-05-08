@@ -89,18 +89,12 @@
                   dispatch.call("resize")
               }
           });
-
           dispatch.on("sendToElectron", function(d) {
+              console.log("send",d)
               astilectron.send(d)
           });
-          d3.select("#myNavLeft").append("li")
-              .append("a")
-              .attr("href","/v1/manager.html")
-              .append("span")
-              .attr("class","glyphicon glyphicon-wrench")
-              .text("Manager")
+
           var dialog = require("electron").remote.dialog;
-              console.log(dialog)
               dispatch.on("openfile",function(_){
                 dialog.showOpenDialog({
                     properties: ['openFile'],
@@ -286,7 +280,8 @@
             });
             //localStorage.setItem(stateId, state);
             //localStorage.setItem('hicId', $("#hicselect").val())
-            window.location.replace("/v1/index.html")
+            //window.location.replace("/v1/index.html")
+            //window.close();
         })
 
     }

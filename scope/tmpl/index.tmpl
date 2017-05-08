@@ -76,7 +76,7 @@
             "species": "human",
             "genome": "hg19"
         }
-        var dispatch = d3.dispatch("resize", "saveState", "add", "exportState", "saveToElectron", "sendToElectron")
+        var dispatch = d3.dispatch("input","resize", "saveState", "add", "exportState", "saveToElectron", "sendToElectron")
 
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
@@ -87,18 +87,23 @@
                 // astilectron.send("I'm good bro")
                 if (message == "resize") {
                     dispatch.call("resize")
+                } else {
+                    console.log(message)
+                    dispatch.call("input",this, S.toolsTrimChrPrefix(S.toolsParseRegions(message)))
                 }
             });
 
             dispatch.on("sendToElectron", function(d) {
                 astilectron.send(d)
             });
+            /*
             d3.select("#myNavLeft").append("li")
                 .append("a")
                 .attr("href","/v1/manager.html")
                 .append("span")
                 .attr("class","glyphicon glyphicon-wrench")
                 .text("Manager")
+                */
         })
         var ws = {}
         var idx = 0
@@ -107,6 +112,9 @@
               ws[key].close()
             }
             ws = {}
+            if(isAstilectron) {
+
+            }
         }
         $("#openExt").on("click", function() {
             if (isAstilectron) {
@@ -201,6 +209,10 @@
                     "code": "brush",
                     "data": S.toolsRegionsText(d)
                 }))
+            })
+            dispatch.on("input",function(d){
+              console.log("input",d)
+              layout.eventHub.emit("input",d)
             })
             layout.eventHub.on("update", function(d) {
                 dispatch.call("sendToElectron", this, JSON.stringify({
@@ -304,6 +316,7 @@
         window.onresize = function() {
             dispatch.call("resize", this, {})
         }
+
 
     }(jQuery, d3, snow))
 </script>
