@@ -201,18 +201,19 @@ func CmdApp(c *cli.Context) error {
 	// Create window
 	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
 	ws := make(map[int]*astilectron.Window)
-	idx := 1
+	idx := 0
 
-	idx++
-	manager := false
+	//manager := false
 
 	mi0.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		/*()
 		manager = !manager
 		if manager {
 			w1.Show()
 		} else {
 			w1.Hide()
 		}
+		*/
 		return false
 	})
 	mi1, _ := m.Item(0, 1)
@@ -267,10 +268,10 @@ func CmdApp(c *cli.Context) error {
 	})
 
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		//w1.Close()
-		for k, _ := range ws {
+		w1.Close()
+		for k, w0 := range ws {
 			log.Println("close", k)
-			//w0.Close()
+			w0.Close()
 		}
 		a.Stop() //TODO fix javascript error
 		return
