@@ -201,21 +201,46 @@ func CmdApp(c *cli.Context) error {
 	// Create window
 	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
 	ws := make(map[int]*astilectron.Window)
-	idx := 0
+	idx := 1
 
 	//manager := false
 
 	mi0.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
-		/*()
-		manager = !manager
-		if manager {
-			w1.Show()
+		if w0, ok := ws[0]; ok {
+			w1 = w0
 		} else {
-			w1.Hide()
+			go func() {
+				createNewWindow(a, port, 1100, 700, "manager", ws, 0)
+				w1 = ws[0]
+				fmt.Println(w1)
+				w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
+					var m string
+					var dat map[string]interface{}
+					e.Message.Unmarshal(&m)
+					astilog.Infof("Received message %s", m)
+					if err = json.Unmarshal([]byte(m), &dat); err != nil {
+						panic(err)
+					}
+					if dat["code"] == "loadBw" {
+						d, _ := dat["data"].(string)
+						fmt.Println("window message : load bigwig ", d)
+						a := strings.Split(d, "/")
+						bwManager.AddURI(d, a[len(a)-1])
+					}
+
+					if dat["code"] == "loadHic" {
+						d, _ := dat["data"].(string)
+						fmt.Println("window message : load hic ", d)
+						a := strings.Split(d, "/")
+						hicManager.AddURI(d, a[len(a)-1])
+					}
+					return
+				})
+			}()
 		}
-		*/
 		return false
 	})
+
 	mi1, _ := m.Item(0, 1)
 	mi1.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		go createNewWindow(a, port, 1000, 700, "external", ws, idx)
@@ -244,9 +269,6 @@ func CmdApp(c *cli.Context) error {
 		e.Message.Unmarshal(&m)
 		fmt.Println("m : ", m)
 		astilog.Infof("Received message %s", m)
-		/*
-
-		 */
 		var dat map[string]interface{}
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
@@ -256,9 +278,6 @@ func CmdApp(c *cli.Context) error {
 			idx++
 			astilog.Infof("window %d", idx)
 		}
-
-		//go createNewWindow(a, port)
-		//w1.Send(m)
 		if dat["code"] == "brush" || dat["code"] == "update" {
 			for _, w1 := range ws {
 				w1.Send(m)
@@ -266,70 +285,60 @@ func CmdApp(c *cli.Context) error {
 		}
 		return
 	})
-
-	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		w1.Close()
+	/*()
+	w.On(astilectron.EventNameWindowCmdClose, func(e astilectron.Event) (deleteListener bool) {
 		for k, w0 := range ws {
 			log.Println("close", k)
 			w0.Close()
 		}
 		a.Stop() //TODO fix javascript error
+		//a.Close()
 		return
 
 	})
-	// Blocking pattern
-
-	//createNewWindow(a, port)
-
-	var height = 700
-	var width = 1000
-	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html", port, "manager"), &astilectron.WindowOptions{
-		Center: astilectron.PtrBool(true),
-		Icon:   astilectron.PtrStr(os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples/6.icons/gopher.png"),
-		Height: astilectron.PtrInt(height),
-		Width:  astilectron.PtrInt(width),
-	}); err != nil {
-		astilog.Fatal(errors.Wrap(err, "new window failed"))
-	}
-	if err = w1.Create(); err != nil {
-		astilog.Fatal(errors.Wrap(err, "creating window failed"))
-	}
-	w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
-		var m string
-		var dat map[string]interface{}
-		e.Message.Unmarshal(&m)
-		astilog.Infof("Received message %s", m)
-		if err = json.Unmarshal([]byte(m), &dat); err != nil {
-			panic(err)
+	*/
+	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
+		log.Println("in close w")
+		keys := []int{}
+		for k, _ := range ws {
+			log.Println("add ", k, " to close")
+			keys = append(keys, k)
 		}
-		if dat["code"] == "loadBw" {
-			d, _ := dat["data"].(string)
-			fmt.Println("window message : load bigwig ", d)
-			a := strings.Split(d, "/")
-			bwManager.AddURI(d, a[len(a)-1])
+		for i := 0; i < len(keys); i++ {
+			go func(j int) {
+				log.Println("close", keys[j])
+				ws[keys[j]].Close()
+			}(i)
 		}
-
-		if dat["code"] == "loadHic" {
-			d, _ := dat["data"].(string)
-			fmt.Println("window message : load hic ", d)
-			a := strings.Split(d, "/")
-			hicManager.AddURI(d, a[len(a)-1])
-		}
+		//a.Stop() //TODO fix javascript error
+		//a.Close()
 		return
 	})
-	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
-		astilog.Info("w1 Window resize")
-		fmt.Println("w1 resize")
-		//w1.Send("w1 resize") // TODO
-		return
+	/*
+		w.On(astilectron.EventNameWindowCmdDestroy, func(e astilectron.Event) (deleteListener bool) {
+			log.Println("in destroy w")
+			a.Stop() //TODO fix javascript error
+			//a.Close()
+			return
+		})
+	*/
+	a.On(astilectron.EventNameAppCmdStop, func(e astilectron.Event) bool {
+		log.Println("in stop app event")
+		/*
+			keys := []int{}
+			for k, _ := range ws {
+				log.Println("add ", k, " to close")
+				keys = append(keys, k)
+			}
+			for i := 0; i < len(keys); i++ {
+				log.Println("close", keys[i])
+				go func() {
+					ws[keys[i]].Close()
+				}()
+			}
+		*/
+		return false
 	})
-	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		astilog.Info("w1 Window close") //TODO?
-		fmt.Println("w1 close")
-		return
-	})
-	//w1.Hide()
-
 	a.Wait()
 	return nil
 }
@@ -352,13 +361,13 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 	fmt.Println("create", id)
 	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
 		astilog.Info("w1 Window resize")
-		fmt.Println("wn resize")
+		fmt.Println("wn resize", id)
 		//w1.Send("w1 resize") // TODO
 		return
 	})
 	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
 		astilog.Info("w1 Window close") //TODO?
-		fmt.Println("wn close")
+		fmt.Println("wn close", id)
 		delete(ws, id)
 		return
 	})
