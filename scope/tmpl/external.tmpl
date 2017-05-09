@@ -1,4 +1,4 @@
-{{define "title"}}simple2{{end}}
+{{define "title"}}external{{end}}
 {{define "html"}}
 <html>
 <head>
@@ -32,6 +32,9 @@
       if (window.opener) {
         eventHub = window.opener.eventHub;
       }
+      var genome = S.toolsGetUrlParam("genome")
+      var species = S.toolsGetUrlParam("species")
+      console.log(genome,species)
       var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
       var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron")
       dispatch.on("add", function(d) {
@@ -92,8 +95,11 @@
         }
         var layout = new GoldenLayout(config, $("#container"));
         var renders = {}
-        var app = {}
-        console.log(layout)
+        var app = {
+          "genome":genome || "hg19",
+          "species": species || "human"
+        } // parameters. TODO mm10 ...
+        console.log("app global",app)
         dispatch.on("brush",function(d){
           layout.eventHub.emit("brush",d)
         })

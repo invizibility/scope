@@ -176,15 +176,14 @@ func CmdApp(c *cli.Context) error {
 					{Label: astilectron.PtrStr("Checkbox 3"), Type: astilectron.MenuItemTypeCheckbox},
 				},
 			},
-			{
-				Label: astilectron.PtrStr("Radio"),
-				SubMenu: []*astilectron.MenuItemOptions{
-					{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Radio 1"), Type: astilectron.MenuItemTypeRadio},
-					{Label: astilectron.PtrStr("Radio 2"), Type: astilectron.MenuItemTypeRadio},
-					{Label: astilectron.PtrStr("Radio 3"), Type: astilectron.MenuItemTypeRadio},
-				},
-			},
 		*/
+		{
+			Label: astilectron.PtrStr("Genome"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Human - hg19"), Type: astilectron.MenuItemTypeRadio},
+				{Label: astilectron.PtrStr("Mouse - mm10"), Type: astilectron.MenuItemTypeRadio},
+			},
+		},
 		{
 			Label: astilectron.PtrStr("View"),
 			SubMenu: []*astilectron.MenuItemOptions{
@@ -205,7 +204,31 @@ func CmdApp(c *cli.Context) error {
 	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
 	ws := make(map[int]*astilectron.Window)
 	idx := 1
+	app := make(map[string]string)
 
+	//TODO Handle Multi Genomes;
+	m11, _ := m.Item(1, 1)
+	m11.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		if app["genome"] != "mm10" || app["species"] != "mouse" {
+			app["genome"] = "mm10"
+			app["species"] = "mouse"
+			fmt.Println(app)
+			w.Send("app mouse mm10")
+			closeAll(ws)
+		}
+		return false
+	})
+	m10, _ := m.Item(1, 0)
+	m10.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		if app["genome"] != "hg19" || app["species"] != "human" {
+			app["genome"] = "hg19"
+			app["species"] = "human"
+			fmt.Println(app)
+			w.Send("app human hg19")
+			closeAll(ws)
+		}
+		return false
+	})
 	//manager := false
 
 	mi0.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
@@ -213,7 +236,7 @@ func CmdApp(c *cli.Context) error {
 			w1 = w0
 		} else {
 			go func() {
-				createNewWindow(a, port, 1000, 618, "manager", ws, 0)
+				createNewWindow(a, port, 1000, 618, "manager", ws, 0, app)
 				w1 = ws[0]
 				fmt.Println(w1)
 				w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
@@ -246,7 +269,7 @@ func CmdApp(c *cli.Context) error {
 
 	mi1, _ := m.Item(0, 1)
 	mi1.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
-		go createNewWindow(a, port, 1000, 700, "external", ws, idx)
+		go createNewWindow(a, port, 1000, 700, "external", ws, idx, app)
 		idx++
 		return false
 	})
@@ -275,8 +298,19 @@ func CmdApp(c *cli.Context) error {
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
+		fmt.Println("message", dat)
+		if dat["code"] == "app" {
+			for k, v := range dat["data"].(map[string]interface{}) {
+				app[k] = v.(string)
+			}
+		}
 		if dat["code"] == "openExt" {
-			go createNewWindow(a, port, 1000, 618, "external", ws, idx)
+			fmt.Println("openExt", dat)
+			//app := make(map[string]string)
+			for k, v := range dat["data"].(map[string]interface{}) {
+				app[k] = v.(string)
+			}
+			go createNewWindow(a, port, 1000, 618, "external", ws, idx, app)
 			idx++
 			astilog.Infof("window %d", idx)
 		}
@@ -300,15 +334,18 @@ func CmdApp(c *cli.Context) error {
 	})
 	*/
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		keys := []int{}
-		for k, _ := range ws {
-			keys = append(keys, k)
-		}
-		for i := 0; i < len(keys); i++ {
-			go func(j int) {
-				ws[keys[j]].Close()
-			}(i)
-		}
+		/*
+			keys := []int{}
+			for k, _ := range ws {
+				keys = append(keys, k)
+			}
+			for i := 0; i < len(keys); i++ {
+				go func(j int) {
+					ws[keys[j]].Close()
+				}(i)
+			}
+		*/
+		closeAll(ws)
 		//a.Stop() //TODO fix javascript error
 		//a.Close()
 		return
@@ -320,12 +357,33 @@ func CmdApp(c *cli.Context) error {
 	a.Wait()
 	return nil
 }
-
-func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int) {
+func closeAll(ws map[int]*astilectron.Window) {
+	keys := []int{}
+	for k, _ := range ws {
+		keys = append(keys, k)
+	}
+	for i := 0; i < len(keys); i++ {
+		go func(j int) {
+			ws[keys[j]].Close()
+		}(i)
+	}
+	return
+}
+func generateLinks(port int, name string, app map[string]string) string {
+	url := fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html?", port, name)
+	for k, v := range app {
+		url += k + "=" + v + "&"
+	}
+	url = strings.Trim(url, "?")
+	url = strings.Trim(url, "&")
+	fmt.Println("url", url)
+	return url
+}
+func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int, app map[string]string) {
 	var w1 *astilectron.Window
 	var err error
 	id := idx
-	if w1, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html", port, page), &astilectron.WindowOptions{
+	if w1, err = a.NewWindow(generateLinks(port, page, app), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Icon:   astilectron.PtrStr(os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples/6.icons/gopher.png"),
 		Height: astilectron.PtrInt(height),

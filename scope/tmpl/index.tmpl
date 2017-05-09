@@ -74,37 +74,38 @@
         var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
 
         var app = {
-            "species": "human",
-            "genome": "hg19"
-        }
+            "species": S.toolsGetUrlParam("species") || "human",
+            "genome": S.toolsGetUrlParam("genome") || "hg19"
+        }  // parameters. Global.
         var dispatch = d3.dispatch("input","resize", "saveState", "add", "exportState", "saveToElectron", "sendToElectron")
 
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
             isAstilectron = true;
             astilectron.listen(function(message) {
-                // document.getElementById('message').innerHTML = message
-                // This will send a message back to GO
-                // astilectron.send("I'm good bro")
+                var r = RegExp("app *")
                 if (message == "resize") {
                     dispatch.call("resize")
+                } else if (r.test(message)) {
+                    var v = message.split(" ")
+                    app["species"]=v[1]
+                    app["genome"]=v[2]
                 } else {
                     console.log(message)
                     dispatch.call("input",this, S.toolsTrimChrPrefix(S.toolsParseRegions(message)))
                 }
             });
 
+            //TODO add change genome.
+            astilectron.send(JSON.stringify({
+              "code":"app",
+              "data":app
+            }))
+
             dispatch.on("sendToElectron", function(d) {
                 astilectron.send(d)
             });
-            /*
-            d3.select("#myNavLeft").append("li")
-                .append("a")
-                .attr("href","/v1/manager.html")
-                .append("span")
-                .attr("class","glyphicon glyphicon-wrench")
-                .text("Manager")
-                */
+
         })
         var ws = {}
         var idx = 0
@@ -117,14 +118,15 @@
 
             }
         }
+
         $("#openExt").on("click", function() {
             if (isAstilectron) {
                 astilectron.send(JSON.stringify({
                     "code": "openExt",
-                    "data": []
+                    "data": app
                 }))
             } else {
-                var w = window.open("/v1/external.html","external_"+idx,"width=1000,height=618")
+                var w = window.open("/v1/external.html?genome="+app.genome+"&"+"speices="+app.species,"external_"+idx,"width=1000,height=618")
                 var id = idx
                 w.onbeforeunload = function(){
                   ws.delete(id)
