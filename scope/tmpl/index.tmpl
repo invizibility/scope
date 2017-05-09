@@ -51,6 +51,7 @@
   </div>
 </template>
 {{template "dna3d"}}
+<a id="downloadAnchorElem" style="display:none"></a>
 </body>
 <!--
 <script type="text/javascript" src="/lib/dat.gui.min.js"></script>
@@ -203,6 +204,11 @@
             })
             dispatch.on("exportState", function() {
                 console.log(layout.toConfig()) //TODO export json file.
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(layout.toConfig()));
+                var dlAnchorElem = document.getElementById('downloadAnchorElem');
+                dlAnchorElem.setAttribute("href",     dataStr   );
+                dlAnchorElem.setAttribute("download", "scope.json");
+                dlAnchorElem.click();
             })
             layout.eventHub.on("brush", function(d) {
                 dispatch.call("sendToElectron", this, JSON.stringify({
