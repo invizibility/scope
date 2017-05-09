@@ -12,7 +12,9 @@ initialHeight = 500
 //container.getElement().remove(".content")
 //container.getElement().remove(".content")
 container.getElement().append("<div class='content'></div>")
+//TODO manage URI
 container.getElement().append("<div class='cfg'>CONFIG<br><label>Data URI:</label><input type='text' class='uri'></input></div>")
+
 container.getElement().find(".cfg .uri").val(state.dataURI)
 d3.select(container.getElement()[0])
 .append("input")
@@ -321,7 +323,6 @@ var chr2idx = function(d) {
 	return parseInt(d.replace("chr","").replace("Chr",""))-1 //TODO improve
 }
 var translate = function(d) {
-	console.log(pairSegments,d.chr,chr2idx(d.chr))
 	var range = pairSegments[chr2idx(d.chr)]
 	var start = Math.min(d.start+range[0],range[1])
 	var end = Math.min(d.end+range[0],range[1])

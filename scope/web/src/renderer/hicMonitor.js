@@ -1,7 +1,8 @@
 import B from "../data/bigwig"
 import H from "../data/hic2"
 import toolsFixRegions from "../tools/fixRegions"
-import toolsAddChrPrefix from "../tools/addChrPrefix"
+//import toolsAddChrPrefix from "../tools/addChrPrefix"
+import toolsTrimChrPrefix from "../tools/trimChrPrefix"
 import scaleScope from "../scaleScope"
 import symbolTriangle from "../symbol/triangle"
 //import brush from "../scopebrush" //TODO
@@ -56,10 +57,22 @@ export default function (layout, container, state, app) {
                 dispatch.call("replot", this, {})
             })
         cfg.append("hr")
-        var uri = cfg.append("input")
-            .attr("type", "text")
-            .attr("value", state.URI || "/hic/default")
-        //var fixed = false;
+
+        var uri = cfg.append("select")
+
+        d3.json("/hic/list",function(d){  //TODO Server
+          console.log("hic data",d)
+          uri.selectAll("option")
+             .data(d)
+             .enter()
+             .append("option")
+             .attr("value",function(d){
+               return "/hic/"+d;  //TODO Server
+             })
+             .text(function(d){
+               return d
+             })
+        })
         cfg.append("input")
             .attr("type", "button")
             .attr("value", "load new data")
@@ -122,12 +135,12 @@ export default function (layout, container, state, app) {
 
     var URI = state.URI || "/hic/default" //need to set it if could.
     var testBeds = [{
-            chr: "1",
+            chr: "chr1",
             start: 0,
             end: 10000000
         },
         {
-            chr: "2",
+            chr: "chr2",
             start: 100000,
             end: 10000000
         }
@@ -142,9 +155,17 @@ export default function (layout, container, state, app) {
 
 
     H.Get(URI, initHic)
-
-    var renderHic = function (regions) {
-
+    var prefixed = true;
+    var renderHic = function (r) {
+        var regions ;
+        var pre = new RegExp("^chr*")
+        var Pre = new RegExp("^Chr*")
+        if (pre.test(hic.opts.chrs[1].Name) || Pre.test(hic.opts.chrs[1].Name)) {
+          regions = r
+        } else {
+          regions = toolsTrimChrPrefix(r)
+          prefixed = false;
+        }
         var hicCb = function (d) {　
             dispatch.call("monitor", this, d)
             var ctx = canvas.node().getContext("2d");

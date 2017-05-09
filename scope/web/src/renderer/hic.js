@@ -1,6 +1,7 @@
 import B from "../data/bigwig"
 import H from "../data/hic2"
 import toolsFixRegions from "../tools/fixRegions"
+import toolsTrimChrPrefix from "../tools/trimChrPrefix"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
 import brush from "../scopebrush"
 
@@ -158,12 +159,12 @@ export default function (layout, container, state, app) {
 
 
     var testBeds = [{
-            chr: "1",
+            chr: "chr1",
             start: 0,
             end: 10000000
         },
         {
-            chr: "2",
+            chr: "chr2",
             start: 100000,
             end: 10000000
         }
@@ -177,7 +178,14 @@ export default function (layout, container, state, app) {
     }
     var getChrLength = function (chr) {
         console.log(hic.opts.chrs, hic.opts.chr2idx)
-        var i = hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")]
+        var i;
+        if (hic.opts.chr2idx[chr] !== undefined) {
+          i = hic.opts.chr2idx[chr]
+        } else if (hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")] !== undefined) {
+          i = hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")]
+        } else {
+          return 0; //unknown chromosome.
+        }
         return hic.opts.chrs[i].Length
     }
 
@@ -235,7 +243,19 @@ export default function (layout, container, state, app) {
             canvas.call(b)
         })
     }
-    var renderHic = function (regions) {
+    var renderHic = function (r) {
+      var regions ;
+      var pre = new RegExp("^chr*")
+      var Pre = new RegExp("^Chr*")
+      console.log(hic.opts.chrs[0].Name)
+      if ( pre.test(hic.opts.chrs[1].Name) || Pre.test(hic.opts.chrs[1].Name)) {
+        regions = r
+        console.log("pre",hic.opts.chrs[0])
+      } else {
+        regions = toolsTrimChrPrefix(r)
+        console.log("not pre",hic.opts.chrs[1])
+        //prefixed = false;
+      }
         var scopebrush = brush().width(scope.edge).on("brush", function (d) {
             dispatch.call("brush", this, d)
             layout.eventHub.emit("brush", d)
@@ -335,7 +355,7 @@ export default function (layout, container, state, app) {
 
     dispatch.on("update.local", function (d) {
         console.log("update.local",d)
-        render(d)
+        render(toolsAddChrPrefix(d))
     })
     var fixRegions = function (d) {
         d.forEach(function (c, i) {
@@ -350,7 +370,7 @@ export default function (layout, container, state, app) {
         return d
     }
     layout.eventHub.on("input", function (d) {
-        d = fixRegions(d)
+        d = fixRegions(toolsAddChrPrefix(d))
         render(d)
     })
     dispatch.on("replot", function (d) {

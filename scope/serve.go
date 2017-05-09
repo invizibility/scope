@@ -134,7 +134,10 @@ func CmdApp(c *cli.Context) error {
 	// Create astilectron
 	log.Print("start app")
 	//var err error
-	if a, err = astilectron.New(astilectron.Options{BaseDirectoryPath: os.Getenv("HOME") + "/lib"}); err != nil {
+	if a, err = astilectron.New(astilectron.Options{
+		AppName:           "Scope",
+		BaseDirectoryPath: os.Getenv("HOME") + "/lib",
+	}); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
 	}
 	//a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
@@ -210,7 +213,7 @@ func CmdApp(c *cli.Context) error {
 			w1 = w0
 		} else {
 			go func() {
-				createNewWindow(a, port, 1100, 700, "manager", ws, 0)
+				createNewWindow(a, port, 1000, 618, "manager", ws, 0)
 				w1 = ws[0]
 				fmt.Println(w1)
 				w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
@@ -267,14 +270,13 @@ func CmdApp(c *cli.Context) error {
 		var m string
 		//var m map[string]interface{}
 		e.Message.Unmarshal(&m)
-		fmt.Println("m : ", m)
 		astilog.Infof("Received message %s", m)
 		var dat map[string]interface{}
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
 		if dat["code"] == "openExt" {
-			go createNewWindow(a, port, 1000, 700, "external", ws, idx)
+			go createNewWindow(a, port, 1000, 618, "external", ws, idx)
 			idx++
 			astilog.Infof("window %d", idx)
 		}
@@ -298,15 +300,12 @@ func CmdApp(c *cli.Context) error {
 	})
 	*/
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		log.Println("in close w")
 		keys := []int{}
 		for k, _ := range ws {
-			log.Println("add ", k, " to close")
 			keys = append(keys, k)
 		}
 		for i := 0; i < len(keys); i++ {
 			go func(j int) {
-				log.Println("close", keys[j])
 				ws[keys[j]].Close()
 			}(i)
 		}
@@ -314,29 +313,8 @@ func CmdApp(c *cli.Context) error {
 		//a.Close()
 		return
 	})
-	/*
-		w.On(astilectron.EventNameWindowCmdDestroy, func(e astilectron.Event) (deleteListener bool) {
-			log.Println("in destroy w")
-			a.Stop() //TODO fix javascript error
-			//a.Close()
-			return
-		})
-	*/
+
 	a.On(astilectron.EventNameAppCmdStop, func(e astilectron.Event) bool {
-		log.Println("in stop app event")
-		/*
-			keys := []int{}
-			for k, _ := range ws {
-				log.Println("add ", k, " to close")
-				keys = append(keys, k)
-			}
-			for i := 0; i < len(keys); i++ {
-				log.Println("close", keys[i])
-				go func() {
-					ws[keys[i]].Close()
-				}()
-			}
-		*/
 		return false
 	})
 	a.Wait()
@@ -358,16 +336,12 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 	if err := w1.Create(); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating window failed"))
 	}
-	fmt.Println("create", id)
 	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
 		astilog.Info("w1 Window resize")
-		fmt.Println("wn resize", id)
 		//w1.Send("w1 resize") // TODO
 		return
 	})
 	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		astilog.Info("w1 Window close") //TODO?
-		fmt.Println("wn close", id)
 		delete(ws, id)
 		return
 	})

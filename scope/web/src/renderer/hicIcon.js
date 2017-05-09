@@ -94,12 +94,12 @@ export default function(layout, container, state, app) {
 
     var URI = state.URI || "/hic/default" //need to set it if could.
     var testBeds = [{
-            chr: "1",
+            chr: "chr1",
             start: 0,
             end: 10000000
         },
         {
-            chr: "2",
+            chr: "chr2",
             start: 100000,
             end: 10000000
         }

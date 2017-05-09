@@ -2375,7 +2375,7 @@ var regionsText = function(regions) {
     return r.join(",")
 };
 
-var trimChrPrefix = function(r) {
+var toolsTrimChrPrefix = function(r) {
     var a = [];
     r.forEach(function(d) {
         a.push({
@@ -2711,12 +2711,12 @@ var hic = function (layout, container, state, app) {
 
 
     var testBeds = [{
-            chr: "1",
+            chr: "chr1",
             start: 0,
             end: 10000000
         },
         {
-            chr: "2",
+            chr: "chr2",
             start: 100000,
             end: 10000000
         }
@@ -2730,7 +2730,14 @@ var hic = function (layout, container, state, app) {
     };
     var getChrLength = function (chr) {
         console.log(hic.opts.chrs, hic.opts.chr2idx);
-        var i = hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")];
+        var i;
+        if (hic.opts.chr2idx[chr] !== undefined) {
+          i = hic.opts.chr2idx[chr];
+        } else if (hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")] !== undefined) {
+          i = hic.opts.chr2idx[chr.replace("chr", "").replace("Chr", "")];
+        } else {
+          return 0; //unknown chromosome.
+        }
         return hic.opts.chrs[i].Length
     };
 
@@ -2788,7 +2795,19 @@ var hic = function (layout, container, state, app) {
             canvas.call(b);
         });
     };
-    var renderHic = function (regions) {
+    var renderHic = function (r) {
+      var regions;
+      var pre = new RegExp("^chr*");
+      var Pre = new RegExp("^Chr*");
+      console.log(hic.opts.chrs[0].Name);
+      if ( pre.test(hic.opts.chrs[1].Name) || Pre.test(hic.opts.chrs[1].Name)) {
+        regions = r;
+        console.log("pre",hic.opts.chrs[0]);
+      } else {
+        regions = toolsTrimChrPrefix(r);
+        console.log("not pre",hic.opts.chrs[1]);
+        //prefixed = false;
+      }
         var scopebrush = brush$1().width(scope.edge).on("brush", function (d) {
             dispatch.call("brush", this, d);
             layout.eventHub.emit("brush", d);
@@ -2888,7 +2907,7 @@ var hic = function (layout, container, state, app) {
 
     dispatch.on("update.local", function (d) {
         console.log("update.local",d);
-        render(d);
+        render(addChrPrefix(d));
     });
     var fixRegions = function (d) {
         d.forEach(function (c, i) {
@@ -2903,7 +2922,7 @@ var hic = function (layout, container, state, app) {
         return d
     };
     layout.eventHub.on("input", function (d) {
-        d = fixRegions(d);
+        d = fixRegions(addChrPrefix(d));
         render(d);
     });
     dispatch.on("replot", function (d) {
@@ -2985,6 +3004,7 @@ var scaleScope = function() {
   return chart
 };
 
+//import toolsAddChrPrefix from "../tools/addChrPrefix"
 //import brush from "../scopebrush" //TODO
 
 var hicMonitor = function (layout, container, state, app) {
@@ -3037,10 +3057,22 @@ var hicMonitor = function (layout, container, state, app) {
                 dispatch.call("replot", this, {});
             });
         cfg.append("hr");
-        var uri = cfg.append("input")
-            .attr("type", "text")
-            .attr("value", state.URI || "/hic/default");
-        //var fixed = false;
+
+        var uri = cfg.append("select");
+
+        d3.json("/hic/list",function(d){  //TODO Server
+          console.log("hic data",d);
+          uri.selectAll("option")
+             .data(d)
+             .enter()
+             .append("option")
+             .attr("value",function(d){
+               return "/hic/"+d;  //TODO Server
+             })
+             .text(function(d){
+               return d
+             });
+        });
         cfg.append("input")
             .attr("type", "button")
             .attr("value", "load new data")
@@ -3103,12 +3135,12 @@ var hicMonitor = function (layout, container, state, app) {
 
     var URI = state.URI || "/hic/default"; //need to set it if could.
     var testBeds = [{
-            chr: "1",
+            chr: "chr1",
             start: 0,
             end: 10000000
         },
         {
-            chr: "2",
+            chr: "chr2",
             start: 100000,
             end: 10000000
         }
@@ -3123,9 +3155,17 @@ var hicMonitor = function (layout, container, state, app) {
 
 
     H.Get(URI, initHic);
-
-    var renderHic = function (regions) {
-
+    var prefixed = true;
+    var renderHic = function (r) {
+        var regions;
+        var pre = new RegExp("^chr*");
+        var Pre = new RegExp("^Chr*");
+        if (pre.test(hic.opts.chrs[1].Name) || Pre.test(hic.opts.chrs[1].Name)) {
+          regions = r;
+        } else {
+          regions = toolsTrimChrPrefix(r);
+          prefixed = false;
+        }
         var hicCb = function (d) {　
             dispatch.call("monitor", this, d);
             var ctx = canvas.node().getContext("2d");
@@ -3390,12 +3430,12 @@ var hicIcon = function(layout, container, state, app) {
 
     var URI = state.URI || "/hic/default"; //need to set it if could.
     var testBeds = [{
-            chr: "1",
+            chr: "chr1",
             start: 0,
             end: 10000000
         },
         {
-            chr: "2",
+            chr: "chr2",
             start: 100000,
             end: 10000000
         }
@@ -3888,7 +3928,9 @@ initialHeight = 500;
 //container.getElement().remove(".content")
 //container.getElement().remove(".content")
 container.getElement().append("<div class='content'></div>");
+//TODO manage URI
 container.getElement().append("<div class='cfg'>CONFIG<br><label>Data URI:</label><input type='text' class='uri'></input></div>");
+
 container.getElement().find(".cfg .uri").val(state.dataURI);
 d3.select(container.getElement()[0])
 .append("input")
@@ -4197,7 +4239,6 @@ var chr2idx = function(d) {
 	return parseInt(d.replace("chr","").replace("Chr",""))-1 //TODO improve
 };
 var translate = function(d) {
-	console.log(pairSegments,d.chr,chr2idx(d.chr));
 	var range = pairSegments[chr2idx(d.chr)];
 	var start = Math.min(d.start+range[0],range[1]);
 	var end = Math.min(d.end+range[0],range[1]);
@@ -4375,7 +4416,7 @@ exports.toolsFixRegions = toolsFixRegions;
 exports.toolsAddPanelTo = addPanelTo;
 exports.toolsRegionText = regionText;
 exports.toolsRegionsText = regionsText;
-exports.toolsTrimChrPrefix = trimChrPrefix;
+exports.toolsTrimChrPrefix = toolsTrimChrPrefix;
 exports.toolsAddChrPrefix = addChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
