@@ -64,7 +64,10 @@
 
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
-
+        var updateLinks = function(app) {
+          d3.select("#miView").attr("href",
+          "/v1/index.html?species="+app.species+"&genome="+app.genome)
+        }
         var stateId = {{ template "id"  }}
 
 
@@ -72,11 +75,11 @@
             "3d": S.render.dna3d
         }
         var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
-
         var app = {
             "species": S.toolsGetUrlParam("species") || "human",
             "genome": S.toolsGetUrlParam("genome") || "hg19"
         }  // parameters. Global.
+        updateLinks(app)
         var dispatch = d3.dispatch("input","resize", "saveState", "add", "exportState", "saveToElectron", "sendToElectron")
 
         document.addEventListener('astilectron-ready', function() {
@@ -90,6 +93,7 @@
                     var v = message.split(" ")
                     app["species"]=v[1]
                     app["genome"]=v[2]
+                    updateLinks(app)
                 } else {
                     console.log(message)
                     dispatch.call("input",this, S.toolsTrimChrPrefix(S.toolsParseRegions(message)))
