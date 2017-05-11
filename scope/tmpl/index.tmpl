@@ -60,6 +60,7 @@
 <script>
     var eventHub;
     var isAstilectron = false;
+    var dialog = require("electron").remote.dialog;
 
 
     (function($, d3, S) {
@@ -80,13 +81,14 @@
             "genome": S.toolsGetUrlParam("genome") || "hg19"
         }  // parameters. Global.
         updateLinks(app)
-        var dispatch = d3.dispatch("input","resize", "saveState", "add", "exportState", "saveToElectron", "sendToElectron")
+        var dispatch = d3.dispatch("initPanels","input","resize", "saveState", "add", "exportState", "importState","saveToElectron", "sendToElectron")
 
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
             isAstilectron = true;
             astilectron.listen(function(message) {
                 var r = RegExp("app *")
+                var readFile = RegExp("file *")
                 if (message == "resize") {
                     dispatch.call("resize")
                 } else if (r.test(message)) {
@@ -94,9 +96,17 @@
                     app["species"]=v[1]
                     app["genome"]=v[2]
                     updateLinks(app)
+                } else if (readFile.test(message)) {
+                  var v = message.replace("file ","");
+                  var config = JSON.parse(v)
+                  console.log(v)
+                  console.log("read v config",config)
+                  //initPanels(config, $('#layoutContainer'))
+                  dispatch.call("initPanels",this,config)
+
                 } else {
                     console.log(message)
-                    dispatch.call("input",this, S.toolsTrimChrPrefix(S.toolsParseRegions(message)))
+                    dispatch.call("input",this, S.toolsTrimChrPrefix(S.toolsParseRegions(message))) //TODO FIX chr
                 }
             });
 
@@ -216,6 +226,18 @@
                 dlAnchorElem.setAttribute("download", "scope.json");
                 dlAnchorElem.click();
             })
+            dispatch.on("importState", function(_) {
+                //console.log(layout.toConfig()) //TODO export json file.
+                dialog.showOpenDialog({
+                    properties: ['openFile'],
+                    filters: [{
+                        extensions: ['txt']
+                    }]
+                }, function(d) {
+                    console.log(d)
+                    _(d)
+                })
+            })
             layout.eventHub.on("brush", function(d) {
                 dispatch.call("sendToElectron", this, JSON.stringify({
                     "code": "brush",
@@ -262,6 +284,11 @@
             })
         }
 
+        dispatch.on("initPanels",function(d){
+          console.log("init panels")
+          $("#layoutContainer").empty();
+          initPanels(d,$("#layoutContainer"))
+        })
       var url = S.toolsGetUrlParam("config") || "/data/config.json"
       d3.json(url, function(error,config){
         console.log("config",error,config)
@@ -308,9 +335,20 @@
             initPanels(JSON.parse(savedState), $("#layoutContainer"))
         })
         $("#export").on("click", function(d) {
-            dispatch.call("exportState")
+            dispatch.call("exportState", this , {})
         })
+        $("#import").on("click", function(d) {
+            // works in electron version?
+            dispatch.call("importState",this,function(d){
+                console.log("callback",d)
+                dispatch.call("sendToElectron",this, JSON.stringify({
+                  "code":"readFile",
+                  "data":d[0]
+                }))
 
+              })
+
+        })
         d3.select("#renders").selectAll("li")
             .data(renderList)
             .enter()

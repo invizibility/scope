@@ -95,7 +95,7 @@
           });
 
           var dialog = require("electron").remote.dialog;
-              dispatch.on("openfile",function(_){
+          dispatch.on("openfile",function(_){
                 dialog.showOpenDialog({
                     properties: ['openFile'],
                     filters: [{

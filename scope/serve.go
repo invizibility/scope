@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -178,6 +179,13 @@ func CmdApp(c *cli.Context) error {
 			},
 		*/
 		{
+			Label: astilectron.PtrStr("Config"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Label: astilectron.PtrStr("Load")},
+				{Label: astilectron.PtrStr("Save")},
+			},
+		},
+		{
 			Label: astilectron.PtrStr("Genome"),
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Human - hg19"), Type: astilectron.MenuItemTypeRadio},
@@ -196,9 +204,21 @@ func CmdApp(c *cli.Context) error {
 
 	mi0, _ := m.Item(0, 0)
 
+	miLoadCfg, _ := m.Item(1, 0)
+	miSaveCfg, _ := m.Item(1, 1)
+
 	// Create the menu
 	m.Create()
 
+	miLoadCfg.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		//TODO Wait for astilectron update with dialog
+		return false
+	})
+
+	miSaveCfg.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		//TODO Wait for astilectron update with dialog
+		return false
+	})
 	//end menu
 	// Create window
 	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
@@ -212,7 +232,6 @@ func CmdApp(c *cli.Context) error {
 		if app["genome"] != "mm10" || app["species"] != "mouse" {
 			app["genome"] = "mm10"
 			app["species"] = "mouse"
-			fmt.Println(app)
 			w.Send("app mouse mm10")
 			closeAll(ws)
 		}
@@ -223,7 +242,6 @@ func CmdApp(c *cli.Context) error {
 		if app["genome"] != "hg19" || app["species"] != "human" {
 			app["genome"] = "hg19"
 			app["species"] = "human"
-			fmt.Println(app)
 			w.Send("app human hg19")
 			closeAll(ws)
 		}
@@ -318,6 +336,18 @@ func CmdApp(c *cli.Context) error {
 			for _, w1 := range ws {
 				w1.Send(m)
 			}
+		}
+		if dat["code"] == "readFile" {
+			log.Println("TODO Read File", dat["data"])
+
+			content, err := ioutil.ReadFile(dat["data"].(string))
+			if err == nil {
+				s := "file " + string(content)
+				w.Send(s)
+			} else {
+				w.Send("file null")
+			}
+
 		}
 		return
 	})
