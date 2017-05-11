@@ -21,6 +21,9 @@ import (
 	"github.com/googollee/go-socket.io"
 )
 
+var v = map[string]string{"code": "getState", "data": ""}
+var codeGetState, _ = json.Marshal(v)
+
 func serveBufferURI(uri string, router *mux.Router, prefix string) {
 	//hicExt := strings.ToLower(path.Ext(uri))
 	uriMap := LoadURI(uri)
@@ -90,6 +93,7 @@ func CmdHttp(c *cli.Context) error {
 }
 
 func CmdApp(c *cli.Context) error {
+	fmt.Println(string(codeGetState))
 	port := c.Int("port")
 	router := mux.NewRouter()
 	var a *astilectron.Astilectron
@@ -349,6 +353,11 @@ func CmdApp(c *cli.Context) error {
 			}
 
 		}
+		if dat["code"] == "getStates" {
+			for _, w0 := range ws {
+				w0.Send(string(codeGetState))
+			}
+		}
 		return
 	})
 	/*()
@@ -433,6 +442,20 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 		delete(ws, id)
 		return
 	})
+
+	w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) bool {
+		var m string
+		//var m map[string]interface{}
+		e.Message.Unmarshal(&m)
+		astilog.Infof("Received message %s", m)
+		var dat map[string]interface{}
+		if err := json.Unmarshal([]byte(m), &dat); err != nil {
+			panic(err)
+		}
+		fmt.Println("wn get message", dat)
+		return false
+	})
+
 	ws[id] = w1
 
 }

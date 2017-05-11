@@ -36,7 +36,7 @@
       var species = S.toolsGetUrlParam("species")
       console.log(genome,species)
       var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
-      var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron")
+      var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron","sendState")
       dispatch.on("add", function(d) {
           layout.root.contentItems[0].addChild(d);
       })
@@ -60,14 +60,24 @@
 
           // This will listes to messages sent by GO
           isAstilectron = true;
+          dispatch.on("sendToElectron", function(d) {
+              astilectron.send(d)
+          });
           astilectron.listen(function(message) {
 
               // This will send a message back to GO
               // astilectron.send("I'm good bro")
               //document.getElementById('message').innerHTML = message
-              var d = JSON.parse(message)
               console.log("message",d)
-              dispatch.call(d.code,this,S.toolsParseRegions(d.data))
+              var d = JSON.parse(message)
+              if (d.code == "brush" || d.code == "update") {
+                dispatch.call(d.code,this,S.toolsParseRegions(d.data))
+              }
+              if (d.code == "getState") {
+                console.log("server asked for getState")
+                dispatch.call("sendState",this,{})
+              }
+
           });
       })
         var config = {
@@ -100,6 +110,11 @@
           "species": species || "human"
         } // parameters. TODO mm10 ...
         console.log("app global",app)
+        dispatch.on("sendState",function(d){
+            var state = JSON.stringify(layout.toConfig());
+            console.log("send State")
+            dispatch.call("sendToElectron",this,JSON.stringify({"code":"state","data":state}))
+        })
         dispatch.on("brush",function(d){
           layout.eventHub.emit("brush",d)
         })

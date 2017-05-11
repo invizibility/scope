@@ -27,14 +27,17 @@
                 <input type="button" value="submit" id="input" style="color:black" />
             </div>
             <hr>
+            <div style="padding:10">
+                <input type="button" value="Add External Window" id="openExt" style="color:black" />
+                <input type="button" value="Save States" id="saveStates" style="color:black" />
+            </div>
+            <hr>
             <div style="color:white;padding:10">
                 <label>History</label>
                 <ul id="history">
                 </ul>
             </div>
-            <div style="padding:10">
-                <input type="button" value="Add External Window" id="openExt" style="color:black" />
-            </div>
+
 
         </div>
         <div id="layoutContainer"></div>
@@ -81,7 +84,7 @@
             "genome": S.toolsGetUrlParam("genome") || "hg19"
         }  // parameters. Global.
         updateLinks(app)
-        var dispatch = d3.dispatch("initPanels","input","resize", "saveState", "add", "exportState", "importState","saveToElectron", "sendToElectron")
+        var dispatch = d3.dispatch("initPanels","input","resize", "saveState", "add", "exportState", "exportStates","importState","saveToElectron", "sendToElectron")
 
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
@@ -132,7 +135,9 @@
 
             }
         }
-
+        $("#saveStates").on("click",function(){
+          dispatch.call("exportStates",this,{})
+        })
         $("#openExt").on("click", function() {
             if (isAstilectron) {
                 astilectron.send(JSON.stringify({
@@ -219,12 +224,15 @@
                 dispatch.call("sendToElectron", this, JSON.stringify(c))
             })
             dispatch.on("exportState", function() {
-                console.log(layout.toConfig()) //TODO export json file.
+                console.log(layout.toConfig())
                 var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(layout.toConfig()));
                 var dlAnchorElem = document.getElementById('downloadAnchorElem');
                 dlAnchorElem.setAttribute("href",     dataStr   );
                 dlAnchorElem.setAttribute("download", "scope.json");
                 dlAnchorElem.click();
+            })
+            dispatch.on("exportStates", function() {
+                dispatch.call("sendToElectron",this,JSON.stringify({"code":"getStates","data":""}))
             })
             dispatch.on("importState", function(_) {
                 //console.log(layout.toConfig()) //TODO export json file.
