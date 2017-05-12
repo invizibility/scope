@@ -49,10 +49,15 @@
 <body>
     {{template "menubar"}}
     <div id="wrapper">
-        <ul id="menuContainer"></ul>
-        <div id="layoutContainer" style="padding:20px">
-            <div id="message"></div>
-            <div id="hic">
+        <div id="menuContainer">
+          <div style="padding:5px">
+            <button id="info">Info in Server</button>
+          </div>
+
+        </div>
+        <div id="layoutContainer">
+
+            <div id="hic" class="panel">
                 <label>HiC Data </label>
                 <div id="hicdata">
               </div>
@@ -60,7 +65,7 @@
                 <input type="button" value="add" id="addHic"></input>
               </div>
             </div>
-            <div id="bw">
+            <div id="bw" class="panel">
                 <label>BigWig Data </label>
                 <div id="bwdata">
                 </div>
@@ -71,6 +76,11 @@
             <div>
                 <button id="submit">submit</button>
             </div>
+            <hr>
+            <div class="panel">
+            <label>Message</label>
+            <div  id="message" ></div>
+          </div>
         </div>
     </div>
 </body>
@@ -82,18 +92,25 @@
           // This will listen to messages sent by GO
           isAstilectron = true;
           astilectron.listen(function(message) {
-              // document.getElementById('message').innerHTML = message
+              document.getElementById('message').innerHTML = message
               // This will send a message back to GO
               // astilectron.send("I'm good bro")
               if (message == "resize") {
                   dispatch.call("resize")
               }
+              // TODO with message such like export database urls.
+
           });
           dispatch.on("sendToElectron", function(d) {
               console.log("send",d)
               astilectron.send(d)
           });
-
+          $("#info").on("click",function(d){
+            dispatch.call("sendToElectron",this,JSON.stringify({
+              "code":"info",
+              "data":[]
+            }))
+          })
           var dialog = require("electron").remote.dialog;
           dispatch.on("openfile",function(_){
                 dialog.showOpenDialog({
@@ -107,6 +124,7 @@
                     //dispatch.call("open",this,d)
                 })
               })
+
       })
         var trans = function(d) {
             var r = []

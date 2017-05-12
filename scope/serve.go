@@ -282,6 +282,22 @@ func CmdApp(c *cli.Context) error {
 						a := strings.Split(d, "/")
 						hicManager.AddURI(d, a[len(a)-1])
 					}
+					if dat["code"] == "info" {
+						fmt.Println("bigwigs", bwManager.List())
+						fmt.Println("hics", hicManager.List())
+						//TODO.
+						k := make(map[string]interface{})
+						k["code"] = "info"
+						k["hic"] = hicManager.List()
+						k["bigwig"] = bwManager.List()
+						s, err1 := json.Marshal(k)
+						if err1 == nil {
+							w1.Send(string(s))
+
+						} else {
+							log.Println(err1)
+						}
+					}
 					return
 				})
 			}()
@@ -353,7 +369,6 @@ func CmdApp(c *cli.Context) error {
 			} else {
 				w.Send("file null")
 			}
-
 		}
 		//get states from extWindws.
 		if dat["code"] == "getStates" {

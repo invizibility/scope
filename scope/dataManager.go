@@ -7,5 +7,5 @@ type DataManager interface {
 	Del(string) error
 	ServeTo(*mux.Router)
 	List() []string
-	GetURI(string) (string, bool)
+	Get(string) (string, bool)
 }
