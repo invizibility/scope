@@ -37,9 +37,7 @@
       console.log(genome,species)
       var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
       var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron","sendState")
-      dispatch.on("add", function(d) {
-          layout.root.contentItems[0].addChild(d);
-      })
+
       var brush = function(d) {
         dispatch.call("brush",this,d)
       }
@@ -82,6 +80,8 @@
                 var state = JSON.parse(d.data)
                 console.log("state",state)
                 //dispatch.call("sendState",this,{})
+                $("#container").empty()
+                initPanels(state,$("#container"))
               }
 
           });
@@ -109,67 +109,73 @@
                 ]
             }]
         }
-        var layout = new GoldenLayout(config, $("#container"));
-        
+        var initPanels = function(config, el){
+            var layout = new GoldenLayout(config, el);
+            dispatch.on("add", function(d) {
+                layout.root.contentItems[0].addChild(d);
+            })
+            dispatch.on("sendState",function(d){
+                var state = JSON.stringify(layout.toConfig());
+                console.log("send State")
+                dispatch.call("sendToElectron",this,JSON.stringify({"code":"state","data":state}))
+            })
+            dispatch.on("brush",function(d){
+              layout.eventHub.emit("brush",d)
+            })
+            dispatch.on("update",function(d){
+              layout.eventHub.emit("update",d)
+            })
+            dispatch.on("resize.inner", function(d) {
+                //console.log("resize")
+                layout.updateSize();
+            })
+            layout.registerComponent("canvas", function(container, state) {
+                var r = renders[state.render] || S.render[state.render]
+                r(layout, container, state, app)
+                //TODO renderer...
+                var configContainer = container.getElement().find(".cfg")
+                var contentContainer = container.getElement().find(".content")
+                if (state.configView) {
+                    configContainer.show();
+                    contentContainer.hide();
+                } else {
+                    configContainer.hide();
+                    contentContainer.show();
+                }
+            });
+            layout.on('stackCreated', function(stack) {
+                var toggle = $($('#cfgbtn').html())
+                stack.header.controlsContainer.prepend(toggle);
+                toggle.on("click", function() {
+                    toggleConfig();
+                })
+                var toggleConfig = function() {
+                    var container = stack.getActiveContentItem().container;
+                    var toggled = !container.getState().configView
+                    container.extendState({
+                        configView: toggled
+                    });
+                    if (toggled) {
+                        container.getElement().find(".cfg").show()
+                        container.getElement().find(".content").hide()
+
+                    } else {
+                        container.getElement().find(".cfg").hide()
+                        container.getElement().find(".content").show()
+                    }
+                };
+            });
+
+            layout.init()
+        }
+        initPanels(config,$("#container"))
+
         var renders = {}
         var app = {
           "genome":genome || "hg19",
           "species": species || "human"
         } // parameters. TODO mm10 ...
-        console.log("app global",app)
-        dispatch.on("sendState",function(d){
-            var state = JSON.stringify(layout.toConfig());
-            console.log("send State")
-            dispatch.call("sendToElectron",this,JSON.stringify({"code":"state","data":state}))
-        })
-        dispatch.on("brush",function(d){
-          layout.eventHub.emit("brush",d)
-        })
-        dispatch.on("update",function(d){
-          layout.eventHub.emit("update",d)
-        })
-        dispatch.on("resize.inner", function(d) {
-            //console.log("resize")
-            layout.updateSize();
-        })
-        layout.registerComponent("canvas", function(container, state) {
-            var r = renders[state.render] || S.render[state.render]
-            r(layout, container, state, app)
-            //TODO renderer...
-            var configContainer = container.getElement().find(".cfg")
-            var contentContainer = container.getElement().find(".content")
-            if (state.configView) {
-                configContainer.show();
-                contentContainer.hide();
-            } else {
-                configContainer.hide();
-                contentContainer.show();
-            }
-        });
-        layout.on('stackCreated', function(stack) {
-            var toggle = $($('#cfgbtn').html())
-            stack.header.controlsContainer.prepend(toggle);
-            toggle.on("click", function() {
-                toggleConfig();
-            })
-            var toggleConfig = function() {
-                var container = stack.getActiveContentItem().container;
-                var toggled = !container.getState().configView
-                container.extendState({
-                    configView: toggled
-                });
-                if (toggled) {
-                    container.getElement().find(".cfg").show()
-                    container.getElement().find(".content").hide()
 
-                } else {
-                    container.getElement().find(".cfg").hide()
-                    container.getElement().find(".content").show()
-                }
-            };
-        });
-
-        layout.init()
         var factory = function(d) {
             return {
                 title: d,

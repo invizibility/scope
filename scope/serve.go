@@ -389,16 +389,18 @@ func CmdApp(c *cli.Context) error {
 		}
 		if dat["code"] == "createExt" {
 			go func() {
-				createNewWindow(a, port, 1000, 700, "external", ws, idx, app, ch)
+				var id int
+				id = idx
+				createNewWindow(a, port, 1000, 700, "external", ws, id, app, ch)
 				v := map[string]string{
 					"code": "setState",
 					"data": dat["data"].(string),
 				}
 				c, _ := json.Marshal(v)
 				log.Println("coding for set state", string(c))
-				ws[idx].Send(string(c))
-				idx++
+				ws[id].Send(string(c))
 			}()
+			idx++
 		}
 		return
 	})
