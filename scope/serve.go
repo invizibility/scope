@@ -289,7 +289,13 @@ func CmdApp(c *cli.Context) error {
 						k := make(map[string]interface{})
 						k["code"] = "info"
 						k["hic"] = hicManager.List()
+						for e := range IterEntry(hicManager) {
+							fmt.Println(e)
+						}
 						k["bigwig"] = bwManager.List()
+						for e2 := range IterEntry(bwManager) {
+							fmt.Println(e2)
+						}
 						s, err1 := json.Marshal(k)
 						if err1 == nil {
 							w1.Send(string(s))
