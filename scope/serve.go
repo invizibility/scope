@@ -337,13 +337,7 @@ func CmdApp(c *cli.Context) error {
 			astilog.Infof("window %d", idx)
 		}
 		if dat["code"] == "closeExt" {
-			n := []int{}
-			for k, _ := range ws {
-				n = append(n, k)
-			}
-			for _, k := range n {
-				go ws[k].Close()
-			}
+			closeAll(ws)
 			idx = 1
 		}
 		if dat["code"] == "brush" || dat["code"] == "update" {
