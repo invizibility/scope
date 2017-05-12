@@ -320,7 +320,7 @@ func CmdApp(c *cli.Context) error {
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
-		fmt.Println("message", dat)
+		//fmt.Println("message", dat)
 		if dat["code"] == "app" {
 			for k, v := range dat["data"].(map[string]interface{}) {
 				app[k] = v.(string)
@@ -361,11 +361,13 @@ func CmdApp(c *cli.Context) error {
 			}
 
 		}
+		//get states from extWindws.
 		if dat["code"] == "getStates" {
+			/* init channel for gather states*/
 			go func() {
 				m := make(map[int]string)
 				for k, _ := range ws {
-					if k != 0 {
+					if k != 0 { //skip data manager window
 						a := <-ch
 						fmt.Println("get id", a["sender"])
 						d, _ := a["data"].(string)
@@ -375,11 +377,12 @@ func CmdApp(c *cli.Context) error {
 				}
 				c, err := json.Marshal(m)
 				if err == nil {
-					w.Send("setStates " + string(c))
+					w.Send("states " + string(c)) //return ext states to main window
 				} else {
-					w.Send("error codingExternalStates")
+					w.Send("error codingExtStates")
 				}
 			}()
+			/* request state from Ext Windows */
 			for k, w0 := range ws {
 				if k != 0 { //skip data manager for now.
 					w0.Send(string(codeGetState))
@@ -391,7 +394,7 @@ func CmdApp(c *cli.Context) error {
 			go func() {
 				var id int
 				id = idx
-				createNewWindow(a, port, 1000, 700, "external", ws, id, app, ch)
+				createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
 				v := map[string]string{
 					"code": "setState",
 					"data": dat["data"].(string),
@@ -497,9 +500,11 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 			ch <- dat
 			//get ext state and return it through ch to w.
 		}
-		if dat["code"] == "setState" {
-			log.Println("set state TODO")
-		}
+		/*
+			if dat["code"] == "setState" {
+				log.Println("set state TODO")
+			}
+		*/
 		return false
 	})
 

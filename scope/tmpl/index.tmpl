@@ -95,7 +95,7 @@
                 var r = RegExp("app *")
                 var readFile = RegExp("file *")
                 var data = RegExp("data *")
-                var state = RegExp("setStates *")
+                var state = RegExp("states *")
 
                 if (message == "resize") {
                     dispatch.call("resize")
@@ -118,9 +118,9 @@
                     var v = message.replace("data ","")
                     dispatch.call("input",this, S.toolsParseRegions(v)) //TODO FIX chr
                 } else if (state.test(message)) {
-                  var v = message.replace("setStates ","")
+                  var v = message.replace("states ","")
                   var o = JSON.parse(v) || {}
-                  console.log("Set States ",o)
+                  console.log("Ext States ",o)
                   //var state = JSON.stringify(layout.toConfig());
                   //o[-1] = state;
                   dispatch.call("exportStatesToFile",this,o)
