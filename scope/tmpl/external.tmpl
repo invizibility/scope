@@ -68,7 +68,7 @@
               // This will send a message back to GO
               // astilectron.send("I'm good bro")
               //document.getElementById('message').innerHTML = message
-              console.log("message",d)
+              console.log("message",message)
               var d = JSON.parse(message)
               if (d.code == "brush" || d.code == "update") {
                 dispatch.call(d.code,this,S.toolsParseRegions(d.data))
@@ -76,6 +76,12 @@
               if (d.code == "getState") {
                 console.log("server asked for getState")
                 dispatch.call("sendState",this,{})
+              }
+              if (d.code == "setState") {
+                console.log("setState")
+                var state = JSON.parse(d.data)
+                console.log("state",state)
+                //dispatch.call("sendState",this,{})
               }
 
           });
@@ -104,6 +110,7 @@
             }]
         }
         var layout = new GoldenLayout(config, $("#container"));
+        
         var renders = {}
         var app = {
           "genome":genome || "hg19",

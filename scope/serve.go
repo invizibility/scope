@@ -114,7 +114,7 @@ func CmdApp(c *cli.Context) error {
 		so.On("data", func(msg string) {
 			//data := msg
 			//so.BroadcastTo(chatroom, "data", len(data))
-			w.Send(msg)
+			w.Send("data " + msg)
 		})
 		so.On("callback", func(msg string) string {
 			return msg
@@ -336,14 +336,22 @@ func CmdApp(c *cli.Context) error {
 			idx++
 			astilog.Infof("window %d", idx)
 		}
+		if dat["code"] == "closeExt" {
+			n := []int{}
+			for k, _ := range ws {
+				n = append(n, k)
+			}
+			for _, k := range n {
+				go ws[k].Close()
+			}
+			idx = 1
+		}
 		if dat["code"] == "brush" || dat["code"] == "update" {
 			for _, w1 := range ws {
 				w1.Send(m)
 			}
 		}
 		if dat["code"] == "readFile" {
-			log.Println("TODO Read File", dat["data"])
-
 			content, err := ioutil.ReadFile(dat["data"].(string))
 			if err == nil {
 				s := "file " + string(content)
@@ -355,11 +363,21 @@ func CmdApp(c *cli.Context) error {
 		}
 		if dat["code"] == "getStates" {
 			go func() {
+				m := make(map[int]string)
 				for k, _ := range ws {
 					if k != 0 {
 						a := <-ch
 						fmt.Println("get id", a["sender"])
+						d, _ := a["data"].(string)
+						id, _ := a["sender"].(int)
+						m[id] = d
 					}
+				}
+				c, err := json.Marshal(m)
+				if err == nil {
+					w.Send("setStates " + string(c))
+				} else {
+					w.Send("error codingExternalStates")
 				}
 			}()
 			for k, w0 := range ws {
@@ -369,20 +387,22 @@ func CmdApp(c *cli.Context) error {
 			}
 
 		}
-		return
-	})
-	/*()
-	w.On(astilectron.EventNameWindowCmdClose, func(e astilectron.Event) (deleteListener bool) {
-		for k, w0 := range ws {
-			log.Println("close", k)
-			w0.Close()
+		if dat["code"] == "createExt" {
+			go func() {
+				createNewWindow(a, port, 1000, 700, "external", ws, idx, app, ch)
+				v := map[string]string{
+					"code": "setState",
+					"data": dat["data"].(string),
+				}
+				c, _ := json.Marshal(v)
+				log.Println("coding for set state", string(c))
+				ws[idx].Send(string(c))
+				idx++
+			}()
 		}
-		a.Stop() //TODO fix javascript error
-		//a.Close()
 		return
-
 	})
-	*/
+
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
 		/*
 			keys := []int{}
@@ -473,6 +493,10 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 			dat["sender"] = id
 			log.Println("sender id", id)
 			ch <- dat
+			//get ext state and return it through ch to w.
+		}
+		if dat["code"] == "setState" {
+			log.Println("set state TODO")
 		}
 		return false
 	})
