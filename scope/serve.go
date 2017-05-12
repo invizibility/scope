@@ -93,7 +93,7 @@ func CmdHttp(c *cli.Context) error {
 }
 
 func CmdApp(c *cli.Context) error {
-	fmt.Println(string(codeGetState))
+	ch := make(chan map[string]interface{})
 	port := c.Int("port")
 	router := mux.NewRouter()
 	var a *astilectron.Astilectron
@@ -258,7 +258,7 @@ func CmdApp(c *cli.Context) error {
 			w1 = w0
 		} else {
 			go func() {
-				createNewWindow(a, port, 1000, 618, "manager", ws, 0, app)
+				createNewWindow(a, port, 1000, 618, "manager", ws, 0, app, ch)
 				w1 = ws[0]
 				fmt.Println(w1)
 				w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
@@ -291,7 +291,7 @@ func CmdApp(c *cli.Context) error {
 
 	mi1, _ := m.Item(0, 1)
 	mi1.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
-		go createNewWindow(a, port, 1000, 700, "external", ws, idx, app)
+		go createNewWindow(a, port, 1000, 700, "external", ws, idx, app, ch)
 		idx++
 		return false
 	})
@@ -332,7 +332,7 @@ func CmdApp(c *cli.Context) error {
 			for k, v := range dat["data"].(map[string]interface{}) {
 				app[k] = v.(string)
 			}
-			go createNewWindow(a, port, 1000, 618, "external", ws, idx, app)
+			go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
 			idx++
 			astilog.Infof("window %d", idx)
 		}
@@ -354,9 +354,20 @@ func CmdApp(c *cli.Context) error {
 
 		}
 		if dat["code"] == "getStates" {
-			for _, w0 := range ws {
-				w0.Send(string(codeGetState))
+			go func() {
+				for k, _ := range ws {
+					if k != 0 {
+						a := <-ch
+						fmt.Println("get id", a["sender"])
+					}
+				}
+			}()
+			for k, w0 := range ws {
+				if k != 0 { //skip data manager for now.
+					w0.Send(string(codeGetState))
+				}
 			}
+
 		}
 		return
 	})
@@ -418,10 +429,12 @@ func generateLinks(port int, name string, app map[string]string) string {
 	fmt.Println("url", url)
 	return url
 }
-func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int, app map[string]string) {
+func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int, app map[string]string, ch chan map[string]interface{}) {
 	var w1 *astilectron.Window
 	var err error
-	id := idx
+	var id int
+	id = idx
+	log.Println("create ", id)
 	if w1, err = a.NewWindow(generateLinks(port, page, app), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Icon:   astilectron.PtrStr(os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples/6.icons/gopher.png"),
@@ -436,9 +449,11 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
 		astilog.Info("w1 Window resize")
 		//w1.Send("w1 resize") // TODO
+		log.Println("resize", id)
 		return
 	})
 	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
+		log.Println("delete", id)
 		delete(ws, id)
 		return
 	})
@@ -452,7 +467,13 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
-		fmt.Println("wn get message", dat)
+		//log.Println("wn get message", dat)
+		//fmt.Println("wn get message", dat)
+		if dat["code"] == "state" {
+			dat["sender"] = id
+			log.Println("sender id", id)
+			ch <- dat
+		}
 		return false
 	})
 
