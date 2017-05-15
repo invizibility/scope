@@ -27,8 +27,10 @@
                 <input type="button" value="Add External Window" id="openExt" style="color:black" />
                 <input type="button" value="Save States" id="saveStates" style="color:black" />
                 <input type="button" value="Load States" id="loadStates" style="color:black" />
-                <input id="cfgfile" type="file" hidden/>
+                <div style="display:none">
+                <input id="cfgfile" type="file" />
                 <input type="button" value="test message" id="testMessage"></input>
+              </div>
             </div>
             <hr>
             <div style="color:white;padding:10">
@@ -297,20 +299,24 @@
             */
         })
         layout.eventHub.on("brush", function(d) {
+          /*
             dispatch.call("sendToElectron", this, JSON.stringify({
                 "code": "brush",
                 "data": S.toolsRegionsText(d)
             }))
+          */
         })
         dispatch.on("input", function(d) {
             console.log("input", d)
             layout.eventHub.emit("input", d)
         })
         layout.eventHub.on("update", function(d) {
+          /*
             dispatch.call("sendToElectron", this, JSON.stringify({
                 "code": "update",
                 "data": S.toolsRegionsText(d)
             }))
+          */
             /*
             var sign = false;
             history.forEach(function(d0) {
@@ -353,6 +359,7 @@
             initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
             for (var k in d) {
                 if (k != -1) {
+                  /*
                     console.log(k, JSON.parse(d[k]))
                     dispatch.call("sendToElectron", this,
                         JSON.stringify({
@@ -360,6 +367,7 @@
                             "data": d[k]
 
                         }))
+                    */
                 }
             }
 
