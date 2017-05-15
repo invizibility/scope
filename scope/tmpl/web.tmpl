@@ -263,18 +263,10 @@
                         if (k > 0) {
                             var id = idx
                             ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
-                            //window.open("http://www.google.com")
                             //TODO add warning for popup blocks.
                             ws[id].onbeforeunload = function() {
                                 ws.delete(id)
                             }
-
-                            console.log("w",id,ws[id],"setState",JSON.parse(d[k]))
-                            /*
-                            w.ready(function(){
-                              console.log("w ready",id)
-                            })
-                            */
                             message[id] = {code:"setState",data:JSON.parse(d[k])}
                             //setTimeout(ws[id].postMessage(message[id],"http://127.0.0.1:5050"),5000)
                             idx += 1
@@ -282,7 +274,15 @@
 
                     }
                 }
-                setTimeout($("#testMessage").click(),10000);
+                //setTimeout($("#testMessage").click(),10000);
+                setTimeout(function(){
+                  console.log("render after 3000")
+                  for (var k in ws) {
+                    console.log("postMessage",k, message[k])
+                    ws[k].postMessage(message[k],domain)
+                  }
+                },3000)
+
             };
             reader.readAsBinaryString(e.target.files[0]);
             /*
