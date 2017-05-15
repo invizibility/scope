@@ -1,0 +1,8 @@
+{
+  "name"    : "WeChat",
+  "version" : "0.1.0",
+  "main"    : "main.js",
+  "dependencies" : {
+    "socket.io-client":"1.7.4"
+  }
+}

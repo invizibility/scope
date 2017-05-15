@@ -1,0 +1,451 @@
+ {{define "title"}} Scope{{.Version}} {{end}} {{define "id"}} "ScopeE7"{{end}} {{define "html"}}
+<html>
+
+<head>
+    <title>{{template "title"}}</title>
+    {{template "css"}}
+    <link rel="stylesheet" href="/style0/snow.css">
+    <link rel="stylesheet" href="/style0/dna3d.css"> {{template "lib"}}
+    <script src="/lib/three.min.js"></script>
+    <script src="/lib0/TrackballControls.js"></script>
+    <script src="/lib0/CanvasRenderer.js"></script>
+    <script src="/lib0/Projector.js"></script>
+    <script src="/lib0/snow.js"></script>
+</head>
+
+<body>
+    {{template "menubar"}}
+    <div id="wrapper">
+        <div id="menuContainer">
+            <div style="color:white;padding:10">
+                <label> Input Regions</label>
+                <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
+                <input type="button" value="submit" id="input" style="color:black" />
+            </div>
+            <hr>
+            <div style="padding:10">
+                <input type="button" value="Add External Window" id="openExt" style="color:black" />
+                <input type="button" value="Save States" id="saveStates" style="color:black" />
+                <input type="button" value="Load States" id="loadStates" style="color:black" />
+                <input id="cfgfile" type="file" hidden/>
+                <input type="button" value="test message" id="testMessage"></input>
+            </div>
+            <hr>
+            <div style="color:white;padding:10">
+                <label>History</label>
+                <ul id="history">
+                </ul>
+            </div>
+
+
+        </div>
+        <div id="layoutContainer"></div>
+    </div>
+    <template type="text/html" id="cfgbtn">
+  <div class='config'>
+    <span class='glyphicon glyphicon-cog'></span>
+  </div>
+</template>
+    <template type="text/html" id="panel">
+  <div class="content">
+  </div>
+  <div class="cfg">
+  </div>
+</template> {{template "dna3d"}}
+    <a id="downloadAnchorElem" style="display:none"></a>
+</body>
+<!--
+<script type="text/javascript" src="/lib/dat.gui.min.js"></script>
+<link rel="stylesheet" href="/css/dat-gui-light-theme.css">
+-->
+<script>
+    var eventHub;
+    var isAstilectron = false;
+    //var dialog = require("electron").remote.dialog;
+
+
+    (function($, d3, S) {
+        //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
+        var updateLinks = function(app) {
+            d3.select("#miView").attr("href",
+                "/v1/web.html?species=" + app.species + "&genome=" + app.genome)
+        }
+        var stateId = {{template "id"}}
+
+
+        var renders = {
+            "3d": S.render.dna3d
+        }
+        var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
+        var app = {
+            "species": S.toolsGetUrlParam("species") || "human",
+            "genome": S.toolsGetUrlParam("genome") || "hg19"
+        } // parameters. Global.
+        updateLinks(app)
+        var dispatch = d3.dispatch("initWindows", "initPanels", "input", "resize", "saveState", "add", "exportState", "exportStates", "exportStatesToFile", "importState", "importStates", "saveToElectron", "closeExt", "sendToElectron")
+        var message = {}
+        var ws = {}
+        var idx = 1
+        $("#testMessage").on("click",function(){
+          for (var k in ws) {
+            ws[k].postMessage(message[k],"http://127.0.0.1:5050")
+          }
+        })
+        dispatch.on("closeExt", function() {
+            console.log("close Ext")
+            for (var key in ws) {
+                ws[key].close()
+                console.log("close Ext", key)
+            }
+            ws = {}
+
+        })
+        window.onbeforeunload = function() {
+            dispatch.call("closeExt", this, {})
+        }
+        $("#saveStates").on("click", function() {
+            dispatch.call("exportStates", this, {})
+        })
+        $("#loadStates").on("click", function() {
+            dispatch.call("importStates", this, function(d) {
+                console.log(d)
+                dispatch.call("sendToElectron", this, JSON.stringify({
+                    "code": "readFile",
+                    "data": d[0]
+                }))
+            })
+        })
+        $("#openExt").on("click", function() {
+
+            var w = window.open("/v1/external.html?genome=" + app.genome + "&" + "speices=" + app.species, "external_" + idx, "width=1000,height=618")
+            var id = idx
+            w.onbeforeunload = function() {
+                ws.delete(id)
+            }
+            ws[id] = w
+            idx += 1
+
+
+        })
+        var layout = new GoldenLayout();
+        var history;
+        var initPanels = function(config, el) {
+            layout = new GoldenLayout(config, el);
+            history = []
+            eventHub = layout.eventHub
+            layout.registerComponent("canvas", function(container, state) {
+                var r = renders[state.render] || S.render[state.render]
+                r(layout, container, state, app)
+                //TODO renderer...
+                var configContainer = container.getElement().find(".cfg")
+                var contentContainer = container.getElement().find(".content")
+                if (state.configView) {
+                    configContainer.show();
+                    contentContainer.hide();
+                } else {
+                    configContainer.hide();
+                    contentContainer.show();
+                }
+            });
+            layout.on('stackCreated', function(stack) {
+                var toggle = $($('#cfgbtn').html())
+                stack.header.controlsContainer.prepend(toggle);
+                toggle.on("click", function() {
+                    toggleConfig();
+                })
+                var toggleConfig = function() {
+                    var container = stack.getActiveContentItem().container;
+                    var toggled = !container.getState().configView
+                    container.extendState({
+                        configView: toggled
+                    });
+                    if (toggled) {
+                        container.getElement().find(".cfg").show()
+                        container.getElement().find(".content").hide()
+
+                    } else {
+                        container.getElement().find(".cfg").hide()
+                        container.getElement().find(".content").show()
+                    }
+                };
+            });
+
+            layout.init()
+            /* TODO Fix to dispatch */
+
+            $("#input").click(function() {
+                var v = $("#regions").val() || $("#regions").attr("placeholder");
+                layout.eventHub.emit("input", S.toolsTrimChrPrefix(S.toolsParseRegions(v)))
+            })
+            /* for ctrl dispatch layout communication */
+
+            dispatch.on("add", function(d) {
+                layout.root.contentItems[0].addChild(d);
+            })
+
+            dispatch.on("resize.inner", function(d) {
+                console.log("resize")
+                layout.updateSize();
+            })
+            dispatch.on("saveState", function() {
+                console.log("save state")
+                var state = JSON.stringify(layout.toConfig());
+                localStorage.setItem(stateId, state);
+                var c = {
+                    "code": "save",
+                    "data": layout.toConfig()
+                }
+                dispatch.call("sendToElectron", this, JSON.stringify(c))
+            })
+
+
+        }
+
+
+        dispatch.on("exportState", function() {
+            saveToFile("scope.json", JSON.stringify(layout.toConfig()))
+        })
+        dispatch.on("exportStates", function() {
+          /*
+            dispatch.call("sendToElectron", this, JSON.stringify({
+                "code": "getStates",
+                "data": ""
+            }))
+          */
+          var data={};
+          //data[-1] = JSON.stringify(layout.toConfig())
+          for (var k in ws){
+            if (k!=-1) {
+              data[k]=JSON.stringify(ws[k].layout.toConfig())
+            }
+          }
+          dispatch.call("exportStatesToFile",this,data)
+        })
+        dispatch.on("exportStatesToFile", function(d) {
+            d[-1] = JSON.stringify(layout.toConfig())
+            saveToFile("scopeExt.json", JSON.stringify(d))
+        })
+
+        dispatch.on("importState", function(_) {
+            //console.log(layout.toConfig()) //TODO export json file.
+            /*
+            dialog.showOpenDialog({
+                properties: ['openFile'],
+                filters: [{
+                    extensions: ['txt']
+                }]
+            }, function(d) {
+                console.log(d)f
+                _(d)
+            })
+            */
+        })
+        dispatch.on("importStates", function(_) {
+            //console.log(layout.toConfig()) //TODO export json file.
+            $("#cfgfile").click();
+
+
+        })
+        $("#cfgfile").on("change", function(e) {
+            console.log(e.target.files[0])
+            var reader = new FileReader();
+            reader.onloadend = function(evt) {
+                if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+                    console.log(evt.target.result);
+                    var d = JSON.parse(evt.target.result)
+                    for (var k in d) {
+                        console.log(JSON.parse(d[-1]))
+                        if (k == -1) {
+                            dispatch.call("initPanels", this, JSON.parse(d[-1]))
+                        }
+                        if (k > 0) {
+                            var id = idx
+                            ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
+                            //window.open("http://www.google.com")
+                            //TODO add warning for popup blocks.
+                            ws[id].onbeforeunload = function() {
+                                ws.delete(id)
+                            }
+
+                            console.log("w",id,ws[id],"setState",JSON.parse(d[k]))
+                            /*
+                            w.ready(function(){
+                              console.log("w ready",id)
+                            })
+                            */
+                            message[id] = {code:"setState",data:JSON.parse(d[k])}
+                            //setTimeout(ws[id].postMessage(message[id],"http://127.0.0.1:5050"),5000)
+                            idx += 1
+                        }
+
+                    }
+                }
+                setTimeout($("#testMessage").click(),10000);
+            };
+            reader.readAsBinaryString(e.target.files[0]);
+            /*
+            for (var k in ws) {
+                console.log("postMessage Now")
+                ws[k].postMessage({
+                    "code": "setState",
+                    "data": "todoConfig"
+                }, "http://127.0.0.1:5050/v1/external.html") //TODO fix
+
+            }
+            */
+        })
+        layout.eventHub.on("brush", function(d) {
+            dispatch.call("sendToElectron", this, JSON.stringify({
+                "code": "brush",
+                "data": S.toolsRegionsText(d)
+            }))
+        })
+        dispatch.on("input", function(d) {
+            console.log("input", d)
+            layout.eventHub.emit("input", d)
+        })
+        layout.eventHub.on("update", function(d) {
+            dispatch.call("sendToElectron", this, JSON.stringify({
+                "code": "update",
+                "data": S.toolsRegionsText(d)
+            }))
+            /*
+            var sign = false;
+            history.forEach(function(d0) {
+                if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
+                    sign = true;
+                    console.log(d0,"=",d)
+                }
+            })
+            if (sign) {
+                return;
+            }
+            */
+            history.push(d);
+            if (history.length > 8) {
+                history.shift();
+            }
+            var ul = d3.select("#history")
+            var li = ul.selectAll("li").data(history.reverse())
+            li.enter().append("li").classed("h", true)
+                .merge(li)
+                .text(function(d) {
+                    return S.toolsRegionsText(d)
+                })
+                .on("click", function(d) {
+                    layout.eventHub.emit("input", d)
+                })
+            li.exit().remove();
+
+        })
+        dispatch.on("initPanels", function(d) {
+            console.log("init panels")
+            $("#layoutContainer").empty();
+            initPanels(d, $("#layoutContainer"))
+        })
+        dispatch.on("initWindows", function(d) {
+            console.log("init windows")
+            dispatch.call("closeExt", this, {})
+            $("#layoutContainer").empty();
+
+            initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
+            for (var k in d) {
+                if (k != -1) {
+                    console.log(k, JSON.parse(d[k]))
+                    dispatch.call("sendToElectron", this,
+                        JSON.stringify({
+                            "code": "createExt",
+                            "data": d[k]
+
+                        }))
+                }
+            }
+
+        })
+        var url = S.toolsGetUrlParam("config") || "/data/config.json"
+        d3.json(url, function(error, config) {
+            console.log("config", error, config)
+            initPanels(config, $('#layoutContainer'))
+        })
+        $("#sideToggle").on("click", function() {
+            console.log("still click")
+            if ($('#menuContainer').css('display') == 'none') {
+                console.log("show")
+                $("#menuContainer").show();
+                $("#layoutContainer").css(
+                    "width", "80%"
+                ).css("left", "20%");
+            } else {
+                console.log("hide")
+                $("#menuContainer").hide();
+                $("#layoutContainer").css(
+                    "width", "100%"
+                ).css("left", "0%");
+            }
+            dispatch.call("resize", this, {})
+        })
+
+        var saveToFile = function(fn, c) {
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(c);
+            var dlAnchorElem = document.getElementById('downloadAnchorElem');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", fn);
+            dlAnchorElem.click();
+        }
+        var factory = function(d) {
+            return {
+                title: d,
+                type: 'component',
+                componentName: 'canvas',
+                componentState: {
+                    name: d,
+                    render: d
+                }
+            };
+        }
+        $("#save").on("click", function(d) {
+            dispatch.call("saveState")
+        })
+
+        $("#open").on("click", function(d) {
+            console.log("load state")
+            savedState = localStorage.getItem(stateId);
+            $("#layoutContainer").empty()
+            initPanels(JSON.parse(savedState), $("#layoutContainer"))
+        })
+        $("#export").on("click", function(d) {
+            dispatch.call("exportState", this, {})
+        })
+        $("#import").on("click", function(d) {
+            // works in electron version?
+            dispatch.call("importState", this, function(d) {
+                console.log("callback", d)
+                //TODO
+
+            })
+
+        })
+        d3.select("#renders").selectAll("li")
+            .data(renderList)
+            .enter()
+            .append("li")
+            .append("a")
+            .attr("id", function(d) {
+                return d
+            }).text(
+                function(d) {
+                    return d
+                }
+            ).on("click", function(d) {
+                dispatch.call("add", this, factory(d))
+            })
+        window.onresize = function() {
+            dispatch.call("resize", this, {})
+        }
+
+
+    }(jQuery, d3, snow))
+</script>
+
+</html>
+{{end}}

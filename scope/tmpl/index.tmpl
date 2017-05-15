@@ -283,15 +283,22 @@
             })
             dispatch.on("importStates", function(_) {
                 //console.log(layout.toConfig()) //TODO export json file.
-                dialog.showOpenDialog({
+                if (isAstilectron) {
+                  dialog.showOpenDialog({
                     properties: ['openFile'],
                     filters: [{
                         extensions: ['txt']
                     }]
-                }, function(d) {
+                  }, function(d) {
                     console.log(d)
                     _(d)
-                })
+                  })
+                } else {
+                  for (var k in ws) {
+                    ws[k].postMessage({"code":"setState","data":"todoConfig"},"http://localhost:5050")
+                  }
+
+                }
             })
             layout.eventHub.on("brush", function(d) {
                 dispatch.call("sendToElectron", this, JSON.stringify({

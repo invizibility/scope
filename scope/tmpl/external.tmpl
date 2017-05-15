@@ -25,7 +25,7 @@
 </template>
 <script>
 
-
+//layout is global;
     (function(S,d3,jQuery){
       var eventHub
       var isAstilectron = false;
@@ -36,7 +36,31 @@
       var species = S.toolsGetUrlParam("species")
       console.log(genome,species)
       var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
-      var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron","sendState")
+      var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron","sendState","setState")
+
+      /* window communication in web version */
+      function message(event) {
+        console.log(event.origin)
+        console.log(event.data)
+
+        if (event.origin !== "http://127.0.0.1:5050") //TODO FIX
+          return;
+
+        var d = event.data
+        if (d.code == "setState") {
+            console.log("setState",d.data)
+            dispatch.call(d.code,this,d.data)
+        }
+      }
+      dispatch.on("setState",function(d){
+        console.log("setState",d)
+        $("#container").empty()
+        initPanels(d,$("#container"))
+      })
+      window.addEventListener("message", message, false);
+
+      /*  window communication on app verion */
+
 
       var brush = function(d) {
         dispatch.call("brush",this,d)
@@ -86,6 +110,7 @@
 
           });
       })
+
         var config = {
             settings: {
                 showPopoutIcon: false
@@ -110,7 +135,7 @@
             }]
         }
         var initPanels = function(config, el){
-            var layout = new GoldenLayout(config, el);
+            layout = new GoldenLayout(config, el);
             dispatch.on("add", function(d) {
                 layout.root.contentItems[0].addChild(d);
             })
