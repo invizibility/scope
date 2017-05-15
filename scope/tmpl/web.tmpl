@@ -61,8 +61,10 @@
 <script>
     var eventHub;
     var isAstilectron = false;
+    var url = window.location.href
+    var arr = url.split("/");
+    var domain = arr[0] + "//" + arr[2];
     //var dialog = require("electron").remote.dialog;
-
 
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
@@ -88,7 +90,7 @@
         var idx = 1
         $("#testMessage").on("click",function(){
           for (var k in ws) {
-            ws[k].postMessage(message[k],"http://127.0.0.1:5050")
+            ws[k].postMessage(message[k],domain)
           }
         })
         dispatch.on("closeExt", function() {

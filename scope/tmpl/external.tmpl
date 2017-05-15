@@ -28,6 +28,9 @@
 //layout is global;
     (function(S,d3,jQuery){
       var eventHub
+      var url = window.location.href
+      var arr = url.split("/");
+      var domain = arr[0] + "//" + arr[2]
       var isAstilectron = false;
       if (window.opener) {
         eventHub = window.opener.eventHub;
@@ -43,7 +46,7 @@
         console.log(event.origin)
         console.log(event.data)
 
-        if (event.origin !== "http://127.0.0.1:5050") //TODO FIX
+        if (event.origin !== domain) //TODO FIX
           return;
 
         var d = event.data
