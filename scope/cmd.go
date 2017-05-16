@@ -37,20 +37,8 @@ func main() {
 			Action: CmdServe,
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "bw,B",
-					Usage: "bigwig data file URI",
-				},
-				cli.StringFlag{
-					Name:  "hic,H",
-					Usage: "hic data file",
-				},
-				cli.StringFlag{
-					Name:  "struct,S",
-					Usage: "3d structure file",
-				},
-				cli.StringFlag{
-					Name:  "genome,G",
-					Usage: "chromSizes",
+					Name:  "input,I",
+					Usage: "data manager tsv",
 				},
 				cli.IntFlag{
 					Name:  "port,p",
@@ -77,20 +65,8 @@ func main() {
 			Action: CmdApp,
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "bw,B",
-					Usage: "bigwig data file URI",
-				},
-				cli.StringFlag{
-					Name:  "hic,H",
-					Usage: "hic data file",
-				},
-				cli.StringFlag{
-					Name:  "struct,S",
-					Usage: "3d structure file",
-				},
-				cli.StringFlag{
-					Name:  "genome,G",
-					Usage: "chromSizes",
+					Name:  "input,I",
+					Usage: "data manager tsv",
 				},
 				cli.IntFlag{
 					Name:  "port,p",

@@ -33,54 +33,14 @@ func serveBufferURI(uri string, router *mux.Router, prefix string) {
 /* CmdServe: serve bigwigs and hic, and static html
  *
  */
-func addData(c *cli.Context, router *mux.Router) (*BigWigManager, *HicManager, error) {
-	entry := []string{}
-	bwURI := c.String("B")
-	var bwM *BigWigManager
-	if bwURI != "" {
-		//serveBwURI(bwURI, router, "/bw")
-		bwM = NewBigWigManager(bwURI, "/bw")
-		bwM.ServeTo(router)
-		//log.Println("bw manager", bwM)
-		entry = append(entry, "bw")
-	}
-	/* TODO: multi hic files */
-	hicURI := c.String("H")
-	var hicM *HicManager
-	if hicURI != "" {
-		hicM = NewHicManager(hicURI, "/hic")
-		hicM.ServeTo(router)
-		entry = append(entry, "hic")
-	}
-	structURI := c.String("S")
-	if structURI != "" { //TODO File Manager
-		/*
-			serveBufferURI(structURI, router, "/3d")
-			entry = append(entry, "3d")
-		*/
-		fileM := NewFileManager(structURI, "/3d")
-		fileM.ServeTo(router)
-	}
-	genomeURI := c.String("G")
-	if genomeURI != "" { //TODO File Manager
-		serveBufferURI(genomeURI, router, "/genome")
-		entry = append(entry, "genome")
-	}
-	router.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
-		e, _ := json.Marshal(entry)
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Write(e)
-	})
-	return bwM, hicM, nil
-}
-
 func CmdServe(c *cli.Context) error {
 	port := c.Int("port")
 	router := mux.NewRouter()
+	uri := c.String("input")
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	addData(c, router)
-
+	//addData(c, router)
+	AddDataManagers(uri, router)
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))
@@ -101,13 +61,17 @@ func CmdHttp(c *cli.Context) error {
 func CmdApp(c *cli.Context) error {
 	ch := make(chan map[string]interface{})
 	port := c.Int("port")
+	uri := c.String("input")
 	router := mux.NewRouter()
 	var a *astilectron.Astilectron
 	var w *astilectron.Window
 	var w1 *astilectron.Window
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	bwManager, hicManager, _ := addData(c, router) //TODO manage data managers.
+	//bwManager, hicManager, _ := addData(c, router) //TODO manage data managers.
+	managers := AddDataManagers(uri, router)
+	bwManager := managers["/bw"]
+	hicManager := managers["/hic"]
 	/* add Socket */
 	chatroom := "scope"
 	server, err := socketio.NewServer(nil)
