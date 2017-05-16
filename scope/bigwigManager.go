@@ -58,7 +58,7 @@ func (m *BigWigManager) ServeTo(router *mux.Router) {
 	AddBwsHandle(router, m.bwMap, m.prefix)
 }
 
-func NewBigWigManager(uri string, router *mux.Router, prefix string) *BigWigManager {
+func NewBigWigManager(uri string, prefix string) *BigWigManager {
 	uriMap := LoadURI(uri)
 	bwmap := make(map[string]*BigWigReader)
 	for k, v := range uriMap {
@@ -69,6 +69,6 @@ func NewBigWigManager(uri string, router *mux.Router, prefix string) *BigWigMana
 		bwmap,
 		prefix,
 	}
-	m.ServeTo(router)
+	//m.ServeTo(router)
 	return &m
 }

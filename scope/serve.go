@@ -39,8 +39,9 @@ func addData(c *cli.Context, router *mux.Router) (*BigWigManager, *HicManager, e
 	var bwM *BigWigManager
 	if bwURI != "" {
 		//serveBwURI(bwURI, router, "/bw")
-		bwM = NewBigWigManager(bwURI, router, "/bw")
-		log.Println("bw manager", bwM)
+		bwM = NewBigWigManager(bwURI, "/bw")
+		bwM.ServeTo(router)
+		//log.Println("bw manager", bwM)
 		entry = append(entry, "bw")
 	}
 	/* TODO: multi hic files */
@@ -53,8 +54,12 @@ func addData(c *cli.Context, router *mux.Router) (*BigWigManager, *HicManager, e
 	}
 	structURI := c.String("S")
 	if structURI != "" { //TODO File Manager
-		serveBufferURI(structURI, router, "/3d")
-		entry = append(entry, "3d")
+		/*
+			serveBufferURI(structURI, router, "/3d")
+			entry = append(entry, "3d")
+		*/
+		fileM := NewFileManager(structURI, "/3d")
+		fileM.ServeTo(router)
 	}
 	genomeURI := c.String("G")
 	if genomeURI != "" { //TODO File Manager
@@ -102,7 +107,7 @@ func CmdApp(c *cli.Context) error {
 	var w1 *astilectron.Window
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	bwManager, hicManager, _ := addData(c, router) //TODO.
+	bwManager, hicManager, _ := addData(c, router) //TODO manage data managers.
 	/* add Socket */
 	chatroom := "scope"
 	server, err := socketio.NewServer(nil)

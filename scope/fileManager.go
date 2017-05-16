@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,8 +23,8 @@ import (
       }
 */
 type FileManager struct {
-	uri    map[string]string
-	data   map[string]io.ReadSeeker
+	uri map[string]string
+	//data   map[string]io.ReadSeeker
 	prefix string
 }
 
@@ -34,12 +33,14 @@ func (m *FileManager) AddURI(key string, uri string) error {
 	if ok {
 		return errors.New("duplicated key string")
 	}
-	f, err := stream.NewSeekableStreamReader(uri)
-	if err != nil {
-		return err
-	}
+	/*
+		  f, err := stream.NewSeekableStreamReader(uri)
+			if err != nil {
+				return err
+			}
+	*/
 	m.uri[key] = uri
-	m.data[key] = f
+	//m.data[key] = f
 	return nil
 }
 
@@ -48,7 +49,7 @@ func (m *FileManager) Del(key string) error {
 	if !ok {
 		return errors.New("key not found")
 	}
-	delete(m.data, key)
+	//delete(m.data, key)
 	delete(m.uri, key)
 	return nil
 }
@@ -56,6 +57,11 @@ func (m *FileManager) Del(key string) error {
 func (m *FileManager) ServeTo(router *mux.Router) {
 	//TODO File Handler
 	m.initBuffersHandle(router) //TODO change buffermap into m.
+	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		jsonHic, _ := json.Marshal(m.uri)
+		w.Write(jsonHic)
+	})
 }
 
 func (m *FileManager) List() []string {
@@ -107,8 +113,11 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 
 }
 
-/*
 func NewFileManager(uri string, prefix string) *FileManager {
-	return "TODO"
+	uriMap := LoadURI(uri)
+	m := FileManager{
+		uriMap,
+		prefix,
+	}
+	return &m
 }
-*/
