@@ -48,7 +48,7 @@ func (m *HicManager) ServeTo(router *mux.Router) {
 	AddHicsHandle(router, m.dataMap, m.prefix)
 }
 
-func NewHicManager(uri string, router *mux.Router, prefix string) *HicManager {
+func NewHicManager(uri string, prefix string) *HicManager {
 	uriMap := LoadURI(uri)
 	dataMap := make(map[string]*hic.HiC)
 	dataList := []string{}
@@ -66,7 +66,7 @@ func NewHicManager(uri string, router *mux.Router, prefix string) *HicManager {
 		dataMap,
 		prefix,
 	}
-	m.ServeTo(router)
+	//m.ServeTo(router)
 	return &m
 }
 

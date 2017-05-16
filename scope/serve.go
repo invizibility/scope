@@ -47,16 +47,17 @@ func addData(c *cli.Context, router *mux.Router) (*BigWigManager, *HicManager, e
 	hicURI := c.String("H")
 	var hicM *HicManager
 	if hicURI != "" {
-		hicM = NewHicManager(hicURI, router, "/hic")
+		hicM = NewHicManager(hicURI, "/hic")
+		hicM.ServeTo(router)
 		entry = append(entry, "hic")
 	}
 	structURI := c.String("S")
-	if structURI != "" {
+	if structURI != "" { //TODO File Manager
 		serveBufferURI(structURI, router, "/3d")
 		entry = append(entry, "3d")
 	}
 	genomeURI := c.String("G")
-	if genomeURI != "" {
+	if genomeURI != "" { //TODO File Manager
 		serveBufferURI(genomeURI, router, "/genome")
 		entry = append(entry, "genome")
 	}

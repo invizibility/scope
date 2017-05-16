@@ -2809,10 +2809,10 @@ var hic = function (layout, container, state, app) {
         //prefixed = false;
       }
         var scopebrush = brush$1().width(scope.edge).on("brush", function (d) {
-            dispatch.call("brush", this, d);
-            layout.eventHub.emit("brush", d);
+            dispatch.call("brush", this, addChrPrefix(d));
+            layout.eventHub.emit("brush", addChrPrefix(d));
         }).on("click", function (d) {
-            dispatch.call("update", this, d);
+            dispatch.call("update", this, addChrPrefix(d));
         }).regions(regions);
         axesG.selectAll("*").remove();
         axesG.call(scopebrush);

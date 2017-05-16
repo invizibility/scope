@@ -257,10 +257,10 @@ export default function (layout, container, state, app) {
         //prefixed = false;
       }
         var scopebrush = brush().width(scope.edge).on("brush", function (d) {
-            dispatch.call("brush", this, d)
-            layout.eventHub.emit("brush", d)
+            dispatch.call("brush", this, toolsAddChrPrefix(d))
+            layout.eventHub.emit("brush", toolsAddChrPrefix(d))
         }).on("click", function (d) {
-            dispatch.call("update", this, d)
+            dispatch.call("update", this, toolsAddChrPrefix(d))
         }).regions(regions)
         axesG.selectAll("*").remove()
         axesG.call(scopebrush)
