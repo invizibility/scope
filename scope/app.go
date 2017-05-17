@@ -12,7 +12,6 @@ import (
 
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
-	"github.com/googollee/go-socket.io"
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/snowjs"
 	"github.com/pkg/errors"
@@ -27,42 +26,14 @@ func CmdApp(c *cli.Context) error {
 	var a *astilectron.Astilectron
 	var w *astilectron.Window
 	var w1 *astilectron.Window
+	var err error
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	//bwManager, hicManager, _ := addData(c, router) //TODO manage data managers.
+
 	managers := AddDataManagers(uri, router)
-	//bwManager := managers["/bw"]
-	//hicManager := managers["/hic"]
+
 	/* add Socket */
 	chatroom := "scope"
-	server, err := socketio.NewServer(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	server.On("connection", func(so socketio.Socket) {
-		log.Println("on connection")
-		so.Join(chatroom)
-		so.On("data", func(msg string) {
-			//data := msg
-			//so.BroadcastTo(chatroom, "data", len(data))
-			w.Send("data " + msg)
-		})
-		so.On("callback", func(msg string) string {
-			return msg
-		})
-		so.On("disconnection", func() {
-			log.Println("on disconnect")
-		})
-	})
-	server.On("error", func(so socketio.Socket, err error) {
-		log.Println("error:", err)
-	})
-
-	router.HandleFunc("/socket.io/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*:*")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		server.ServeHTTP(w, r)
-	})
 
 	log.Println("Listening...")
 	go http.ListenAndServe(":"+strconv.Itoa(port), router)
@@ -214,6 +185,8 @@ func CmdApp(c *cli.Context) error {
 	if err = w.Create(); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating window failed"))
 	}
+
+	AddSocket(chatroom, router, w)
 	w.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
 		astilog.Info("Window resized")
 		w.Send("resize")
@@ -311,20 +284,9 @@ func CmdApp(c *cli.Context) error {
 	})
 
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		/*
-			keys := []int{}
-			for k, _ := range ws {
-				keys = append(keys, k)
-			}
-			for i := 0; i < len(keys); i++ {
-				go func(j int) {
-					ws[keys[j]].Close()
-				}(i)
-			}
-		*/
+
 		closeAll(ws)
-		//a.Stop() //TODO fix javascript error
-		//a.Close()
+
 		return
 	})
 
@@ -402,11 +364,7 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 			ch <- dat
 			//get ext state and return it through ch to w.
 		}
-		/*
-			if dat["code"] == "setState" {
-				log.Println("set state TODO")
-			}
-		*/
+
 		return false
 	})
 
