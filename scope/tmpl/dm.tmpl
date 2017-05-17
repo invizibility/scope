@@ -50,7 +50,7 @@
     <div id="wrapper">
         <div id="menuContainer">
 
-
+        <button id="getJson">Dowload as Json</button>
         </div>
         <div id="layoutContainer">
 
@@ -60,6 +60,7 @@
 <script>
     window.onload = function() {
         var isAstilectron = false
+
         var dispatch = d3.dispatch("send", "openfile")
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
@@ -213,6 +214,27 @@
                 q.defer(d3.json, "/" + d + "/ls")
             })
             q.awaitAll(ready)
+        })
+
+        /** DownLoad as Json file */
+        var getJson = function() {
+          var out = []
+          var cb = function(error,results) {
+              out.push(results)
+              console.log(out)
+          }
+          d3.json("/ls",function(d){
+            out.push(d)
+            var q = d3.queue(2)
+            console.log(d)
+            d.forEach(function(d) {
+                q.defer(d3.json, "/" + d.dbname + "/ls")
+            })
+            q.awaitAll(cb)
+          })
+        }
+        d3.select("#getJson").on('click',function(){
+          getJson()
         })
     }
 </script>
