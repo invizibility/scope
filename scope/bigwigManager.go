@@ -15,7 +15,7 @@ func readBw(uri string) *BigWigReader {
 	checkErr(err)
 	bwf := NewBbiReader(reader)
 	bwf.InitIndex()
-	log.Println("in reading idx of", uri)
+	//log.Println("in reading idx of", uri)
 	bw := NewBigWigReader(bwf)
 	return bw
 }
@@ -24,7 +24,7 @@ func readBw(uri string) *BigWigReader {
 type BigWigManager struct {
 	uriMap map[string]string
 	bwMap  map[string]*BigWigReader
-	prefix string
+	dbname string
 }
 
 func (m *BigWigManager) AddURI(uri string, key string) error {
@@ -50,15 +50,17 @@ func (m *BigWigManager) List() []string {
 	return keys
 }
 func (m *BigWigManager) ServeTo(router *mux.Router) {
-	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
+	prefix := "/" + m.dbname
+	router.HandleFunc(prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		jsonHic, _ := json.Marshal(m.uriMap)
 		w.Write(jsonHic)
 	})
-	AddBwsHandle(router, m.bwMap, m.prefix)
+	AddBwsHandle(router, m.bwMap, prefix)
 }
 
-func NewBigWigManager(uri string, prefix string) *BigWigManager {
+func NewBigWigManager(uri string, dbname string) *BigWigManager {
+	//prefix := "/" + dbname
 	uriMap := LoadURI(uri)
 	bwmap := make(map[string]*BigWigReader)
 	for k, v := range uriMap {
@@ -67,7 +69,7 @@ func NewBigWigManager(uri string, prefix string) *BigWigManager {
 	m := BigWigManager{
 		uriMap,
 		bwmap,
-		prefix,
+		dbname,
 	}
 	//m.ServeTo(router)
 	return &m

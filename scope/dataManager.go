@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 
 	astilectron "github.com/asticode/go-astilectron"
 	"github.com/gorilla/mux"
@@ -38,16 +37,16 @@ func IterEntry(d DataManager) chan Entry {
 	return ch
 }
 
-func newDataManager(prefix string, uri string, format string) DataManager {
+func newDataManager(dbname string, uri string, format string) DataManager {
 	switch format {
 	case "file":
-		return NewFileManager(uri, prefix)
+		return NewFileManager(uri, dbname)
 	case "bigwig":
-		return NewBigWigManager(uri, prefix)
+		return NewBigWigManager(uri, dbname)
 	case "hic":
-		return NewHicManager(uri, prefix)
+		return NewHicManager(uri, dbname)
 	}
-	return NewFileManager(uri, prefix)
+	return NewFileManager(uri, dbname)
 }
 
 func AddDataManagers(uri string, router *mux.Router) map[string]DataManager {
@@ -60,23 +59,33 @@ func AddDataManagers(uri string, router *mux.Router) map[string]DataManager {
 	r.Comment = '#'
 	lines, err := r.ReadAll()
 	checkErr(err)
+	jdata := []map[string]string{}
 	for i, line := range lines {
 		if i == 0 {
 			continue
 		}
-		prefix, uri, format := line[0], line[1], line[2]
-		log.Println(prefix, uri, format)
-		entry = append(entry, strings.Replace(prefix, "/", "", 1))
-		a := newDataManager(prefix, uri, format)
+		dbname, uri, format := line[0], line[1], line[2]
+		log.Println(dbname, uri, format)
+		entry = append(entry, dbname)
+		a := newDataManager(dbname, uri, format)
+		jdata = append(jdata, map[string]string{
+			"dbname": dbname,
+			"uri":    uri,
+			"format": format,
+		})
 		a.ServeTo(router)
-		m[prefix] = a
+		m[dbname] = a
 	}
 	router.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
 		e, _ := json.Marshal(entry)
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(e)
 	})
-
+	router.HandleFunc("/ls", func(w http.ResponseWriter, r *http.Request) {
+		e, _ := json.Marshal(jdata)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write(e)
+	})
 	return m
 }
 
@@ -89,24 +98,24 @@ func AddAsticodeToWindow(w *astilectron.Window, dbmap map[string]DataManager) {
 			panic(err)
 		}
 		if dat["code"] == "add" {
-			prefix, ok1 := dat["prefix"].(string) // prefix(dbname) start with \/
+			dbname, ok1 := dat["dbname"].(string) // prefix(dbname) start with \/
 			id, ok2 := dat["id"].(string)
 			uri, ok3 := dat["uri"].(string)
 			//log.Println("add from web", prefix, id, uri)
 			//log.Println(ok1, ok2, ok3)
 			if ok1 && ok2 && ok3 {
-				if dbi, ok := dbmap[prefix]; ok {
+				if dbi, ok := dbmap[dbname]; ok {
 					//log.Println("adding", ok)
 					dbi.AddURI(uri, id)
 				}
 			}
 		}
 		if dat["code"] == "del" {
-			prefix, ok1 := dat["prefix"].(string) //prefix(dbname) start with \/
+			dbname, ok1 := dat["dbname"].(string) //prefix(dbname) start with \/
 			id, ok2 := dat["id"].(string)
 			//uri, ok3 := dat["uri"].(string)
 			if ok1 && ok2 {
-				if dbi, ok := dbmap[prefix]; ok {
+				if dbi, ok := dbmap[dbname]; ok {
 					dbi.Del(id)
 				}
 			}

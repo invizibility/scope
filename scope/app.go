@@ -74,16 +74,7 @@ func CmdApp(c *cli.Context) error {
 				{Label: astilectron.PtrStr("About"), Role: astilectron.MenuItemRoleAbout},
 			},
 		},
-		/*
-			{
-				Label: astilectron.PtrStr("Checkbox"),
-				SubMenu: []*astilectron.MenuItemOptions{
-					{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Checkbox 1"), Type: astilectron.MenuItemTypeCheckbox},
-					{Label: astilectron.PtrStr("Checkbox 2"), Type: astilectron.MenuItemTypeCheckbox},
-					{Label: astilectron.PtrStr("Checkbox 3"), Type: astilectron.MenuItemTypeCheckbox},
-				},
-			},
-		*/
+
 		{
 			Label: astilectron.PtrStr("Config"),
 			SubMenu: []*astilectron.MenuItemOptions{
@@ -284,9 +275,7 @@ func CmdApp(c *cli.Context) error {
 	})
 
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-
 		closeAll(ws)
-
 		return
 	})
 
@@ -356,8 +345,6 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
-		//log.Println("wn get message", dat)
-		//fmt.Println("wn get message", dat)
 		if dat["code"] == "state" {
 			dat["sender"] = id
 			log.Println("sender id", id)

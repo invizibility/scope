@@ -25,7 +25,7 @@ import (
 type FileManager struct {
 	uri map[string]string
 	//data   map[string]io.ReadSeeker
-	prefix string
+	dbname string
 }
 
 func (m *FileManager) AddURI(uri string, key string) error {
@@ -56,8 +56,9 @@ func (m *FileManager) Del(key string) error {
 
 func (m *FileManager) ServeTo(router *mux.Router) {
 	//TODO File Handler
+	prefix := "/" + m.dbname
 	m.initBuffersHandle(router) //TODO change buffermap into m.
-	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		jsonHic, _ := json.Marshal(m.uri)
 		w.Write(jsonHic)
@@ -78,7 +79,8 @@ func (m *FileManager) Get(key string) (string, bool) {
 
 func (m *FileManager) initBuffersHandle(router *mux.Router) {
 	bufferMap := make(map[string][]byte)
-	router.HandleFunc(m.prefix+"/list", func(w http.ResponseWriter, r *http.Request) {
+	prefix := "/" + m.dbname
+	router.HandleFunc(prefix+"/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		keys := []string{}
 		for key, _ := range m.uri {
@@ -87,7 +89,7 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 		jsonBuffers, _ := json.Marshal(keys)
 		w.Write(jsonBuffers)
 	})
-	router.HandleFunc(m.prefix+"/get/{id}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(prefix+"/get/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		id := params["id"]
@@ -113,11 +115,11 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 
 }
 
-func NewFileManager(uri string, prefix string) *FileManager {
+func NewFileManager(uri string, dbname string) *FileManager {
 	uriMap := LoadURI(uri)
 	m := FileManager{
 		uriMap,
-		prefix,
+		dbname,
 	}
 	return &m
 }

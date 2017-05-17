@@ -14,7 +14,7 @@ import (
 type HicManager struct {
 	uriMap  map[string]string
 	dataMap map[string]*hic.HiC
-	prefix  string
+	dbname  string
 }
 
 func (m *HicManager) AddURI(uri string, key string) error {
@@ -40,15 +40,16 @@ func (m *HicManager) List() []string {
 	return keys
 }
 func (m *HicManager) ServeTo(router *mux.Router) {
-	router.HandleFunc(m.prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
+	prefix := "/" + m.dbname
+	router.HandleFunc(prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		jsonHic, _ := json.Marshal(m.uriMap)
 		w.Write(jsonHic)
 	})
-	AddHicsHandle(router, m.dataMap, m.prefix)
+	AddHicsHandle(router, m.dataMap, prefix)
 }
 
-func NewHicManager(uri string, prefix string) *HicManager {
+func NewHicManager(uri string, dbname string) *HicManager {
 	uriMap := LoadURI(uri)
 	dataMap := make(map[string]*hic.HiC)
 	dataList := []string{}
@@ -64,7 +65,7 @@ func NewHicManager(uri string, prefix string) *HicManager {
 	m := HicManager{
 		uriMap,
 		dataMap,
-		prefix,
+		dbname,
 	}
 	//m.ServeTo(router)
 	return &m

@@ -119,8 +119,8 @@
                     console.log("tableRendered");
                     this.setCellRenderer("action", new CellRenderer({
                         render: function(cell, value) {
-                            cell.innerHTML = "<a onclick=\"if (confirm('Are you sure you want to delete this entry? ')) editableGrid.remove(" + cell.rowIndex + ");\" style=\"cursor:pointer\">" +
-                                "<span><i class='glyphicon glyphicon-remove'></i></span></a>";
+                          //TODO Remove Line From Data Manager.
+                            cell.innerHTML = "<a onclick=\"if (confirm('Are you sure you want to delete this entry? ')) window['"+gridName+"'].remove(" + cell.rowIndex + ");\" style=\"cursor:pointer\">" + "<span><i class='glyphicon glyphicon-remove'></i></span></a>";
                         }
                     }));
                 },
@@ -129,9 +129,7 @@
                 },
                 pageSize: 100
             });
-            /* TODO
 
-            */
         }
 
 
@@ -143,11 +141,6 @@
 
 
                 selection.each(function(d) {
-                    /*
-                    d3.select(this).html(
-                        JSON.stringify(d, 2, 2)
-                    )
-                    */
                     var header = d3.select(this).append("div").classed("header",true)
                     header.append("h3").classed("title",true).text(d.name)
                     var div = d3.select(this).append("div").attr("id","_div_"+d.name)
@@ -181,7 +174,7 @@
                         grid.append(grid.data.length, { 'shortLabel': n[n.length-1],'url':d[0] }, true);
                         dispatch.call("send",this, JSON.stringify({
                           "code":"add",
-                          "prefix":"/"+name, //TODO prefix?
+                          "dbname": name, //TODO prefix?
                           "id":n[n.length-1],
                           "uri":d[0],
                         }))
@@ -221,10 +214,6 @@
             })
             q.awaitAll(ready)
         })
-
-
-
-
     }
 </script>
 
