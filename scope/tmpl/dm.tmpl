@@ -55,6 +55,7 @@
         <div id="layoutContainer">
 
         </div>
+        <a id="downloadAnchorElem" style="display:none"></a>
     </div>
 </body>
 <script>
@@ -218,13 +219,14 @@
 
         /** DownLoad as Json file */
         var getJson = function() {
-          var out = []
+          var out = {}
           var cb = function(error,results) {
-              out.push(results)
+              out["data"]=results
               console.log(out)
+              saveToFile("data.json",JSON.stringify(out))
           }
           d3.json("/ls",function(d){
-            out.push(d)
+            out["meta"]=d
             var q = d3.queue(2)
             console.log(d)
             d.forEach(function(d) {
@@ -232,6 +234,13 @@
             })
             q.awaitAll(cb)
           })
+        }
+        var saveToFile = function(fn,c) {
+          var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(c);
+          var dlAnchorElem = document.getElementById('downloadAnchorElem');
+          dlAnchorElem.setAttribute("href",     dataStr   );
+          dlAnchorElem.setAttribute("download", fn);
+          dlAnchorElem.click();
         }
         d3.select("#getJson").on('click',function(){
           getJson()

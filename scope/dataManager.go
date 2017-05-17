@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -46,7 +48,64 @@ func newDataManager(dbname string, uri string, format string) DataManager {
 	case "hic":
 		return NewHicManager(uri, dbname)
 	}
-	return NewFileManager(uri, dbname)
+	return nil
+}
+func initDataManager(dbname string, format string) DataManager {
+	switch format {
+	case "file":
+		return InitFileManager(dbname)
+	case "bigwig":
+		return InitBigWigManager(dbname)
+	case "hic":
+		return InitHicManager(dbname)
+	}
+	return nil
+}
+func ReadJsonToManagers(uri string, router *mux.Router) map[string]DataManager {
+	m := map[string]DataManager{}
+	r, err := stream.NewSeekableStreamReader(uri)
+	checkErr(err)
+	var dat map[string]interface{}
+	byt, err := ioutil.ReadAll(r)
+	checkErr(err)
+	if err = json.Unmarshal(byt, &dat); err != nil {
+		panic(err)
+	}
+	data := dat["data"].([]interface{})
+	meta := dat["meta"].([]interface{})
+	jdata := []map[string]string{}
+	entry := []string{}
+	for i, v := range meta {
+		fmt.Println(i, v, data[i])
+		v1 := v.(map[string]interface{})
+		format, _ := v1["format"].(string)
+		dbname, _ := v1["dbname"].(string)
+		dm := initDataManager(dbname, format)
+		m[dbname] = dm
+		jdata = append(jdata, map[string]string{
+			"dbname": dbname,
+			"uri":    "null",
+			"format": format,
+		})
+		entry = append(entry, dbname)
+		for k, v := range data[i].(map[string]interface{}) {
+			fmt.Println("add", v.(string), "as", k, "in db", dbname)
+			dm.AddURI(v.(string), k)
+		}
+		dm.ServeTo(router)
+	}
+	router.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
+		e, _ := json.Marshal(entry)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write(e)
+	})
+	router.HandleFunc("/ls", func(w http.ResponseWriter, r *http.Request) {
+		e, _ := json.Marshal(jdata)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write(e)
+	})
+	//TODO Load Data Manager (loadDataManager)
+	return m
 }
 
 func AddDataManagers(uri string, router *mux.Router) map[string]DataManager {

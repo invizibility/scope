@@ -70,6 +70,16 @@ func NewHicManager(uri string, dbname string) *HicManager {
 	//m.ServeTo(router)
 	return &m
 }
+func InitHicManager(dbname string) *HicManager {
+	uriMap := make(map[string]string)
+	dataMap := make(map[string]*hic.HiC)
+	m := HicManager{
+		uriMap,
+		dataMap,
+		dbname,
+	}
+	return &m
+}
 
 func readhic(uri string) *hic.HiC {
 	reader, err := stream.NewSeekableStreamReader(uri)

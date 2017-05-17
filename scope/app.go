@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -29,9 +30,13 @@ func CmdApp(c *cli.Context) error {
 	var err error
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-
-	managers := AddDataManagers(uri, router)
-
+	var managers map[string]DataManager
+	ext := path.Ext(uri)
+	if ext == ".json" {
+		managers = ReadJsonToManagers(uri, router)
+	} else {
+		managers = AddDataManagers(uri, router)
+	}
 	/* add Socket */
 	chatroom := "scope"
 

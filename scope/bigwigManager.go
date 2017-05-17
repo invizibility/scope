@@ -74,3 +74,14 @@ func NewBigWigManager(uri string, dbname string) *BigWigManager {
 	//m.ServeTo(router)
 	return &m
 }
+
+func InitBigWigManager(dbname string) *BigWigManager {
+	uriMap := make(map[string]string)
+	bwMap := make(map[string]*BigWigReader)
+	m := BigWigManager{
+		uriMap,
+		bwMap,
+		dbname,
+	}
+	return &m
+}

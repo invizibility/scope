@@ -123,3 +123,12 @@ func NewFileManager(uri string, dbname string) *FileManager {
 	}
 	return &m
 }
+
+func InitFileManager(dbname string) *FileManager {
+	uriMap := make(map[string]string)
+	m := FileManager{
+		uriMap,
+		dbname,
+	}
+	return &m
+}
