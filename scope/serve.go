@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,13 @@ func CmdServe(c *cli.Context) error {
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
 	//addData(c, router)
-	AddDataManagers(uri, router)
+	//var managers map[string]DataManager
+	ext := path.Ext(uri)
+	if ext == ".json" {
+		ReadJsonToManagers(uri, router)
+	} else {
+		AddDataManagers(uri, router)
+	}
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))

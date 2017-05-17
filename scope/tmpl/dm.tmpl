@@ -53,6 +53,8 @@
         <button id="getJson">Dowload as Json</button>
         </div>
         <div id="layoutContainer">
+          <div id="message">
+          </div>
 
         </div>
         <a id="downloadAnchorElem" style="display:none"></a>
@@ -62,7 +64,8 @@
     window.onload = function() {
         var isAstilectron = false
 
-        var dispatch = d3.dispatch("send", "openfile")
+        var dispatch = d3.dispatch("send", "openfile","del")
+        window.dispatch = dispatch
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
             isAstilectron = true;
@@ -89,7 +92,14 @@
             })
 
         })
+        dispatch.on("del",function(d){
+          console.log("del",d)
+          var name = d.dbname.replace("_grid_","")
+          //var row = d.row
+          console.log(name)
+          console.log(window[d.dbname])
 
+        })
 
         var metadata = [];
         metadata.push({
@@ -122,12 +132,12 @@
                     this.setCellRenderer("action", new CellRenderer({
                         render: function(cell, value) {
                           //TODO Remove Line From Data Manager.
-                            cell.innerHTML = "<a onclick=\"if (confirm('Are you sure you want to delete this entry? ')) window['"+gridName+"'].remove(" + cell.rowIndex + ");\" style=\"cursor:pointer\">" + "<span><i class='glyphicon glyphicon-remove'></i></span></a>";
+                            cell.innerHTML = "<a onclick=\"if (confirm('Are you sure you want to delete this entry? ')) {dispatch.call('del',this,{dbname:'"+gridName+"',id:'"+window[gridName].getValueAt(cell.rowIndex,0)+"'}); window['"+gridName+"'].remove(" + cell.rowIndex + ")};\" style=\"cursor:pointer\">" + "<span><i class='glyphicon glyphicon-remove'></i></span></a>";
                         }
                     }));
                 },
                 modelChanged: function(rowIdx, colIdx, oldValue, newValue, row) {
-                    //_$("message").innerHTML = "<p class='ok'>New value is '" + newValue + "'</p>";
+                    _$("message").innerHTML = "<p class='ok'>New value is '" + newValue + "'</p>";
                 },
                 pageSize: 100
             });
