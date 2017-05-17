@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	astilectron "github.com/asticode/go-astilectron"
 	"github.com/gorilla/mux"
 	"github.com/nimezhu/stream"
 )
@@ -77,4 +78,36 @@ func AddDataManagers(uri string, router *mux.Router) map[string]DataManager {
 	})
 
 	return m
+}
+
+func AddAsticodeToWindow(w *astilectron.Window, dbmap map[string]DataManager) {
+	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
+		var m string
+		var dat map[string]interface{}
+		e.Message.Unmarshal(&m)
+		if err := json.Unmarshal([]byte(m), &dat); err != nil {
+			panic(err)
+		}
+		if dat["code"] == "add" {
+			prefix, ok1 := dat["prefix"].(string) // prefix(dbname) start with \/
+			id, ok2 := dat["id"].(string)
+			uri, ok3 := dat["uri"].(string)
+			if ok1 && ok2 && ok3 {
+				if dbi, ok := dbmap[prefix]; ok {
+					dbi.AddURI(id, uri)
+				}
+			}
+		}
+		if dat["code"] == "del" {
+			prefix, ok1 := dat["prefix"].(string) //prefix(dbname) start with \/
+			id, ok2 := dat["id"].(string)
+			//uri, ok3 := dat["uri"].(string)
+			if ok1 && ok2 {
+				if dbi, ok := dbmap[prefix]; ok {
+					dbi.Del(id)
+				}
+			}
+		}
+		return false
+	})
 }
