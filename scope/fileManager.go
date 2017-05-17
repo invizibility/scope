@@ -28,7 +28,7 @@ type FileManager struct {
 	prefix string
 }
 
-func (m *FileManager) AddURI(key string, uri string) error {
+func (m *FileManager) AddURI(uri string, key string) error {
 	_, ok := m.uri[key]
 	if ok {
 		return errors.New("duplicated key string")

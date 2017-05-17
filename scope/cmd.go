@@ -77,8 +77,24 @@ func main() {
 		},
 		{
 			Name:   "data",
-			Usage:  "start data manager",
+			Usage:  "start data server",
 			Action: CmdData,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input,I",
+					Usage: "manager file",
+				},
+				cli.IntFlag{
+					Name:  "port,p",
+					Usage: "data server port",
+					Value: 5050,
+				},
+			},
+		},
+		{
+			Name:   "datam",
+			Usage:  "start data manager",
+			Action: CmdDM,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "input,I",

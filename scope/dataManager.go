@@ -13,7 +13,7 @@ import (
 )
 
 type DataManager interface {
-	AddURI(string, string) error
+	AddURI(uri string, key string) error
 	Del(string) error
 	ServeTo(*mux.Router)
 	List() []string
@@ -92,9 +92,12 @@ func AddAsticodeToWindow(w *astilectron.Window, dbmap map[string]DataManager) {
 			prefix, ok1 := dat["prefix"].(string) // prefix(dbname) start with \/
 			id, ok2 := dat["id"].(string)
 			uri, ok3 := dat["uri"].(string)
+			//log.Println("add from web", prefix, id, uri)
+			//log.Println(ok1, ok2, ok3)
 			if ok1 && ok2 && ok3 {
 				if dbi, ok := dbmap[prefix]; ok {
-					dbi.AddURI(id, uri)
+					//log.Println("adding", ok)
+					dbi.AddURI(uri, id)
 				}
 			}
 		}
