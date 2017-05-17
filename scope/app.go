@@ -192,66 +192,7 @@ func CmdApp(c *cli.Context) error {
 				createNewWindow(a, port, 1000, 618, "dm", ws, 0, app, ch)
 				w1 = ws[0]
 				fmt.Println(w1)
-				w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
-					var m string
-					var dat map[string]interface{}
-					e.Message.Unmarshal(&m)
-					astilog.Infof("Received message %s", m)
-					if err = json.Unmarshal([]byte(m), &dat); err != nil {
-						panic(err)
-					}
-					if dat["code"] == "add" {
-						uri, ok1 := dat["uri"].(string)
-						dbname, ok2 := dat["prefix"].(string)
-						id, ok3 := dat["id"].(string)
-						//fmt.Println("window message : load bigwig ", d)
-						//a := strings.Split(d, "/")
-						if ok1 && ok2 && ok3 {
-							if dbi, ok := managers[dbname]; ok {
-								//log.Println("adding", ok)
-								dbi.AddURI(uri, id)
-							}
-						}
-					}
-					/*
-						if dat["code"] == "loadBw" {
-							d, _ := dat["data"].(string)
-							fmt.Println("window message : load bigwig ", d)
-							a := strings.Split(d, "/")
-							bwManager.AddURI(d, a[len(a)-1])
-						}
-
-						if dat["code"] == "loadHic" {
-							d, _ := dat["data"].(string)
-							fmt.Println("window message : load hic ", d)
-							a := strings.Split(d, "/")
-							hicManager.AddURI(d, a[len(a)-1])
-						}
-						if dat["code"] == "info" {
-							fmt.Println("bigwigs", bwManager.List())
-							fmt.Println("hics", hicManager.List())
-							//TODO.
-							k := make(map[string]interface{})
-							k["code"] = "info"
-							k["hic"] = hicManager.List()
-							for e := range IterEntry(hicManager) {
-								fmt.Println(e)
-							}
-							k["bigwig"] = bwManager.List()
-							for e2 := range IterEntry(bwManager) {
-								fmt.Println(e2)
-							}
-							s, err1 := json.Marshal(k)
-							if err1 == nil {
-								w1.Send(string(s))
-
-							} else {
-								log.Println(err1)
-							}
-						}
-					*/
-					return
-				})
+				AddAsticodeToWindow(w1, managers)
 			}()
 		}
 		return false
