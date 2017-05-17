@@ -97,7 +97,13 @@
           var name = d.dbname.replace("_grid_","")
           //var row = d.row
           console.log(name)
-          console.log(window[d.dbname])
+          dispatch.call("send",this, JSON.stringify({
+            "code":"del",
+            "dbname": name, //TODO prefix?
+            "id":d.id,
+      
+          }))
+          //console.log(window[d.dbname])
 
         })
 
