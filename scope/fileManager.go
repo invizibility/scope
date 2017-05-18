@@ -11,21 +11,11 @@ import (
 	"github.com/nimezhu/stream"
 )
 
-/*
- * implement Files (loaded URL in webpage?)
- * Data Manager interface
- *    type DataManager interface {
- 	      AddURI(string, string) error
- 	      Del(string) error
- 	      ServeTo(*mux.Router)
- 	      List() []string
- 	      Get(string) (string, bool)
-      }
-*/
 type FileManager struct {
 	uri map[string]string
 	//data   map[string]io.ReadSeeker
-	dbname string
+	dbname    string
+	bufferMap map[string][]byte
 }
 
 func (m *FileManager) AddURI(uri string, key string) error {
@@ -51,6 +41,12 @@ func (m *FileManager) Del(key string) error {
 	}
 	//delete(m.data, key)
 	delete(m.uri, key)
+
+	_, ok2 := m.bufferMap[key]
+	if ok2 {
+		delete(m.bufferMap, key)
+	}
+	//delete(m.data, key)
 	return nil
 }
 
@@ -82,11 +78,16 @@ func (m *FileManager) Move(key1 string, key2 string) bool {
 		m.uri[key2] = v
 		delete(m.uri, key1)
 	}
+	b, ok2 := m.bufferMap[key1]
+	if ok2 {
+		m.bufferMap[key2] = b
+		delete(m.bufferMap, key1)
+	}
 	return ok
 }
 
 func (m *FileManager) initBuffersHandle(router *mux.Router) {
-	bufferMap := make(map[string][]byte)
+	//bufferMap := make(map[string][]byte)
 	prefix := "/" + m.dbname
 	router.HandleFunc(prefix+"/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -101,7 +102,7 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
 		id := params["id"]
-		content, ok := bufferMap[id]
+		content, ok := m.bufferMap[id]
 		if ok {
 			w.Write(content)
 		} else {
@@ -112,7 +113,7 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 				if err != nil {
 					log.Println("error load " + id)
 				} else {
-					bufferMap[id], _ = ioutil.ReadAll(r)
+					m.bufferMap[id], _ = ioutil.ReadAll(r)
 					w.Write(bufferMap[id])
 				}
 			} else {
@@ -125,18 +126,22 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 
 func NewFileManager(uri string, dbname string) *FileManager {
 	uriMap := LoadURI(uri)
+	bufferMap := make(map[string][]byte)
 	m := FileManager{
 		uriMap,
 		dbname,
+		bufferMap,
 	}
 	return &m
 }
 
 func InitFileManager(dbname string) *FileManager {
 	uriMap := make(map[string]string)
+	bufferMap := make(map[string][]byte)
 	m := FileManager{
 		uriMap,
 		dbname,
+		bufferMap,
 	}
 	return &m
 }
