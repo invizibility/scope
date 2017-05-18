@@ -1,5 +1,5 @@
 ```
-scope -I data.tsv
+scope app -I data.tsv
 
 ```
 
