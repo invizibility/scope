@@ -32,6 +32,17 @@ func (m *HicManager) Get(key string) (string, bool) {
 	v, ok := m.uriMap[key]
 	return v, ok
 }
+func (m *HicManager) Move(key1 string, key2 string) bool {
+	v, ok1 := m.uriMap[key1]
+	d, ok2 := m.dataMap[key1]
+	if ok1 && ok2 {
+		m.uriMap[key2] = v
+		m.dataMap[key2] = d
+		delete(m.uriMap, key1)
+		delete(m.dataMap, key1)
+	}
+	return ok1 && ok2
+}
 func (m *HicManager) List() []string {
 	keys := []string{}
 	for k, _ := range m.uriMap {

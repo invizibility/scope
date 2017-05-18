@@ -76,6 +76,14 @@ func (m *FileManager) Get(key string) (string, bool) {
 	v, ok := m.uri[key]
 	return v, ok
 }
+func (m *FileManager) Move(key1 string, key2 string) bool {
+	v, ok := m.uri[key1]
+	if ok {
+		m.uri[key2] = v
+		delete(m.uri, key1)
+	}
+	return ok
+}
 
 func (m *FileManager) initBuffersHandle(router *mux.Router) {
 	bufferMap := make(map[string][]byte)

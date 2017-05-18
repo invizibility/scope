@@ -55,7 +55,8 @@
         <div id="layoutContainer">
           <div id="message">
           </div>
-
+          <div id="dataMap">
+          </div>
         </div>
         <a id="downloadAnchorElem" style="display:none"></a>
     </div>
@@ -64,7 +65,7 @@
     window.onload = function() {
         var isAstilectron = false
 
-        var dispatch = d3.dispatch("send", "openfile","del")
+        var dispatch = d3.dispatch("send", "openfile","del","move")
         window.dispatch = dispatch
         document.addEventListener('astilectron-ready', function() {
             // This will listen to messages sent by GO
@@ -101,10 +102,15 @@
             "code":"del",
             "dbname": name, //TODO prefix?
             "id":d.id,
-      
+
           }))
           //console.log(window[d.dbname])
 
+        })
+        dispatch.on("move",function(d){
+          d.code = "move"
+          console.log("MOVE",d)
+          dispatch.call("send",this, JSON.stringify(d))
         })
 
         var metadata = [];
@@ -112,7 +118,7 @@
             name: "shortLabel",
             label: "LABEL",
             datatype: "string",
-            editable: false
+            editable: true
         });
         metadata.push({
             name: "url",
@@ -144,6 +150,7 @@
                 },
                 modelChanged: function(rowIdx, colIdx, oldValue, newValue, row) {
                     _$("message").innerHTML = "<p class='ok'>New value is '" + newValue + "'</p>";
+                    dispatch.call("move",this,{"dbname":gridName.replace("_grid_",""),"from":oldValue,"to":newValue})
                 },
                 pageSize: 100
             });
@@ -155,9 +162,6 @@
         var data = []
         var simple = function() {
             var chart = function(selection) {
-
-
-
                 selection.each(function(d) {
                     var header = d3.select(this).append("div").classed("header",true)
                     header.append("h3").classed("title",true).text(d.name)
@@ -203,7 +207,7 @@
             return chart;
         }
         //var prefixs;
-        var container = d3.select("#layoutContainer")
+        var container = d3.select("#dataMap")
         var dm = simple();
 
         var ready = function(error, results) {

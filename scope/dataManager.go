@@ -19,6 +19,7 @@ type DataManager interface {
 	ServeTo(*mux.Router)
 	List() []string
 	Get(string) (string, bool)
+	Move(key1 string, key2 string) bool
 }
 type Entry struct {
 	Name string
@@ -176,6 +177,17 @@ func AddAsticodeToWindow(w *astilectron.Window, dbmap map[string]DataManager) {
 			if ok1 && ok2 {
 				if dbi, ok := dbmap[dbname]; ok {
 					dbi.Del(id)
+				}
+			}
+		}
+		if dat["code"] == "move" {
+			log.Println(dat)
+			dbname, ok1 := dat["dbname"].(string) //prefix(dbname) start with \/
+			id1, ok2 := dat["from"].(string)
+			id2, ok3 := dat["to"].(string)
+			if ok1 && ok2 && ok3 {
+				if dbi, ok := dbmap[dbname]; ok {
+					dbi.Move(id1, id2)
 				}
 			}
 		}
