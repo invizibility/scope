@@ -17,3 +17,6 @@ hic.tsv example
 K562    /path/to/K562_combined.hic
 GM12878    /path/to/GM12878_combined.hic
 ```
+
+### Download Binary
+[Download Dist](http://genome.compbio.cs.cmu.edu/~xiaopenz/scope/dist)
