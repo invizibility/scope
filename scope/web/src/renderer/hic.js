@@ -15,6 +15,7 @@ export default function (layout, container, state, app) {
         "bigwig": false,
         "hic": false
     }
+    var server = app["server"] || ""
     var hic = {}
     var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor")
     var main = d3.select(container.getElement()[0])
@@ -148,10 +149,10 @@ export default function (layout, container, state, app) {
         TO = setTimeout(resizePanel,200)
     })
 
-    var URI = "/hic/default" //TODO This For All HiC selection.
+    var URI = server + "/hic/default" //TODO This For All HiC selection.
     var hicId = localStorage.getItem("hicId")
     if (hicId) {
-        URI = "/hic/" + hicId
+        URI = server + "/hic/" + hicId
         container.setTitle(hicId)
     } else {
         hicId = ""
@@ -199,7 +200,7 @@ export default function (layout, container, state, app) {
     if (bwconfig) {
         bwconfig = JSON.parse(bwconfig)
     }
-    B.Get("/bw", initBw)
+    B.Get(server + "/bw", initBw)
     H.Get(URI, initHic) //TODO get localStorage hic id
 
     var renderBigwig = function (regions) {
@@ -222,7 +223,7 @@ export default function (layout, container, state, app) {
         tracks.forEach(function (b, i) {
             bw.push(
                 B.canvas()
-                .URI("/bw") //set this?
+                .URI(server + "/bw") //set this?
                 .id(b)
                 .x(10)
                 .y(scope.edge / 2 + 40 + i * 80)

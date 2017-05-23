@@ -70,20 +70,29 @@
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
         var updateLinks = function(app) {
-          d3.select("#miView").attr("href",
-          "/v1/index.html?species="+app.species+"&genome="+app.genome)
+          var para = [];
+          for (var k in app) {
+            para.push(k+"="+app[k])
+          }
+          var paras = para.join("&")
+          var link = "/v1/index.html?"+paras
+          d3.select("#miView").attr("href",link)
+          d3.select("#miEdit").attr("href","/v1/edit.html?"+paras)
         }
-        var stateId = {{ template "id"  }}
-
-
+        var stateId = "ScopeE7"
         var renders = {
             "3d": S.render.dna3d
         }
         var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
         var app = {
             "species": S.toolsGetUrlParam("species") || "human",
-            "genome": S.toolsGetUrlParam("genome") || "hg19"
+            "genome": S.toolsGetUrlParam("genome") || "hg19",
+            //"server":S.toolsGetUrlParam("server") || null
         }  // parameters. Global.
+        var server = S.toolsGetUrlParam("server")
+        if (server) {
+          app["server"]=server
+        }
         updateLinks(app)
         var dispatch = d3.dispatch("initWindows","initPanels","input","resize", "saveState", "add", "exportState", "exportStates","exportStatesToFile","importState","importStates","saveToElectron", "closeExt","sendToElectron")
 
@@ -103,6 +112,9 @@
                     var v = message.split(" ")
                     app["species"]=v[1]
                     app["genome"]=v[2]
+                    if (v.length > 3) {
+                      app["server"] = v[3]
+                    }
                     updateLinks(app)
                 } else if (readFile.test(message)) {
                   var v = message.replace("file ","");

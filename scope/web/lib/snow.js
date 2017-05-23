@@ -2567,6 +2567,7 @@ var hic = function (layout, container, state, app) {
         "bigwig": false,
         "hic": false
     };
+    var server = app["server"] || "";
     var hic = {};
     var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor");
     var main = d3.select(container.getElement()[0])
@@ -2700,10 +2701,10 @@ var hic = function (layout, container, state, app) {
         TO = setTimeout(resizePanel,200);
     });
 
-    var URI = "/hic/default"; //TODO This For All HiC selection.
+    var URI = server + "/hic/default"; //TODO This For All HiC selection.
     var hicId = localStorage.getItem("hicId");
     if (hicId) {
-        URI = "/hic/" + hicId;
+        URI = server + "/hic/" + hicId;
         container.setTitle(hicId);
     } else {
         hicId = "";
@@ -2751,7 +2752,7 @@ var hic = function (layout, container, state, app) {
     if (bwconfig) {
         bwconfig = JSON.parse(bwconfig);
     }
-    B.Get("/bw", initBw);
+    B.Get(server + "/bw", initBw);
     H.Get(URI, initHic); //TODO get localStorage hic id
 
     var renderBigwig = function (regions) {
@@ -2774,7 +2775,7 @@ var hic = function (layout, container, state, app) {
         tracks.forEach(function (b, i) {
             bw.push(
                 B.canvas()
-                .URI("/bw") //set this?
+                .URI(server + "/bw") //set this?
                 .id(b)
                 .x(10)
                 .y(scope.edge / 2 + 40 + i * 80)
@@ -3017,6 +3018,7 @@ var hicMonitor = function (layout, container, state, app) {
         "hic": false
     };
     var hic = {};
+    var server = app["server"] || "";
     var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor");
     var main = d3.select(container.getElement()[0])
         .append("div")
@@ -3060,14 +3062,14 @@ var hicMonitor = function (layout, container, state, app) {
 
         var uri = cfg.append("select");
 
-        d3.json("/hic/list",function(d){  //TODO Server
+        d3.json(server + "/hic/list",function(d){  //TODO Server
           console.log("hic data",d);
           uri.selectAll("option")
              .data(d)
              .enter()
              .append("option")
              .attr("value",function(d){
-               return "/hic/"+d;  //TODO Server
+               return server + "/hic/"+d;  //TODO Server
              })
              .text(function(d){
                return d
@@ -3133,7 +3135,7 @@ var hicMonitor = function (layout, container, state, app) {
         TO = setTimeout(resizePanel, 200);
     });
 
-    var URI = state.URI || "/hic/default"; //need to set it if could.
+    var URI = state.URI || server+"/hic/default"; //need to set it if could.
     var testBeds = [{
             chr: "chr1",
             start: 0,

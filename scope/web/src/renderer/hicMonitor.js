@@ -17,6 +17,7 @@ export default function (layout, container, state, app) {
         "hic": false
     }
     var hic = {}
+    var server = app["server"] || ""
     var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor")
     var main = d3.select(container.getElement()[0])
         .append("div")
@@ -60,14 +61,14 @@ export default function (layout, container, state, app) {
 
         var uri = cfg.append("select")
 
-        d3.json("/hic/list",function(d){  //TODO Server
+        d3.json(server + "/hic/list",function(d){  //TODO Server
           console.log("hic data",d)
           uri.selectAll("option")
              .data(d)
              .enter()
              .append("option")
              .attr("value",function(d){
-               return "/hic/"+d;  //TODO Server
+               return server + "/hic/"+d;  //TODO Server
              })
              .text(function(d){
                return d
@@ -133,7 +134,7 @@ export default function (layout, container, state, app) {
         TO = setTimeout(resizePanel, 200)
     })
 
-    var URI = state.URI || "/hic/default" //need to set it if could.
+    var URI = state.URI || server+"/hic/default" //need to set it if could.
     var testBeds = [{
             chr: "chr1",
             start: 0,

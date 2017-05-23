@@ -114,7 +114,7 @@ func (m *FileManager) initBuffersHandle(router *mux.Router) {
 					log.Println("error load " + id)
 				} else {
 					m.bufferMap[id], _ = ioutil.ReadAll(r)
-					w.Write(bufferMap[id])
+					w.Write(m.bufferMap[id])
 				}
 			} else {
 				w.Write([]byte("file not found"))

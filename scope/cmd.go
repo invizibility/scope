@@ -76,6 +76,22 @@ func main() {
 			},
 		},
 		{
+			Name:   "connect",
+			Usage:  "start application",
+			Action: CmdConnect,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input,I",
+					Usage: "data server url",
+				},
+				cli.IntFlag{
+					Name:  "port,p",
+					Usage: "data server port",
+					Value: 5050,
+				},
+			},
+		},
+		{
 			Name:   "data",
 			Usage:  "start data server",
 			Action: CmdData,

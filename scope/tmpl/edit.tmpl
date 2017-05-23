@@ -5,6 +5,7 @@
     <title>{{template "title"}}</title>
     {{template "lib"}}
     <script src="/plugins/editablegrid/editablegrid.min.js"></script>
+    <script src="/lib0/snow.js"></script>
 
     <link rel="stylesheet" href="/plugins/editablegrid/editablegrid.css" type="text/css" media="screen"> {{template "css"}}
     <style>
@@ -70,6 +71,7 @@
 </body>
 <script>
     window.onload = function() {
+        var S = snow;
         var trans = function(d) {
             var r = []
             d.forEach(function(d) {
@@ -80,7 +82,19 @@
             })
             return r
         }
-        var URI = ""
+        var updateLinks = function(app) {
+          var para = [];
+          for (var k in app) {
+            para.push(k+"="+app[k])
+          }
+          var paras = para.join("&")
+          var link = "/v1/index.html?"+paras
+          d3.select("#miView").attr("href",link)
+          d3.select("#miEdit").attr("href","/v1/edit.html?"+paras)
+        }
+
+        var URI = S.toolsGetUrlParam("server") || ""
+
         var stateId = "bwconfig"
         var metadata = [];
         metadata.push({
@@ -198,7 +212,7 @@
             });
             localStorage.setItem(stateId, state);
             localStorage.setItem('hicId', $("#hicselect").val())
-            window.location.replace("/v1/index.html")
+            window.location.replace("/v1/index.html")//TODO.
         })
 
     }
