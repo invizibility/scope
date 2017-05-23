@@ -55,8 +55,6 @@
           var link = server + "/v1/"+name+".html?"+paras
           return link
         }
-
-
         var stateId = "ScopeE7"
         var links = []
         d3.json(server+"/config/ls",function(d){
@@ -78,12 +76,6 @@
           .enter()
           .append("div")
           .classed("panel",true)
-          //.append("a")
-          /*
-          .attr("href",function(d){
-            return d.link
-          })
-          */
           .text(function(d){
             return d.name
           })

@@ -2,220 +2,246 @@
 <html>
 
 <head>
-    <title>{{template "title"}}</title>
-    {{template "lib"}}
-    <script src="/plugins/editablegrid/editablegrid.min.js"></script>
-    <script src="/lib0/snow.js"></script>
+  <title>{{template "title"}}</title>
+  {{template "lib"}}
+  <script src="/plugins/editablegrid/editablegrid.min.js"></script>
+  <script src="/lib0/snow.js"></script>
 
-    <link rel="stylesheet" href="/plugins/editablegrid/editablegrid.css" type="text/css" media="screen"> {{template "css"}}
-    <style>
-        h1 {
-            font-size: 15px;
-        }
+  <link rel="stylesheet" href="/plugins/editablegrid/editablegrid.css" type="text/css" media="screen"> {{template "css"}}
+  <style>
+    h1 {
+      font-size: 15px;
+    }
 
-        a {
-            color: #548dc4;
-            text-decoration: none;
-        }
+    a {
+      color: #548dc4;
+      text-decoration: none;
+    }
 
-        a:hover {
-            text-decoration: underline;
-        }
+    a:hover {
+      text-decoration: underline;
+    }
 
-        table.datagrid {
-            border-collapse: collapse;
-            border: 1px solid #CCB;
-            width: 800px;
-        }
+    table.datagrid {
+      border-collapse: collapse;
+      border: 1px solid #CCB;
+      width: 800px;
+    }
 
-        table.datagrid td,
-        table.datagrid th {
-            padding: 5px;
-            border: 1px solid #E0E0E0;
-        }
+    table.datagrid td,
+    table.datagrid th {
+      padding: 5px;
+      border: 1px solid #E0E0E0;
+    }
 
-        table.datagrid th {
-            background: #E5E5E5;
-            text-align: left;
-        }
+    table.datagrid th {
+      background: #E5E5E5;
+      text-align: left;
+    }
 
-        input.invalid {
-            background: red;
-            color: #FDFDFD;
-        }
-    </style>
-    <link rel="stylesheet" href="/style0/snow.css">
+    input.invalid {
+      background: red;
+      color: #FDFDFD;
+    }
+  </style>
+  <link rel="stylesheet" href="/style0/snow.css">
 </head>
 
 <body>
-    {{template "menubar"}}
-    <div id="wrapper">
-        <ul id="menuContainer"></ul>
-        <div id="layoutContainer" style="padding:20px">
-            <div id="message"></div>
-            <div id="hic">
-                <label>HiC Data </label>
-                <select id="hicselect">
+  {{template "menubar"}}
+  <div id="wrapper">
+    <ul id="menuContainer"></ul>
+    <div id="layoutContainer" style="padding:20px">
+      <div id="message"></div>
+      <div id="hic">
+        <label>HiC Data </label>
+        <select id="hicselect">
               </select>
-            </div>
-            <div id="bw">
-                <label>BigWig Data </label>
-                <div id="bwdata">
-                </div>
-            </div>
-            <div>
-                <button id="submit">submit</button>
-            </div>
+      </div>
+      <div id="bw">
+        <label>BigWig Data </label>
+        <div id="bwdata">
         </div>
+      </div>
+      <div>
+        <button id="submit">submit</button>
+      </div>
     </div>
+  </div>
 </body>
 <script>
-    window.onload = function() {
-        var S = snow;
-        var trans = function(d) {
-            var r = []
-            d.forEach(function(d) {
-                r.push({
-                    id: d.id,
-                    values: d.columns
-                })
-            })
-            return r
+  window.onload = function() {
+    var isAstilectron = false;
+    document.addEventListener('astilectron-ready', function() {
+      isAstilectron = true;
+    })
+    var S = snow;
+    var trans = function(d) {
+      var r = []
+      d.forEach(function(d) {
+        r.push({
+          id: d.id,
+          values: d.columns
+        })
+      })
+      return r
+    }
+    var generateLinks = function(name, app) {
+      var para = [];
+      for (var k in app) {
+        para.push(k + "=" + app[k])
+      }
+      var paras = para.join("&")
+      var link = "/v1/" + name + ".html?" + paras
+      return server + link
+    }
+    var updateLinks = function(app) {
+      d3.select("#miView").on("click", function() {
+        if (isAstilectron) {
+          window.location.replace(generateLinks("index", app))
+        } else {
+          window.location.replace(generateLinks("web", app))
         }
-        var updateLinks = function(app) {
-          var para = [];
-          for (var k in app) {
-            para.push(k+"="+app[k])
+      })
+      d3.select("#miEdit").attr("href", generateLinks("edit", app))
+    }
+
+    var URI = S.toolsGetUrlParam("server") || ""
+    var app = {
+      "species": S.toolsGetUrlParam("species") || "human",
+      "genome": S.toolsGetUrlParam("genome") || "hg19",
+      "server": URI,
+    }
+    updateLinks(app)
+    var server = URI //TODO
+    var stateId = "bwconfig"
+    var metadata = [];
+    metadata.push({
+      name: "shortLabel",
+      label: "LABEL",
+      datatype: "string",
+      editable: false
+    });
+    metadata.push({
+      name: "view",
+      label: "VIEW",
+      datatype: "string",
+      editable: true,
+      values: {
+        "hidden": "hidden",
+        "show": "show"
+      }
+    })
+    metadata.push({
+      name: "action",
+      label: "ACTION",
+      datatype: "html",
+      editable: false
+    })
+
+    editableGrid = new EditableGrid("DemoGridJsData", {
+      tableLoaded: function() {
+        console.log("tableLoaded")
+      },
+      tableRendered: function() {
+        console.log("tableRendered");
+
+        this.setCellRenderer("action", new CellRenderer({
+          render: function(cell, value) {
+            cell.innerHTML = "<a onclick=\"if (confirm('Are you sure you want to delete this entry? ')) editableGrid.remove(" + cell.rowIndex + ");\" style=\"cursor:pointer\">" +
+              "<span><i class='glyphicon glyphicon-remove'></i></span></a>";
           }
-          var paras = para.join("&")
-          var link = "/v1/index.html?"+paras
-          d3.select("#miView").attr("href",link)
-          d3.select("#miEdit").attr("href","/v1/edit.html?"+paras)
-        }
+        }));
+      },
+      modelChanged: function(rowIdx, colIdx, oldValue, newValue, row) {
+        _$("message").innerHTML = "<p class='ok'>New value is '" + newValue + "'</p>";
+      },
+      pageSize: 100
+    });
 
-        var URI = S.toolsGetUrlParam("server") || ""
 
-        var stateId = "bwconfig"
-        var metadata = [];
-        metadata.push({
-            name: "shortLabel",
-            label: "LABEL",
-            datatype: "string",
-            editable: false
-        });
-        metadata.push({
-            name: "view",
-            label: "VIEW",
-            datatype: "string",
-            editable: true,
-            values: {
-                "hidden": "hidden",
-                "show": "show"
-            }
+    var data = []
+    var ready = function(error, results) {
+      if (error) throw error;
+      var bw = results[0];
+      var hic = results[1];
+      //d3.select("#bw").html(JSON.stringify(bw))
+      d3.select("#hicselect")
+        .selectAll("option")
+        .data(hic)
+        .enter()
+        .append("option")
+        .attr("value", function(d) {
+          return d
         })
-        metadata.push({
-            name: "action",
-            label: "ACTION",
-            datatype: "html",
-            editable: false
+        .append("text")
+        .text(function(d) {
+          return d;
         })
-
-        editableGrid = new EditableGrid("DemoGridJsData", {
-            tableLoaded: function() {
-                console.log("tableLoaded")
-            },
-            tableRendered: function() {
-                console.log("tableRendered");
-
-                this.setCellRenderer("action", new CellRenderer({
-                    render: function(cell, value) {
-                        cell.innerHTML = "<a onclick=\"if (confirm('Are you sure you want to delete this entry? ')) editableGrid.remove(" + cell.rowIndex + ");\" style=\"cursor:pointer\">" +
-                            "<span><i class='glyphicon glyphicon-remove'></i></span></a>";
-                    }
-                }));
-            },
-            modelChanged: function(rowIdx, colIdx, oldValue, newValue, row) {
-                _$("message").innerHTML = "<p class='ok'>New value is '" + newValue + "'</p>";
-            },
-            pageSize: 100
-        });
-
-
-        var data = []
-        var ready = function(error, results) {
-            if (error) throw error;
-            var bw = results[0];
-            var hic = results[1];
-            //d3.select("#bw").html(JSON.stringify(bw))
-            d3.select("#hicselect")
-                .selectAll("option")
-                .data(hic)
-                .enter()
-                .append("option")
-                .attr("value", function(d) {
-                    return d
-                })
-                .append("text")
-                .text(function(d) {
-                    return d;
-                })
-            //var data = []
-            bw.forEach(function(d, i) {
-                data.push({
-                    id: i + 1,
-                    values: {
-                        shortLabel: d,
-                        view: "show"
-                    }
-                })
-            })
-            editableGrid.load({
-                "metadata": metadata,
-                "data": data
-            });
-            editableGrid.renderGrid("bwdata", "datagrid");
-
-        }
-        d3.queue(2)
-            .defer(d3.json, URI + "/bw/list")
-            .defer(d3.json, URI + "/hic/list")
-            .awaitAll(ready);
-
-        $("#save").on("click", function(d) {
-            console.log("save state")
-            console.log(editableGrid)
-            var state = JSON.stringify({
-                "metadata": metadata,
-                "data": trans(editableGrid.data)
-            });
-            localStorage.setItem(stateId, state);
+      //var data = []
+      bw.forEach(function(d, i) {
+        data.push({
+          id: i + 1,
+          values: {
+            shortLabel: d,
+            view: "show"
+          }
         })
-        $("#open").on("click", function(d) {
-            console.log("load state")
-            savedState = localStorage.getItem(stateId);
-            console.log(savedState)
-
-            editableGrid.load(JSON.parse(savedState))
-            //editableGrid.data = JSON.parse(savedState).data
-            idx = 0;
-            editableGrid.data.forEach(function(d) {
-                if (idx <= d.id) {
-                    idx = d.id + 1
-                }
-            })
-            editableGrid.renderGrid("bw", "datagrid");
-        })
-        $("#submit").on("click", function(d) {
-            var state = JSON.stringify({
-                "metadata": metadata,
-                "data": trans(editableGrid.data)
-            });
-            localStorage.setItem(stateId, state);
-            localStorage.setItem('hicId', $("#hicselect").val())
-            window.location.replace("/v1/index.html")//TODO.
-        })
+      })
+      editableGrid.load({
+        "metadata": metadata,
+        "data": data
+      });
+      editableGrid.renderGrid("bwdata", "datagrid");
 
     }
+    d3.queue(2)
+      .defer(d3.json, URI + "/bw/list")
+      .defer(d3.json, URI + "/hic/list")
+      .awaitAll(ready);
+
+    $("#save").on("click", function(d) {
+      console.log("save state")
+      console.log(editableGrid)
+      var state = JSON.stringify({
+        "metadata": metadata,
+        "data": trans(editableGrid.data)
+      });
+      localStorage.setItem(stateId, state);
+    })
+    $("#open").on("click", function(d) {
+      console.log("load state")
+      savedState = localStorage.getItem(stateId);
+      console.log(savedState)
+
+      editableGrid.load(JSON.parse(savedState))
+      //editableGrid.data = JSON.parse(savedState).data
+      idx = 0;
+      editableGrid.data.forEach(function(d) {
+        if (idx <= d.id) {
+          idx = d.id + 1
+        }
+      })
+      editableGrid.renderGrid("bw", "datagrid");
+    })
+
+
+    $("#submit").on("click", function(d) {
+      var state = JSON.stringify({
+        "metadata": metadata,
+        "data": trans(editableGrid.data)
+      });
+      localStorage.setItem(stateId, state);
+      localStorage.setItem('hicId', $("#hicselect").val())
+
+      if (isAstilectron) {
+        window.location.replace(generateLinks("index", app))
+      } else {
+        window.location.replace(generateLinks("web", app))
+      }
+    })
+
+  }
 </script>
 
 </html>
