@@ -1,8 +1,10 @@
 export default function(layout, container, state, app) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20)
 console.log(state)
-
-var dataURI = state.dataURI || "/3d/get/default"
+var server = app["server"] || ""
+console.log("server in 3d",server)
+console.log("app in 3d ",app)
+var dataURI = state.dataURI || server + "/3d/get/default"//TODO switch between 3ds
 state.dataURI = dataURI
 
 var data;
