@@ -66,6 +66,7 @@
     var url = window.location.href
     var arr = url.split("/");
     var domain = arr[0] + "//" + arr[2];
+    var server=""; //TODO
     //var dialog = require("electron").remote.dialog;
 
     (function($, d3, S) {
@@ -359,23 +360,31 @@
             initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
             for (var k in d) {
                 if (k != -1) {
-                  /*
-                    console.log(k, JSON.parse(d[k]))
-                    dispatch.call("sendToElectron", this,
-                        JSON.stringify({
-                            "code": "createExt",
-                            "data": d[k]
-
-                        }))
-                    */
+                  //TODO Create New Opener
+                  //var c = JSON.parse(d[k])
+                  var id = idx
+                  ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
+                  //TODO add warning for popup blocks.
+                  ws[id].onbeforeunload = function() {
+                      ws.delete(id)
+                  }
+                  message[id] = {code:"setState",data:JSON.parse(d[k])}
+                  //setTimeout(ws[id].postMessage(message[id],"http://127.0.0.1:5050"),5000)
+                  idx += 1
                 }
             }
 
         })
         var url = S.toolsGetUrlParam("config") || "/data/config.json"
-        d3.json(url, function(error, config) {
+        d3.json(server + url, function(error, config) {
             console.log("config", error, config)
-            initPanels(config, $('#layoutContainer'))
+            if (config[-1]) { //windows format
+              console.log(config) // config map[int]string
+              dispatch.call("initWindows",this,config)
+            } else { // one window format
+              dispatch.call("initPanels",this,config)
+            }
+
         })
         $("#sideToggle").on("click", function() {
             console.log("still click")

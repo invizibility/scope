@@ -392,7 +392,13 @@
       var url = S.toolsGetUrlParam("config") || "/data/config.json"
       d3.json(url, function(error,config){
         console.log("config",error,config)
-        initPanels(config, $('#layoutContainer'))
+        //initPanels(config, $('#layoutContainer'))
+        if (config[-1]) { //windows format
+          console.log(config) // config map[int]string
+          dispatch.call("initWindows",this,config)
+        } else { // one window format
+          dispatch.call("initPanels",this,config)
+        }
       })
       $("#sideToggle").on("click", function() {
             console.log("still click")
