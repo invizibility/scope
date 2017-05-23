@@ -79,15 +79,15 @@ func CmdConnect(c *cli.Context) error {
 				{Label: astilectron.PtrStr("Save")},
 			},
 		},
-		/*
-			{
-				Label: astilectron.PtrStr("Genome"),
-				SubMenu: []*astilectron.MenuItemOptions{
-					{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Human - hg19"), Type: astilectron.MenuItemTypeRadio},
-					{Label: astilectron.PtrStr("Mouse - mm10"), Type: astilectron.MenuItemTypeRadio},
-				},
+
+		{
+			Label: astilectron.PtrStr("Genome"),
+			SubMenu: []*astilectron.MenuItemOptions{
+				{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Human - hg19"), Type: astilectron.MenuItemTypeRadio},
+				{Label: astilectron.PtrStr("Mouse - mm10"), Type: astilectron.MenuItemTypeRadio},
 			},
-		*/
+		},
+
 		{
 			Label: astilectron.PtrStr("View"),
 			SubMenu: []*astilectron.MenuItemOptions{
@@ -123,8 +123,8 @@ func CmdConnect(c *cli.Context) error {
 	app := make(map[string]string)
 
 	//TODO Handle Multi Genomes;
-	/*　TODO get app genome in server
-	m11, _ := m.Item(1, 1)
+	//　TODO get app genome in server genome version controller
+	m11, _ := m.Item(2, 1)
 	m11.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		if app["genome"] != "mm10" || app["species"] != "mouse" {
 			app["genome"] = "mm10"
@@ -134,7 +134,7 @@ func CmdConnect(c *cli.Context) error {
 		}
 		return false
 	})
-	m10, _ := m.Item(1, 0)
+	m10, _ := m.Item(2, 0)
 	m10.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		if app["genome"] != "hg19" || app["species"] != "human" {
 			app["genome"] = "hg19"
@@ -144,7 +144,7 @@ func CmdConnect(c *cli.Context) error {
 		}
 		return false
 	})
-	*/
+
 	//manager := false
 	app = map[string]string{
 		"server":  uri,
