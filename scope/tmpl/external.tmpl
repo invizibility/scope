@@ -37,6 +37,7 @@
       }
       var genome = S.toolsGetUrlParam("genome")
       var species = S.toolsGetUrlParam("species")
+      var server = S.toolsGetUrlParam("server") || ""
       console.log(genome,species)
       var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
       var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron","sendState","setState")
@@ -203,7 +204,9 @@
           "genome":genome || "hg19",
           "species": species || "human"
         } // parameters. TODO mm10 ...
-
+        if (server!="") {
+          app["server"] = server
+        }
         var factory = function(d) {
             return {
                 title: d,

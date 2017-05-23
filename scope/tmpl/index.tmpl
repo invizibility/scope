@@ -69,16 +69,20 @@
 
     (function($, d3, S) {
         //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
-        var updateLinks = function(app) {
+        var generateLinks = function(name,app) {
           var para = [];
           for (var k in app) {
             para.push(k+"="+app[k])
           }
           var paras = para.join("&")
-          var link = "/v1/index.html?"+paras
-          d3.select("#miView").attr("href",link)
-          d3.select("#miEdit").attr("href","/v1/edit.html?"+paras)
+          var link = "/v1/"+name+".html?"+paras
+          return link
         }
+        var updateLinks = function(app) {
+          d3.select("#miView").attr("href",generateLinks("index",app))
+          d3.select("#miEdit").attr("href",generateLinks("edit",app))
+        }
+
         var stateId = "ScopeE7"
         var renders = {
             "3d": S.render.dna3d
@@ -185,7 +189,8 @@
                     "data": app
                 }))
             } else {
-                var w = window.open("/v1/external.html?genome="+app.genome+"&"+"speices="+app.species,"external_"+idx,"width=1000,height=618")
+                //TODO FIX
+                var w = window.open(generateLinks("external",app),"external_"+idx,"width=1000,height=618")
                 var id = idx
                 w.onbeforeunload = function(){
                   ws.delete(id)
