@@ -42,6 +42,10 @@
 
     (function($, d3, S) {
         var server = ""; //TODO
+        var isAstilectron = false;
+        document.addEventListener('astilectron-ready', function() {
+          isAstilectron = true;
+        })
         var generateLinks = function(name,app) {
           var para = [];
           for (var k in app) {
@@ -62,7 +66,7 @@
               "config":server+"/config/get/"+k
             }
             link = generateLinks("web",app)
-            links.push({"name":k,"link":link})
+            links.push({"name":k})
           }
           console.log(links)
           callback(links)
@@ -74,12 +78,24 @@
           .enter()
           .append("div")
           .classed("panel",true)
-          .append("a")
+          //.append("a")
+          /*
           .attr("href",function(d){
             return d.link
           })
+          */
           .text(function(d){
             return d.name
+          })
+          .on("click",function(d){
+            var app = {
+              "config":server+"/config/get/"+d.name
+            }
+              if (isAstilectron) {
+                window.location.replace(generateLinks("index",app))
+              } else {
+                window.location.replace(generateLinks("web",app))
+              }
           })
         }
 
