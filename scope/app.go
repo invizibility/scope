@@ -198,7 +198,7 @@ func CmdApp(c *cli.Context) error {
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
-		fmt.Println("message", dat["code"])
+		//fmt.Println("message", dat["code"])
 		if dat["code"] == "app" {
 			for k, v := range dat["data"].(map[string]interface{}) {
 				app[k] = v.(string)

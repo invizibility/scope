@@ -289,7 +289,6 @@
           }
         }
         //setTimeout($("#testMessage").click(),10000);
-        console.log("message", message)
         setTimeout(function() {
           console.log("render after 3000")
           for (var k in ws) {
@@ -297,7 +296,7 @@
             ws[k].postMessage(message[k], domain)
           }
           dispatch.call("initPanels", this, dmain)
-        }, 3000)
+        }, 2000) //TODO Fix
 
       };
       reader.readAsBinaryString(e.target.files[0]);
@@ -370,6 +369,7 @@
       dispatch.call("closeExt", this, {})
       $("#layoutContainer").empty();
       var dmain = JSON.parse(d[-1])
+      dispatch.call("initPanels", this, dmain)
       //initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
       for (var k in d) {
         if (k != -1) {
@@ -378,6 +378,13 @@
           var id = idx
           ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
           //TODO add warning for popup blocks.
+          console.log("init id",id)
+          /*
+          ws[id].onloadend = function(){
+              console.log("id on load end",id)
+              ws[id].postMessage(message[id], domain)
+          }
+          */
           ws[id].onbeforeunload = function() {
             ws.delete(id)
           }
@@ -389,17 +396,21 @@
           idx += 1
         }
       }
-        for (var k in ws) {
-          console.log("postMessage", k, message[k])
-          ws[k].postMessage(message[k], domain)
-        }
-        dispatch.call("initPanels", this, dmain)
+        setTimeout(function(){
+          for (var k in ws) {
+            console.log("postMessage", k, message[k])
+            ws[k].postMessage(message[k], domain)
+          }
+        },2000)
+
+
+
     })
     var url = S.toolsGetUrlParam("config") || "/data/config.json"
     d3.json(server + url, function(error, config) {
       console.log("config", error, config)
       if (config[-1]) { //windows format
-        console.log(config) // config map[int]string
+        //console.log(config) // config map[int]string
         dispatch.call("initWindows", this, config)
       } else { // one window format
         dispatch.call("initPanels", this, config)
