@@ -198,7 +198,7 @@ func CmdApp(c *cli.Context) error {
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
-		//fmt.Println("message", dat)
+		fmt.Println("message", dat["code"])
 		if dat["code"] == "app" {
 			for k, v := range dat["data"].(map[string]interface{}) {
 				app[k] = v.(string)
@@ -215,6 +215,7 @@ func CmdApp(c *cli.Context) error {
 			astilog.Infof("window %d", idx)
 		}
 		if dat["code"] == "closeExt" {
+			log.Println("close ext")
 			closeAll(ws)
 			idx = 1
 		}
@@ -262,6 +263,7 @@ func CmdApp(c *cli.Context) error {
 
 		}
 		if dat["code"] == "createExt" {
+			log.Println("createExt")
 			go func() {
 				var id int
 				id = idx

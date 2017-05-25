@@ -1,500 +1,472 @@
-
-{{define "title"}} Scope{{.Version}} {{end}}
-{{define "id"}} "ScopeE7"{{end}}
-{{define "html"}}
+ {{define "title"}} Scope{{.Version}} {{end}} {{define "id"}} "ScopeE7"{{end}} {{define "html"}}
 <html>
 
 <head>
-    <title>{{template "title"}}</title>
-    {{template "css"}}
-    <link rel="stylesheet" href="/style0/snow.css">
-    <link rel="stylesheet" href="/style0/dna3d.css">
-    {{template "lib"}}
-    <script src="/lib/three.min.js"></script>
-    <script src="/lib0/TrackballControls.js"></script>
-    <script src="/lib0/CanvasRenderer.js"></script>
-    <script src="/lib0/Projector.js"></script>
-    <script src="/lib0/snow.js"></script>
+  <title>{{template "title"}}</title>
+  {{template "css"}}
+  <link rel="stylesheet" href="/style0/snow.css">
+  <link rel="stylesheet" href="/style0/dna3d.css"> {{template "lib"}}
+  <script src="/lib/three.min.js"></script>
+  <script src="/lib0/TrackballControls.js"></script>
+  <script src="/lib0/CanvasRenderer.js"></script>
+  <script src="/lib0/Projector.js"></script>
+  <script src="/lib0/snow.js"></script>
 </head>
 
 <body>
-    {{template "menubar"}}
-    <div id="wrapper">
-        <div id="menuContainer">
-            <div style="color:white;padding:10">
-                <label> Input Regions</label>
-                <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
-                <input type="button" value="submit" id="input" style="color:black" />
-            </div>
-            <hr>
-            <div style="padding:10">
+  {{template "menubar"}}
+  <div id="wrapper">
+    <div id="menuContainer">
+      <div style="color:white;padding:10">
+        <label> Input Regions</label>
+        <input id="regions" type="text" style="color:black;width:100%" placeholder="chr1:1-1000000,chr2:2-2000000" />
+        <input type="button" value="submit" id="input" style="color:black" />
+      </div>
+      <hr>
+      <div style="padding:10">
 
-                <!--
+        <!--
                 <input type="button" value="Add External Window" id="openExt" style="color:black" />
                 <input type="button" value="Save States" id="saveStates" style="color:black" />
                 <input type="button" value="Load States" id="loadStates" style="color:black" />
               -->
-            </div>
-            <hr>
-            <div style="color:white;padding:10">
-                <label>History</label>
-                <ul id="history">
-                </ul>
-            </div>
+      </div>
+      <hr>
+      <div style="color:white;padding:10">
+        <label>History</label>
+        <ul id="history">
+        </ul>
+      </div>
 
 
-        </div>
-        <div id="layoutContainer"></div>
     </div>
-    <template type="text/html" id="cfgbtn">
+    <div id="layoutContainer"></div>
+  </div>
+  <template type="text/html" id="cfgbtn">
   <div class='config'>
     <span class='glyphicon glyphicon-cog'></span>
   </div>
 </template>
-    <template type="text/html" id="panel">
+  <template type="text/html" id="panel">
   <div class="content">
   </div>
   <div class="cfg">
   </div>
-</template>
-{{template "dna3d"}}
-<a id="downloadAnchorElem" style="display:none"></a>
+</template> {{template "dna3d"}}
+  <a id="downloadAnchorElem" style="display:none"></a>
 </body>
 <!--
 <script type="text/javascript" src="/lib/dat.gui.min.js"></script>
 <link rel="stylesheet" href="/css/dat-gui-light-theme.css">
 -->
 <script>
-    var eventHub;
-    var isAstilectron = false;
-    var dialog = require("electron").remote.dialog;
+  var eventHub;
+  var isAstilectron = false;
+  var dialog = require("electron").remote.dialog;
 
 
-    (function($, d3, S) {
-        //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
-        var generateLinks = function(name,app) {
-          var para = [];
-          for (var k in app) {
-            para.push(k+"="+app[k])
+  (function($, d3, S) {
+    //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
+    var generateLinks = function(name, app) {
+      var para = [];
+      for (var k in app) {
+        para.push(k + "=" + app[k])
+      }
+      var paras = para.join("&")
+      var link = "/v1/" + name + ".html?" + paras
+      return link
+    }
+    var updateLinks = function(app) {
+      d3.select("#miView").attr("href", generateLinks("index", app))
+      d3.select("#miEdit").attr("href", generateLinks("edit", app))
+    }
+
+    var stateId = "ScopeE7"
+    var renders = {
+      "3d": S.render.dna3d
+    }
+    //  var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
+    var renderList = ["simple", "3d", "hicMonitor", "ucsc", "links"] //for monitors
+    var app = {
+      "species": S.toolsGetUrlParam("species") || "human",
+      "genome": S.toolsGetUrlParam("genome") || "hg19",
+      //"server":S.toolsGetUrlParam("server") || null
+    } // parameters. Global.
+    var server = S.toolsGetUrlParam("server")
+    if (server) {
+      app["server"] = server
+    }
+    updateLinks(app)
+    var dispatch = d3.dispatch("initWindows", "initPanels", "input", "resize", "saveState", "add", "exportState", "exportStates", "exportStatesToFile", "importState", "importStates", "saveToElectron", "closeExt", "sendToElectron")
+
+    document.addEventListener('astilectron-ready', function() {
+      // This will listen to messages sent by GO
+      isAstilectron = true;
+
+      dispatch.on("sendToElectron", function(d) {
+        console.log("on sendToElection", d)
+        astilectron.send(d)
+      });
+
+      astilectron.listen(function(message) {
+        //TODO FIX This Messages ;
+        var r = RegExp("app *")
+        var readFile = RegExp("file *")
+        var data = RegExp("data *")
+        var state = RegExp("states *")
+
+        if (message == "resize") {
+          dispatch.call("resize")
+        } else if (r.test(message)) {
+          var v = message.split(" ")
+          app["species"] = v[1]
+          app["genome"] = v[2]
+          if (v.length > 3) {
+            app["server"] = v[3]
           }
-          var paras = para.join("&")
-          var link = "/v1/"+name+".html?"+paras
-          return link
-        }
-        var updateLinks = function(app) {
-          d3.select("#miView").attr("href",generateLinks("index",app))
-          d3.select("#miEdit").attr("href",generateLinks("edit",app))
-        }
-
-        var stateId = "ScopeE7"
-        var renders = {
-            "3d": S.render.dna3d
-        }
-      //  var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
-        var renderList = ["simple", "3d", "hicMonitor",  "ucsc", "links"] //for monitors
-        var app = {
-            "species": S.toolsGetUrlParam("species") || "human",
-            "genome": S.toolsGetUrlParam("genome") || "hg19",
-            //"server":S.toolsGetUrlParam("server") || null
-        }  // parameters. Global.
-        var server = S.toolsGetUrlParam("server")
-        if (server) {
-          app["server"]=server
-        }
-        updateLinks(app)
-        var dispatch = d3.dispatch("initWindows","initPanels","input","resize", "saveState", "add", "exportState", "exportStates","exportStatesToFile","importState","importStates","saveToElectron", "closeExt","sendToElectron")
-
-        document.addEventListener('astilectron-ready', function() {
-            // This will listen to messages sent by GO
-            isAstilectron = true;
-            astilectron.listen(function(message) {
-                //TODO FIX This Messages ;
-                var r = RegExp("app *")
-                var readFile = RegExp("file *")
-                var data = RegExp("data *")
-                var state = RegExp("states *")
-
-                if (message == "resize") {
-                    dispatch.call("resize")
-                } else if (r.test(message)) {
-                    var v = message.split(" ")
-                    app["species"]=v[1]
-                    app["genome"]=v[2]
-                    if (v.length > 3) {
-                      app["server"] = v[3]
-                    }
-                    updateLinks(app)
-                } else if (readFile.test(message)) {
-                  var v = message.replace("file ","");
-                  var config = JSON.parse(v)
-                  if (config[-1]) { //windows format
-                    console.log(config) // config map[int]string
-                    dispatch.call("initWindows",this,config)
-                  } else { // one window format
-                    dispatch.call("initPanels",this,config)
-                  }
-
-                } else if (data.test(message)) {
-                    var v = message.replace("data ","")
-                    dispatch.call("input",this, S.toolsParseRegions(v)) //TODO FIX chr
-                } else if (state.test(message)) {
-                  var v = message.replace("states ","")
-                  var o = JSON.parse(v) || {}
-                  console.log("Ext States ",o)
-                  //var state = JSON.stringify(layout.toConfig());
-                  //o[-1] = state;
-                  dispatch.call("exportStatesToFile",this,o)
-                }
-            });
-
-            //TODO add change genome.
-            astilectron.send(JSON.stringify({
-              "code":"app",
-              "data":app
-            }))
-
-            dispatch.on("sendToElectron", function(d) {
-                astilectron.send(d)
-            });
-
-        })
-        var ws = {}
-        var idx = 0
-        dispatch.on("closeExt",function(){
-          console.log("close Ext")
-          for (var key in ws) {
-            ws[key].close()
-            console.log("close Ext",key)
-          }
-          ws = {}
-          if(isAstilectron) {
-            dispatch.call("sendToElectron",this,JSON.stringify({"code":"closeExt"}))
-          }
-        })
-        window.onbeforeunload = function() {
-            dispatch.call("closeExt",this,{})
-        }
-        /*
-        $("#saveStates").on("click",function(){
-          dispatch.call("exportStates",this,{})
-        })
-        $("#loadStates").on("click",function(){
-          dispatch.call("importStates",this,function(d){
-            console.log(d)
-            dispatch.call("sendToElectron",this, JSON.stringify({
-              "code":"readFile",
-              "data":d[0]
-            }))
-          })
-        })
-        */
-        /*
-        $("#openExt").on("click", function() {
-            if (isAstilectron) {
-                astilectron.send(JSON.stringify({
-                    "code": "openExt",
-                    "data": app
-                }))
-            } else {
-                //TODO FIX
-                var w = window.open(generateLinks("external",app),"external_"+idx,"width=1000,height=618")
-                var id = idx
-                w.onbeforeunload = function(){
-                  ws.delete(id)
-                }
-                ws[id] = w
-                idx+=1
-            }
-
-        })
-        */
-        var initPanels = function(config, el) {
-            var layout = new GoldenLayout(config, el);
-            var history = []
-            eventHub = layout.eventHub
-            layout.registerComponent("canvas", function(container, state) {
-                var r = renders[state.render] || S.render[state.render]
-                r(layout, container, state, app)
-                //TODO renderer...
-                var configContainer = container.getElement().find(".cfg")
-                var contentContainer = container.getElement().find(".content")
-                if (state.configView) {
-                    configContainer.show();
-                    contentContainer.hide();
-                } else {
-                    configContainer.hide();
-                    contentContainer.show();
-                }
-            });
-            layout.on('stackCreated', function(stack) {
-                var toggle = $($('#cfgbtn').html())
-                stack.header.controlsContainer.prepend(toggle);
-                toggle.on("click", function() {
-                    toggleConfig();
-                })
-                var toggleConfig = function() {
-                    var container = stack.getActiveContentItem().container;
-                    var toggled = !container.getState().configView
-                    container.extendState({
-                        configView: toggled
-                    });
-                    if (toggled) {
-                        container.getElement().find(".cfg").show()
-                        container.getElement().find(".content").hide()
-
-                    } else {
-                        container.getElement().find(".cfg").hide()
-                        container.getElement().find(".content").show()
-                    }
-                };
-            });
-
-            layout.init()
-            /* TODO Fix to dispatch */
-
-            $("#input").click(function() {
-                var v = $("#regions").val() || $("#regions").attr("placeholder");
-                layout.eventHub.emit("input", S.toolsTrimChrPrefix(S.toolsParseRegions(v)))
-            })
-            /* for ctrl dispatch layout communication */
-
-            dispatch.on("add", function(d) {
-                layout.root.contentItems[0].addChild(d);
-            })
-
-            dispatch.on("resize.inner", function(d) {
-                console.log("resize")
-                layout.updateSize();
-            })
-            dispatch.on("saveState", function() {
-                console.log("save state")
-                var state = JSON.stringify(layout.toConfig());
-                localStorage.setItem(stateId, state);
-                var c = {
-                    "code": "save",
-                    "data": layout.toConfig()
-                }
-                dispatch.call("sendToElectron", this, JSON.stringify(c))
-            })
-            var saveToFile = function(fn,c) {
-              var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(c);
-              var dlAnchorElem = document.getElementById('downloadAnchorElem');
-              dlAnchorElem.setAttribute("href",     dataStr   );
-              dlAnchorElem.setAttribute("download", fn);
-              dlAnchorElem.click();
-            }
-            dispatch.on("exportState", function() {
-                saveToFile("scope.json",JSON.stringify(layout.toConfig()))
-            })
-            dispatch.on("exportStates", function() {
-                dispatch.call("sendToElectron",this,JSON.stringify({"code":"getStates","data":""}))
-            })
-            dispatch.on("exportStatesToFile",function(d){
-              d[-1] = JSON.stringify(layout.toConfig())
-              saveToFile("scopeExt.json",JSON.stringify(d))
-            })
-
-            dispatch.on("importState", function(_) {
-                //console.log(layout.toConfig()) //TODO export json file.
-                dialog.showOpenDialog({
-                    properties: ['openFile'],
-                    filters: [{
-                        extensions: ['txt']
-                    }]
-                }, function(d) {
-                    console.log(d)
-                    _(d)
-                })
-            })
-            dispatch.on("importStates", function(_) {
-                //console.log(layout.toConfig()) //TODO export json file.
-                if (isAstilectron) {
-                  dialog.showOpenDialog({
-                    properties: ['openFile'],
-                    filters: [{
-                        extensions: ['txt']
-                    }]
-                  }, function(d) {
-                    console.log(d)
-                    _(d)
-                  })
-                } else {
-                  for (var k in ws) {
-                    ws[k].postMessage({"code":"setState","data":"todoConfig"},"http://localhost:5050")
-                  }
-
-                }
-            })
-            layout.eventHub.on("brush", function(d) {
-                dispatch.call("sendToElectron", this, JSON.stringify({
-                    "code": "brush",
-                    "data": S.toolsRegionsText(d)
-                }))
-            })
-            dispatch.on("input",function(d){
-              console.log("input",d)
-              layout.eventHub.emit("input",d)
-            })
-            layout.eventHub.on("update", function(d) {
-                dispatch.call("sendToElectron", this, JSON.stringify({
-                    "code": "update",
-                    "data": S.toolsRegionsText(d)
-                }))
-                /*
-                var sign = false;
-                history.forEach(function(d0) {
-                    if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
-                        sign = true;
-                        console.log(d0,"=",d)
-                    }
-                })
-                if (sign) {
-                    return;
-                }
-                */
-                history.push(d);
-                if (history.length > 8) {
-                    history.shift();
-                }
-                var ul = d3.select("#history")
-                var li = ul.selectAll("li").data(history.reverse())
-                li.enter().append("li").classed("h", true)
-                    .merge(li)
-                    .text(function(d) {
-                        return S.toolsRegionsText(d)
-                    })
-                    .on("click", function(d) {
-                        layout.eventHub.emit("input", d)
-                    })
-                li.exit().remove();
-
-            })
-        }
-
-        dispatch.on("initPanels",function(d){
-          console.log("init panels")
-          $("#layoutContainer").empty();
-          initPanels(d,$("#layoutContainer"))
-        })
-        dispatch.on("initWindows",function(d){
-          console.log("init windows")
-          dispatch.call("closeExt",this,{})
-          $("#layoutContainer").empty();
-
-          initPanels(JSON.parse(d[-1]),$("#layoutContainer"))
-          for (var k in d){
-            if (k!=-1) {
-              console.log(k,JSON.parse(d[k]))
-              dispatch.call("sendToElectron",this,
-                  JSON.stringify(
-                      {
-                        "code":"createExt",
-                        "data":d[k]
-
-                      }
-                  ))
-            }
+          updateLinks(app)
+        } else if (readFile.test(message)) {
+          var v = message.replace("file ", "");
+          var config = JSON.parse(v)
+          if (config[-1]) { //windows format
+            console.log(config) // config map[int]string
+            dispatch.call("initWindows", this, config)
+          } else { // one window format
+            dispatch.call("initPanels", this, config)
           }
 
-        })
-      var url = S.toolsGetUrlParam("config") || "/data/config.json"
-      d3.json(url, function(error,config){
-        console.log("config",error,config)
-        //initPanels(config, $('#layoutContainer'))
-        if (config[-1]) { //windows format
-          console.log(config) // config map[int]string
-          dispatch.call("initWindows",this,config)
-        } else { // one window format
-          dispatch.call("initPanels",this,config)
+        } else if (data.test(message)) {
+          var v = message.replace("data ", "")
+          dispatch.call("input", this, S.toolsParseRegions(v)) //TODO FIX chr
+        } else if (state.test(message)) {
+          var v = message.replace("states ", "")
+          var o = JSON.parse(v) || {}
+          console.log("Ext States ", o)
+          //var state = JSON.stringify(layout.toConfig());
+          //o[-1] = state;
+          dispatch.call("exportStatesToFile", this, o)
         }
+      });
+
+      //TODO add change genome.
+      astilectron.send(JSON.stringify({
+        "code": "app",
+        "data": app
+      }))
+
+
+    })
+    var ws = {}
+    var idx = 0
+    dispatch.on("closeExt", function() {
+      console.log("close Ext")
+      for (var key in ws) {
+        ws[key].close()
+        console.log("close Ext", key)
+      }
+      ws = {}
+      if (isAstilectron) {
+        dispatch.call("sendToElectron", this, JSON.stringify({
+          "code": "closeExt"
+        }))
+      }
+    })
+    window.onbeforeunload = function() {
+      dispatch.call("closeExt", this, {})
+    }
+
+    var initPanels = function(config, el) {
+      var layout = new GoldenLayout(config, el);
+      var history = []
+      eventHub = layout.eventHub
+      layout.registerComponent("canvas", function(container, state) {
+        var r = renders[state.render] || S.render[state.render]
+        r(layout, container, state, app)
+        //TODO renderer...
+        var configContainer = container.getElement().find(".cfg")
+        var contentContainer = container.getElement().find(".content")
+        if (state.configView) {
+          configContainer.show();
+          contentContainer.hide();
+        } else {
+          configContainer.hide();
+          contentContainer.show();
+        }
+      });
+      layout.on('stackCreated', function(stack) {
+        var toggle = $($('#cfgbtn').html())
+        stack.header.controlsContainer.prepend(toggle);
+        toggle.on("click", function() {
+          toggleConfig();
+        })
+        var toggleConfig = function() {
+          var container = stack.getActiveContentItem().container;
+          var toggled = !container.getState().configView
+          container.extendState({
+            configView: toggled
+          });
+          if (toggled) {
+            container.getElement().find(".cfg").show()
+            container.getElement().find(".content").hide()
+
+          } else {
+            container.getElement().find(".cfg").hide()
+            container.getElement().find(".content").show()
+          }
+        };
+      });
+
+      layout.init()
+      /* TODO Fix to dispatch */
+
+      $("#input").click(function() {
+        var v = $("#regions").val() || $("#regions").attr("placeholder");
+        layout.eventHub.emit("input", S.toolsTrimChrPrefix(S.toolsParseRegions(v)))
       })
-      $("#sideToggle").on("click", function() {
-            console.log("still click")
-            if ($('#menuContainer').css('display') == 'none') {
-                console.log("show")
-                $("#menuContainer").show();
-                $("#layoutContainer").css(
-                    "width", "80%"
-                ).css("left", "20%");
-            } else {
-                console.log("hide")
-                $("#menuContainer").hide();
-                $("#layoutContainer").css(
-                    "width", "100%"
-                ).css("left", "0%");
-            }
-            dispatch.call("resize", this, {})
-        })
+      /* for ctrl dispatch layout communication */
 
+      dispatch.on("add", function(d) {
+        layout.root.contentItems[0].addChild(d);
+      })
 
-        var factory = function(d) {
-            return {
-                title: d,
-                type: 'component',
-                componentName: 'canvas',
-                componentState: {
-                    name: d,
-                    render: d
-                }
-            };
+      dispatch.on("resize.inner", function(d) {
+        console.log("resize")
+        layout.updateSize();
+      })
+      dispatch.on("saveState", function() {
+        //console.log("save state")
+        var state = JSON.stringify(layout.toConfig());
+        localStorage.setItem(stateId, state);
+        var c = {
+          "code": "save",
+          "data": layout.toConfig()
         }
-        /*
-        $("#save").on("click", function(d) {
-            dispatch.call("saveState")
-        })
+        dispatch.call("sendToElectron", this, JSON.stringify(c))
+      })
+      var saveToFile = function(fn, c) {
+        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(c);
+        var dlAnchorElem = document.getElementById('downloadAnchorElem');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", fn);
+        dlAnchorElem.click();
+      }
+      dispatch.on("exportState", function() {
+        saveToFile("scope.json", JSON.stringify(layout.toConfig()))
+      })
+      dispatch.on("exportStates", function() {
+        dispatch.call("sendToElectron", this, JSON.stringify({
+          "code": "getStates",
+          "data": ""
+        }))
+      })
+      dispatch.on("exportStatesToFile", function(d) {
+        d[-1] = JSON.stringify(layout.toConfig())
+        saveToFile("scopeExt.json", JSON.stringify(d))
+      })
 
-        $("#open").on("click", function(d) {
-            console.log("load state")
-            savedState = localStorage.getItem(stateId);
-            $("#layoutContainer").empty()
-            initPanels(JSON.parse(savedState), $("#layoutContainer"))
+      dispatch.on("importState", function(_) {
+        //console.log(layout.toConfig()) //TODO export json file.
+        dialog.showOpenDialog({
+          properties: ['openFile'],
+          filters: [{
+            extensions: ['txt']
+          }]
+        }, function(d) {
+          console.log(d)
+          _(d)
         })
-        */
-        $("#export").on("click", function(d) {
-            //dispatch.call("exportState", this , {})
-            dispatch.call("exportStates",this,{})
-        })
-        $("#import").on("click", function(d) {
-            // works in electron version?
-            /*
-            dispatch.call("importState",this,function(d){
-                console.log("callback",d)
-                dispatch.call("sendToElectron",this, JSON.stringify({
-                  "code":"readFile",
-                  "data":d[0]
-                }))
+      })
+      dispatch.on("importStates", function(_) {
+        //console.log(layout.toConfig()) //TODO export json file.
+        if (isAstilectron) {
+          dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [{
+              extensions: ['txt']
+            }]
+          }, function(d) {
+            console.log(d)
+            _(d)
+          })
+        }
 
-              })
-            */
-            dispatch.call("importStates",this,function(d){
-              console.log(d)
-              dispatch.call("sendToElectron",this, JSON.stringify({
-                "code":"readFile",
-                "data":d[0]
+      })
+      layout.eventHub.on("brush", function(d) {
+        dispatch.call("sendToElectron", this, JSON.stringify({
+          "code": "brush",
+          "data": S.toolsRegionsText(d)
+        }))
+      })
+      dispatch.on("input", function(d) {
+        console.log("input", d)
+        layout.eventHub.emit("input", d)
+      })
+      layout.eventHub.on("update", function(d) {
+        dispatch.call("sendToElectron", this, JSON.stringify({
+          "code": "update",
+          "data": S.toolsRegionsText(d)
+        }))
+
+        history.push(d);
+        if (history.length > 8) {
+          history.shift();
+        }
+        var ul = d3.select("#history")
+        var li = ul.selectAll("li").data(history.reverse())
+        li.enter().append("li").classed("h", true)
+          .merge(li)
+          .text(function(d) {
+            return S.toolsRegionsText(d)
+          })
+          .on("click", function(d) {
+            layout.eventHub.emit("input", d)
+          })
+        li.exit().remove();
+
+      })
+    }
+
+    dispatch.on("initPanels", function(d) {
+      console.log("init panels")
+      $("#layoutContainer").empty();
+      initPanels(d, $("#layoutContainer"))
+    })
+    dispatch.on("initWindows", function(d) {
+      console.log("init windows", d)
+      //dispatch.call("closeExt",this,{})
+      $("#layoutContainer").empty();
+      initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
+      for (var k in d) {
+        if (k != -1) {
+          console.log("sending K to CREATE", k, JSON.parse(d[k]))
+          if (!isAstilectron) {
+              console.log("Astilectron is not ready");
+              //var bk = k;
+              (function(k){
+                setTimeout(
+                  function(){
+                    console.log("isAstilectron ready?",isAstilectron)
+                    console.log("sending k",k)
+                    dispatch.call("sendToElectron", this,
+                    JSON.stringify({
+                      "code": "createExt",
+                      "data": d[k]
+                    }))
+                  }
+                  ,2000
+                )
+              })(k)
+
+          } else {
+            dispatch.call("sendToElectron", this,
+              JSON.stringify({
+                "code": "createExt",
+                "data": d[k]
               }))
-            })
+          }
+
+        }
+      }
+
+    })
+    var url = S.toolsGetUrlParam("config") || "/data/config.json"
+    d3.json(url, function(error, config) {
+      //console.log("config",error,config)
+      //initPanels(config, $('#layoutContainer'))
+      if (config[-1]) { //windows format
+        //console.log("initWindow config is ",config) // config map[int]string
+        dispatch.call("initWindows", this, config)
+      } else { // one window format
+        dispatch.call("initPanels", this, config)
+      }
+    })
+    $("#sideToggle").on("click", function() {
+      console.log("still click")
+      if ($('#menuContainer').css('display') == 'none') {
+        console.log("show")
+        $("#menuContainer").show();
+        $("#layoutContainer").css(
+          "width", "80%"
+        ).css("left", "20%");
+      } else {
+        console.log("hide")
+        $("#menuContainer").hide();
+        $("#layoutContainer").css(
+          "width", "100%"
+        ).css("left", "0%");
+      }
+      dispatch.call("resize", this, {})
+    })
+
+
+    var factory = function(d) {
+      return {
+        title: d,
+        type: 'component',
+        componentName: 'canvas',
+        componentState: {
+          name: d,
+          render: d
+        }
+      };
+    }
+    /*
+    $("#save").on("click", function(d) {
+        dispatch.call("saveState")
+    })
+
+    $("#open").on("click", function(d) {
+        console.log("load state")
+        savedState = localStorage.getItem(stateId);
+        $("#layoutContainer").empty()
+        initPanels(JSON.parse(savedState), $("#layoutContainer"))
+    })
+    */
+    $("#export").on("click", function(d) {
+      //dispatch.call("exportState", this , {})
+      dispatch.call("exportStates", this, {})
+    })
+    $("#import").on("click", function(d) {
+      // works in electron version?
+      /*
+      dispatch.call("importState",this,function(d){
+          console.log("callback",d)
+          dispatch.call("sendToElectron",this, JSON.stringify({
+            "code":"readFile",
+            "data":d[0]
+          }))
 
         })
-        d3.select("#renders").selectAll("li")
-            .data(renderList)
-            .enter()
-            .append("li")
-            .append("a")
-            .attr("id", function(d) {
-                return d
-            }).text(
-                function(d) {
-                    return d
-                }
-            ).on("click", function(d) {
-                dispatch.call("add", this, factory(d))
-            })
-        window.onresize = function() {
-            dispatch.call("resize", this, {})
+      */
+      dispatch.call("importStates", this, function(d) {
+        console.log(d)
+        dispatch.call("sendToElectron", this, JSON.stringify({
+          "code": "readFile",
+          "data": d[0]
+        }))
+      })
+
+    })
+    d3.select("#renders").selectAll("li")
+      .data(renderList)
+      .enter()
+      .append("li")
+      .append("a")
+      .attr("id", function(d) {
+        return d
+      }).text(
+        function(d) {
+          return d
         }
+      ).on("click", function(d) {
+        dispatch.call("add", this, factory(d))
+      })
+    window.onresize = function() {
+      dispatch.call("resize", this, {})
+    }
 
 
-    }(jQuery, d3, snow))
+  }(jQuery, d3, snow))
 </script>
 
 </html>

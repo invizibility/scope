@@ -159,6 +159,7 @@
                 layout.updateSize();
             })
             layout.registerComponent("canvas", function(container, state) {
+              console.log("DEBUG",state.render,S.render)
                 var r = renders[state.render] || S.render[state.render]
                 r(layout, container, state, app)
                 //TODO renderer...
