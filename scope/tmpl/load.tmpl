@@ -11,18 +11,33 @@
     {{template "lib"}}
     <script src="/lib0/snow.js"></script>
     <style>
-
-
+    .panel {
+      width: 168px;
+      height: 200px;
+      float: left;
+      margin: 10px;
+    }
     </style>
 </head>
 
 <body>
-    {{template "menubar"}}
+  <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+            </button>
+              <a class="navbar-brand" href="#">
+                {{template "title"}}
+              </a>
+
+          </div>
+      </div>
+   </nav>
     <div id="wrapper">
-        <div id="menuContainer">
+        <div id="menuContainer" style="display:none" >
 
         </div>
-        <div id="layoutContainer"></div>
+        <div id="layoutContainer" style="left:0%;width:100%"></div>
     </div>
   <template type="text/html" id="cfgbtn">
   <div class='config'>
@@ -74,14 +89,25 @@
           callback(links)
         })
         var callback=function(d) {
-          d3.select("#layoutContainer")
+          var panels = d3.select("#layoutContainer")
           .selectAll(".panel")
           .data(d)
           .enter()
           .append("div")
           .classed("panel",true)
+          .classed("panel-default",true)
+          panels.append("div")
+          .classed("panel-heading",true)
+          .append("h2")
+          .classed("panel-title",true)
           .text(function(d){
             return d.name
+          })
+
+          var body = panels.append("div")
+          .classed("panel-body",true)
+          .text(function(d){
+            return "Render "+d.name;
           })
           .on("click",function(d){
             var app = {
