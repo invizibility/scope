@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="/style0/snow.css">
     {{template "lib"}}
     <script src="/lib0/snow.js"></script>
+    <style>
+
+
+    </style>
 </head>
 
 <body>
@@ -88,6 +92,12 @@
               } else {
                 window.location.replace(generateLinks("web",app))
               }
+          })
+          .on("mouseover",function(d){
+              d3.select(this).style("background-color","grey")
+          })
+          .on("mouseout",function(d){
+              d3.select(this).style("background-color","white")
           })
         }
 

@@ -25,8 +25,10 @@
             <hr>
             <div style="padding:10">
                 <input type="button" value="Add External Window" id="openExt" style="color:black" />
+                <!--
                 <input type="button" value="Save States" id="saveStates" style="color:black" />
                 <input type="button" value="Load States" id="loadStates" style="color:black" />
+              -->
                 <div style="display:none">
                 <input id="cfgfile" type="file" />
                 <input type="button" value="test message" id="testMessage"></input>
@@ -81,7 +83,8 @@
         var renders = {
             "3d": S.render.dna3d
         }
-        var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
+        //var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
+        var renderList = ["simple", "3d", "hicMonitor",  "ucsc", "links"] //for monitors
         var app = {
             "species": S.toolsGetUrlParam("species") || "human",
             "genome": S.toolsGetUrlParam("genome") || "hg19"
@@ -108,6 +111,7 @@
         window.onbeforeunload = function() {
             dispatch.call("closeExt", this, {})
         }
+        /*
         $("#saveStates").on("click", function() {
             dispatch.call("exportStates", this, {})
         })
@@ -120,6 +124,7 @@
                 }))
             })
         })
+        */
         $("#openExt").on("click", function() {
 
             var w = window.open("/v1/external.html?genome=" + app.genome + "&" + "speices=" + app.species, "external_" + idx, "width=1000,height=618")
@@ -422,6 +427,7 @@
                 }
             };
         }
+        /*
         $("#save").on("click", function(d) {
             dispatch.call("saveState")
         })
@@ -432,15 +438,25 @@
             $("#layoutContainer").empty()
             initPanels(JSON.parse(savedState), $("#layoutContainer"))
         })
+        */
         $("#export").on("click", function(d) {
-            dispatch.call("exportState", this, {})
+            dispatch.call("exportStates", this, {})
         })
         $("#import").on("click", function(d) {
             // works in electron version?
+            /*
             dispatch.call("importState", this, function(d) {
                 console.log("callback", d)
                 //TODO
 
+            })
+            */
+            dispatch.call("importStates", this, function(d) {
+                console.log(d)
+                dispatch.call("sendToElectron", this, JSON.stringify({
+                    "code": "readFile",
+                    "data": d[0]
+                }))
             })
 
         })

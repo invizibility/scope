@@ -77,7 +77,7 @@ func main() {
 		},
 		{
 			Name:   "connect",
-			Usage:  "start application",
+			Usage:  "connect a data server",
 			Action: CmdConnect,
 			Flags: []cli.Flag{
 				cli.StringFlag{

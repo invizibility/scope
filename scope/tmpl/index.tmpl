@@ -28,9 +28,12 @@
             </div>
             <hr>
             <div style="padding:10">
+
+                <!--
                 <input type="button" value="Add External Window" id="openExt" style="color:black" />
                 <input type="button" value="Save States" id="saveStates" style="color:black" />
                 <input type="button" value="Load States" id="loadStates" style="color:black" />
+              -->
             </div>
             <hr>
             <div style="color:white;padding:10">
@@ -87,7 +90,8 @@
         var renders = {
             "3d": S.render.dna3d
         }
-        var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
+      //  var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
+        var renderList = ["simple", "3d", "hicMonitor",  "ucsc", "links"] //for monitors
         var app = {
             "species": S.toolsGetUrlParam("species") || "human",
             "genome": S.toolsGetUrlParam("genome") || "hg19",
@@ -170,6 +174,7 @@
         window.onbeforeunload = function() {
             dispatch.call("closeExt",this,{})
         }
+        /*
         $("#saveStates").on("click",function(){
           dispatch.call("exportStates",this,{})
         })
@@ -182,6 +187,8 @@
             }))
           })
         })
+        */
+        /*
         $("#openExt").on("click", function() {
             if (isAstilectron) {
                 astilectron.send(JSON.stringify({
@@ -200,6 +207,7 @@
             }
 
         })
+        */
         var initPanels = function(config, el) {
             var layout = new GoldenLayout(config, el);
             var history = []
@@ -430,6 +438,7 @@
                 }
             };
         }
+        /*
         $("#save").on("click", function(d) {
             dispatch.call("saveState")
         })
@@ -440,11 +449,14 @@
             $("#layoutContainer").empty()
             initPanels(JSON.parse(savedState), $("#layoutContainer"))
         })
+        */
         $("#export").on("click", function(d) {
-            dispatch.call("exportState", this , {})
+            //dispatch.call("exportState", this , {})
+            dispatch.call("exportStates",this,{})
         })
         $("#import").on("click", function(d) {
             // works in electron version?
+            /*
             dispatch.call("importState",this,function(d){
                 console.log("callback",d)
                 dispatch.call("sendToElectron",this, JSON.stringify({
@@ -453,6 +465,14 @@
                 }))
 
               })
+            */
+            dispatch.call("importStates",this,function(d){
+              console.log(d)
+              dispatch.call("sendToElectron",this, JSON.stringify({
+                "code":"readFile",
+                "data":d[0]
+              }))
+            })
 
         })
         d3.select("#renders").selectAll("li")
