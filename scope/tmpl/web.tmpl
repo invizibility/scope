@@ -94,11 +94,13 @@
     var message = {}
     var ws = {}
     var idx = 1
+    /*
     $("#testMessage").on("click", function() {
       for (var k in ws) {
         ws[k].postMessage(message[k], domain)
       }
     })
+    */
     dispatch.on("closeExt", function() {
       console.log("close Ext")
       for (var key in ws) {
@@ -125,6 +127,7 @@
         })
     })
     */
+
     $("#openExt").on("click", function() {
 
       var w = window.open("/v1/external.html?genome=" + app.genome + "&" + "speices=" + app.species, "external_" + idx, "width=1000,height=618")
@@ -378,7 +381,7 @@
           var id = idx
           ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
           //TODO add warning for popup blocks.
-          console.log("init id",id)
+          // console.log("init id",id)
           /*
           ws[id].onloadend = function(){
               console.log("id on load end",id)
@@ -388,21 +391,33 @@
           ws[id].onbeforeunload = function() {
             ws.delete(id)
           }
+          ws[id].addEventListener('begin',function(){
+            console.log(id,"begin")
+          })
           message[id] = {
             code: "setState",
             data: JSON.parse(d[k])
           }
+          ws[id].addEventListener('inited',function(){
+            console.log(id,"inited")
+            ws[id].postMessage(message[id],domain)
+          })
+
+
           //setTimeout(ws[id].postMessage(message[id],"http://127.0.0.1:5050"),5000)
           idx += 1
         }
       }
+
+      //TODO TO FIX TO EVENT DRIVEN ws on ready send state
+      /*
         setTimeout(function(){
           for (var k in ws) {
             console.log("postMessage", k, message[k])
             ws[k].postMessage(message[k], domain)
           }
-        },2000)
-
+        },5000)
+      */
 
 
     })

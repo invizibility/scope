@@ -28,6 +28,9 @@
 //layout is global;
     (function(S,d3,jQuery){
       var eventHub
+      var event = new Event('begin')
+      window.dispatchEvent(event)
+      var eventInited = new Event('inited')
       var url = window.location.href
       var arr = url.split("/");
       var domain = arr[0] + "//" + arr[2]
@@ -195,10 +198,10 @@
                     }
                 };
             });
-
             layout.init()
         }
         initPanels(config,$("#container"))
+        window.dispatchEvent(eventInited)
 
         var renders = {}
         var app = {
