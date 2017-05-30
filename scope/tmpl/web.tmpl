@@ -113,20 +113,7 @@
     window.onbeforeunload = function() {
       dispatch.call("closeExt", this, {})
     }
-    /*
-    $("#saveStates").on("click", function() {
-        dispatch.call("exportStates", this, {})
-    })
-    $("#loadStates").on("click", function() {
-        dispatch.call("importStates", this, function(d) {
-            console.log(d)
-            dispatch.call("sendToElectron", this, JSON.stringify({
-                "code": "readFile",
-                "data": d[0]
-            }))
-        })
-    })
-    */
+
 
     $("#openExt").on("click", function() {
 
@@ -200,6 +187,7 @@
         console.log("resize")
         layout.updateSize();
       })
+      /*
       dispatch.on("saveState", function() {
         console.log("save state")
         var state = JSON.stringify(layout.toConfig());
@@ -210,21 +198,18 @@
         }
         dispatch.call("sendToElectron", this, JSON.stringify(c))
       })
+      */
 
 
     }
 
-
+    /*
     dispatch.on("exportState", function() {
       saveToFile("scope.json", JSON.stringify(layout.toConfig()))
     })
+    */
     dispatch.on("exportStates", function() {
-      /*
-        dispatch.call("sendToElectron", this, JSON.stringify({
-            "code": "getStates",
-            "data": ""
-        }))
-      */
+
       var data = {};
       //data[-1] = JSON.stringify(layout.toConfig())
       for (var k in ws) {
@@ -239,25 +224,10 @@
       saveToFile("scopeExt.json", JSON.stringify(d))
     })
 
-    dispatch.on("importState", function(_) {
-      //console.log(layout.toConfig()) //TODO export json file.
-      /*
-      dialog.showOpenDialog({
-          properties: ['openFile'],
-          filters: [{
-              extensions: ['txt']
-          }]
-      }, function(d) {
-          console.log(d)f
-          _(d)
-      })
-      */
-    })
+
     dispatch.on("importStates", function(_) {
       //console.log(layout.toConfig()) //TODO export json file.
       $("#cfgfile").click();
-
-
     })
     $("#cfgfile").on("change", function(e) {
       console.log(e.target.files[0])
@@ -266,85 +236,22 @@
         if (evt.target.readyState == FileReader.DONE) { // DONE == 2
           console.log(evt.target.result);
           var d = JSON.parse(evt.target.result)
-          var dmain;
-          for (var k in d) {
-            //console.log(JSON.parse(d[-1]))
-
-            if (k == -1) {
-              //TODO MARK dispatch.call("initPanels", this, JSON.parse(d[-1]))
-              dmain = JSON.parse(d[-1])
-            }
-            if (k > 0) {
-              var id = idx
-              ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
-              //TODO add warning for popup blocks.
-              ws[id].onbeforeunload = function() {
-                ws.delete(id)
-              }
-              message[id] = {
-                code: "setState",
-                data: JSON.parse(d[k])
-              }
-              //setTimeout(ws[id].postMessage(message[id],"http://127.0.0.1:5050"),5000)
-              idx += 1
-            }
-
-          }
+          dispatch.call("initWindows", this, d)
         }
-        //setTimeout($("#testMessage").click(),10000);
-        setTimeout(function() {
-          console.log("render after 3000")
-          for (var k in ws) {
-            console.log("postMessage", k, message[k])
-            ws[k].postMessage(message[k], domain)
-          }
-          dispatch.call("initPanels", this, dmain)
-        }, 2000) //TODO Fix
-
-      };
-      reader.readAsBinaryString(e.target.files[0]);
-      /*
-      for (var k in ws) {
-          console.log("postMessage Now")
-          ws[k].postMessage({
-              "code": "setState",
-              "data": "todoConfig"
-          }, "http://127.0.0.1:5050/v1/external.html") //TODO fix
-
       }
-      */
+      reader.readAsBinaryString(e.target.files[0]);
     })
+
+
     layout.eventHub.on("brush", function(d) {
-      /*
-        dispatch.call("sendToElectron", this, JSON.stringify({
-            "code": "brush",
-            "data": S.toolsRegionsText(d)
-        }))
-      */
+
     })
     dispatch.on("input", function(d) {
       console.log("input", d)
       layout.eventHub.emit("input", d)
     })
     layout.eventHub.on("update", function(d) {
-      /*
-        dispatch.call("sendToElectron", this, JSON.stringify({
-            "code": "update",
-            "data": S.toolsRegionsText(d)
-        }))
-      */
-      /*
-      var sign = false;
-      history.forEach(function(d0) {
-          if (S.toolsRegionsText(d0) == S.toolsRegionsText(d)) {
-              sign = true;
-              console.log(d0,"=",d)
-          }
-      })
-      if (sign) {
-          return;
-      }
-      */
+
       history.push(d);
       if (history.length > 8) {
         history.shift();
@@ -391,16 +298,16 @@
           ws[id].onbeforeunload = function() {
             ws.delete(id)
           }
-          ws[id].addEventListener('begin',function(){
-            console.log(id,"begin")
+          ws[id].addEventListener('begin', function() {
+            console.log(id, "begin")
           })
           message[id] = {
             code: "setState",
             data: JSON.parse(d[k])
           }
-          ws[id].addEventListener('inited',function(){
-            console.log(id,"inited")
-            ws[id].postMessage(message[id],domain)
+          ws[id].addEventListener('inited', function() {
+            console.log(id, "inited")
+            ws[id].postMessage(message[id], domain)
           })
 
 
@@ -418,9 +325,9 @@
           }
         },5000)
       */
-
-
     })
+
+    //})
     var url = S.toolsGetUrlParam("config") || "/data/config.json"
     d3.json(server + url, function(error, config) {
       console.log("config", error, config)
@@ -499,10 +406,9 @@
           "data": d[0]
         }))
       })
-
     })
-    d3.select("#renders").selectAll("li")
-      .data(renderList)
+
+    d3.select("#renders").selectAll("li").data(renderList)
       .enter()
       .append("li")
       .append("a")
@@ -518,9 +424,7 @@
     window.onresize = function() {
       dispatch.call("resize", this, {})
     }
-
-
-  }(jQuery, d3, snow))
+  })(jQuery, d3, snow)
 </script>
 
 </html>
