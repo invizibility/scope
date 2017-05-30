@@ -48,7 +48,7 @@
 
 <body>
     <div id="wrapper">
-        <div id="menuContainer">
+        <div id="menuContainer" style="padding:3px">
 
         <button id="getJson">Dowload as Json</button>
         </div>
@@ -220,11 +220,39 @@
                     "data": d
                 })
             })
-            container.selectAll("div")
+            var tab = container.append("ul").classed("nav",true).classed("nav-tabs",true)
+            //container.call(tab)
+            var tabs = tab.selectAll("li")
+                .data(db)
+                .enter()
+                .append("li")
+                .classed("nav",true)
+
+            tabs.append("a")
+                .attr("href",function(d){
+                  return "#"+d.name
+                })
+                .attr("data-toggle","tab")
+                .text(function(d){
+                  return d.name
+                })
+            tabs.filter(function(d,i){return i===0})
+            .classed("active",true)
+
+            var content = container.append("div").classed("tab-content",true)
+            var divs = content.selectAll("div")
                 .data(db)
                 .enter()
                 .append("div")
+                .classed("tab-pane",true)
+                .classed("fade",true)
+                .attr("id",function(d){
+                  return d.name;
+                })
                 .call(dm)
+            divs.filter(function(d,i){return i===0})
+            .classed("in",true)
+            .classed("active",true)
         }
         var dbnames;
         d3.json("/list", function(d) {
