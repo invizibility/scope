@@ -23,7 +23,6 @@ var cfg = d3.select(container.getElement()[0])
 cfg.append("div").text("Data URI:")
 var uri = cfg.append("select")
 d3.json(server + "/3d/list",function(d){  //TODO Server
-	console.log("3d data",d)
 	uri.selectAll("option")
 		 .data(d)
 		 .enter()
@@ -41,7 +40,9 @@ d3.select(container.getElement()[0])
 .attr("type","button")
 .attr("value","submit")
 .on("click", function(){
-	 var v = container.getElement().find(".cfg .uri").val()
+	 //var v = container.getElement().find(".cfg .uri").val()
+	 var v = uri.node().value
+	 console.log(v)
 	 if (v!=state.dataURI) {
 		state.dataURI = v;
 		dataLoaded = false;
@@ -115,7 +116,7 @@ var load = function(callback) {
 		var chr = null;
 		var index = -1;
 
-
+		console.log("Loading and Parsing",dataURI,data)
 		//load coordinates
 		for (var i = 0; i < pdb.length - 1; i++){
 			var row = pdb[i].split('\t');
@@ -193,6 +194,7 @@ var draw = function() {
 	if(regions.length > 0) {
 		alphaRegions(regions)
 	}
+
 }
 var getPanelSize = function(){
   width = container.width

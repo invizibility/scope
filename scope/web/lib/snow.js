@@ -3920,8 +3920,8 @@ var dna3d = function(layout, container, state, app) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20);
 console.log(state);
 var server = app["server"] || "";
-console.log("server in 3d",server);
-console.log("app in 3d ",app);
+//console.log("server in 3d",server)
+//console.log("app in 3d ",app)
 var dataURI = state.dataURI || server + "/3d/get/default";//TODO switch between 3ds
 state.dataURI = dataURI;
 
@@ -3947,11 +3947,15 @@ d3.json(server + "/3d/list",function(d){  //TODO Server
 		 .enter()
 		 .append("option")
 		 .attr("value",function(d){
+			 console.log("value",server+"/3d/get/"+d);
 			 return server + "/3d/get/"+d;  //TODO Server
 		 })
 		 .text(function(d){
 			 return d
 		 });
+		 /*
+		state.dataURI = uri.node().value
+		*/
 });
 //container.getElement().find(".cfg .uri").val(state.dataURI)
 d3.select(container.getElement()[0])
@@ -3959,7 +3963,9 @@ d3.select(container.getElement()[0])
 .attr("type","button")
 .attr("value","submit")
 .on("click", function(){
-	 var v = container.getElement().find(".cfg .uri").val();
+	 //var v = container.getElement().find(".cfg .uri").val()
+	 var v = uri.node().value;
+	 console.log(v);
 	 if (v!=state.dataURI) {
 		state.dataURI = v;
 		dataLoaded = false;
@@ -4033,7 +4039,7 @@ var load = function(callback) {
 		var chr = null;
 		var index = -1;
 
-
+		console.log("Loading and Parsing",dataURI,data);
 		//load coordinates
 		for (var i = 0; i < pdb.length - 1; i++){
 			var row = pdb[i].split('\t');
@@ -4111,6 +4117,7 @@ var draw = function() {
 	if(regions.length > 0) {
 		alphaRegions(regions);
 	}
+
 };
 var getPanelSize = function(){
   width = container.width;
