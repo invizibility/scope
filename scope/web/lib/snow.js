@@ -3941,21 +3941,16 @@ var cfg = d3.select(container.getElement()[0])
 cfg.append("div").text("Data URI:");
 var uri = cfg.append("select");
 d3.json(server + "/3d/list",function(d){  //TODO Server
-	console.log("3d data",d);
 	uri.selectAll("option")
 		 .data(d)
 		 .enter()
 		 .append("option")
 		 .attr("value",function(d){
-			 console.log("value",server+"/3d/get/"+d);
 			 return server + "/3d/get/"+d;  //TODO Server
 		 })
 		 .text(function(d){
 			 return d
 		 });
-		 /*
-		state.dataURI = uri.node().value
-		*/
 });
 //container.getElement().find(".cfg .uri").val(state.dataURI)
 d3.select(container.getElement()[0])
