@@ -74,6 +74,7 @@ func CmdApp(c *cli.Context) error {
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Label: astilectron.PtrStr("Data Manager")},
 				{Label: astilectron.PtrStr("Add External Window")},
+				{Label: astilectron.PtrStr("Add Window From Server")},
 				{Label: astilectron.PtrStr("Quit"), Role: astilectron.MenuItemRoleClose},
 				{Type: astilectron.MenuItemTypeSeparator},
 				{Label: astilectron.PtrStr("About"), Role: astilectron.MenuItemRoleAbout},
@@ -105,6 +106,7 @@ func CmdApp(c *cli.Context) error {
 	})
 
 	mi0, _ := m.Item(0, 0)
+	mi2, _ := m.Item(0, 2)
 
 	miLoadCfg, _ := m.Item(1, 0)
 	miSaveCfg, _ := m.Item(1, 1)
@@ -168,6 +170,19 @@ func CmdApp(c *cli.Context) error {
 	mi1, _ := m.Item(0, 1)
 	mi1.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		go createNewWindow(a, port, 1000, 700, "external", ws, idx, app, ch)
+		idx++
+		return false
+	})
+
+	mi2.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		species, _ := app["species"]
+		genome, _ := app["genome"]
+		local := map[string]string{
+			"species": species,
+			"genome":  genome,
+			"server":  "http://genome.compbio.cs.cmu.edu:8084",
+		}
+		go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
 		idx++
 		return false
 	})
