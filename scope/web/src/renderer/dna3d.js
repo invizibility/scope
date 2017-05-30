@@ -2,8 +2,8 @@ export default function(layout, container, state, app) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20)
 console.log(state)
 var server = app["server"] || ""
-console.log("server in 3d",server)
-console.log("app in 3d ",app)
+//console.log("server in 3d",server)
+//console.log("app in 3d ",app)
 var dataURI = state.dataURI || server + "/3d/get/default"//TODO switch between 3ds
 state.dataURI = dataURI
 
@@ -16,9 +16,26 @@ initialHeight = 500
 //container.getElement().remove(".content")
 container.getElement().append("<div class='content'></div>")
 //TODO manage URI
-container.getElement().append("<div class='cfg'>CONFIG<br><label>Data URI:</label><input type='text' class='uri'></input></div>")
-
-container.getElement().find(".cfg .uri").val(state.dataURI)
+//container.getElement().append("<div class='cfg'>CONFIG<br><label>Data URI:</label><input type='text' class='uri'></input></div>")
+var cfg = d3.select(container.getElement()[0])
+		.append("div")
+		.classed("cfg",true)
+cfg.append("div").text("Data URI:")
+var uri = cfg.append("select")
+d3.json(server + "/3d/list",function(d){  //TODO Server
+	console.log("3d data",d)
+	uri.selectAll("option")
+		 .data(d)
+		 .enter()
+		 .append("option")
+		 .attr("value",function(d){
+			 return server + "/3d/get/"+d;  //TODO Server
+		 })
+		 .text(function(d){
+			 return d
+		 })
+})
+//container.getElement().find(".cfg .uri").val(state.dataURI)
 d3.select(container.getElement()[0])
 .append("input")
 .attr("type","button")
