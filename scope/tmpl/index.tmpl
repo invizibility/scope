@@ -78,6 +78,7 @@
     }
     var updateLinks = function(app) {
       d3.select("#miView").attr("href", generateLinks("index", app))
+      d3.select("#miHome").attr("href", generateLinks("load", app))
       d3.select("#miEdit").attr("href", generateLinks("edit", app))
     }
 

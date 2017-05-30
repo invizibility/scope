@@ -34,7 +34,7 @@
 </body>
 <script>
     (function(d3, $) {
-        var server = ""
+        var server = S.toolsGetUrlParam("server") || ""
         var serverId = "data"
         var render = function(treeData) {
             // Set the dimensions and margins of the diagram

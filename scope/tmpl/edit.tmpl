@@ -104,6 +104,7 @@
         }
       })
       d3.select("#miEdit").attr("href", generateLinks("edit", app))
+      d3.select("#miHome").attr("href", generateLinks("load", app))
     }
 
     var URI = S.toolsGetUrlParam("server") || ""

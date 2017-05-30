@@ -60,7 +60,7 @@
 
 
     (function($, d3, S) {
-        var server = ""; //TODO
+        var server = S.toolsGetUrlParam("server") || "" 
         var isAstilectron = false;
         document.addEventListener('astilectron-ready', function() {
           isAstilectron = true;
