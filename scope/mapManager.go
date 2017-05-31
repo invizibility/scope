@@ -63,3 +63,21 @@ func (m *MapManager) ServeTo(router *mux.Router) {
 	})
 
 }
+func NewMapManager(uri string, name string) *MapManager {
+	data := LoadURI(uri)
+	//d := make(map[string]string)
+	m := MapManager{
+		name,
+		data,
+	}
+	return &m
+}
+
+func InitMapManager(name string) *MapManager {
+	data := make(map[string]string)
+	m := MapManager{
+		name,
+		data,
+	}
+	return &m
+}

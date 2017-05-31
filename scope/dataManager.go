@@ -48,6 +48,8 @@ func newDataManager(dbname string, uri string, format string) DataManager {
 		return NewBigWigManager(uri, dbname)
 	case "hic":
 		return NewHicManager(uri, dbname)
+	case "map":
+		return NewMapManager(uri, dbname)
 	}
 	return nil
 }
@@ -59,6 +61,8 @@ func initDataManager(dbname string, format string) DataManager {
 		return InitBigWigManager(dbname)
 	case "hic":
 		return InitHicManager(dbname)
+	case "map":
+		return InitMapManager(dbname)
 	}
 	return nil
 }
