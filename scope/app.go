@@ -179,10 +179,11 @@ func CmdApp(c *cli.Context) error {
 	mi2.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		species, _ := app["species"]
 		genome, _ := app["genome"]
+		server, _ := managers["server"].Get("main") //TODO.
 		local := map[string]string{
 			"species": species,
 			"genome":  genome,
-			"server":  "http://genome.compbio.cs.cmu.edu:8084",
+			"server":  server,
 		}
 		wsVars[idx] = local
 		go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
