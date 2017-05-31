@@ -129,7 +129,7 @@
         } else if (readFile.test(message)) {
           var v = message.replace("file ", "");
           var config = JSON.parse(v)
-          if (config[-1]) { //windows format
+          if (config[-1] || config["states"]) { //windows format
             console.log(config) // config map[int]string
             dispatch.call("initWindows", this, config)
           } else { // one window format
@@ -139,7 +139,7 @@
         } else if (data.test(message)) {
           var v = message.replace("data ", "")
           dispatch.call("input", this, S.toolsParseRegions(v)) //TODO FIX chr
-        } else if (state.test(message)) {
+        } else if (state.test(message)) { //TODO.
           var v = message.replace("states ", "")
           var o = JSON.parse(v) || {}
           console.log("Ext States ", o)
@@ -234,16 +234,7 @@
         console.log("resize")
         layout.updateSize();
       })
-      dispatch.on("saveState", function() {
-        //console.log("save state")
-        var state = JSON.stringify(layout.toConfig());
-        localStorage.setItem(stateId, state);
-        var c = {
-          "code": "save",
-          "data": layout.toConfig()
-        }
-        dispatch.call("sendToElectron", this, JSON.stringify(c))
-      })
+
       var saveToFile = function(fn, c) {
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(c);
         var dlAnchorElem = document.getElementById('downloadAnchorElem');
@@ -251,9 +242,7 @@
         dlAnchorElem.setAttribute("download", fn);
         dlAnchorElem.click();
       }
-      dispatch.on("exportState", function() {
-        saveToFile("scope.json", JSON.stringify(layout.toConfig()))
-      })
+
       dispatch.on("exportStates", function() {
         dispatch.call("sendToElectron", this, JSON.stringify({
           "code": "getStates",
@@ -261,22 +250,16 @@
         }))
       })
       dispatch.on("exportStatesToFile", function(d) {
-        d[-1] = JSON.stringify(layout.toConfig())
+        if (d["states"]) {
+          var k = JSON.parse(d["states"]);
+          k[-1] =  JSON.stringify(layout.toConfig())
+          d["states"] =  JSON.stringify(k)
+        } else {
+          d[-1] = JSON.stringify(layout.toConfig())
+        }
         saveToFile("scopeExt.json", JSON.stringify(d))
       })
 
-      dispatch.on("importState", function(_) {
-        //console.log(layout.toConfig()) //TODO export json file.
-        dialog.showOpenDialog({
-          properties: ['openFile'],
-          filters: [{
-            extensions: ['txt']
-          }]
-        }, function(d) {
-          console.log(d)
-          _(d)
-        })
-      })
       dispatch.on("importStates", function(_) {
         //console.log(layout.toConfig()) //TODO export json file.
         if (isAstilectron) {
@@ -335,6 +318,13 @@
     dispatch.on("initWindows", function(d) {
       console.log("init windows", d)
       //dispatch.call("closeExt",this,{})
+      var hasVars = false;
+      if (d["states"]) {
+          var vars = JSON.parse(d["vars"]);
+
+          d = JSON.parse(d["states"]);
+          hasVars = true;
+      }
       $("#layoutContainer").empty();
       initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
       for (var k in d) {
@@ -343,28 +333,35 @@
           if (!isAstilectron) {
               console.log("Astilectron is not ready");
               //var bk = k;
+
               (function(k){
                 setTimeout(
                   function(){
+                    var v = vars[k] || app
                     console.log("isAstilectron ready?",isAstilectron)
                     console.log("sending k",k)
                     dispatch.call("sendToElectron", this,
                     JSON.stringify({
                       "code": "createExt",
-                      "data": d[k]
+                      "data": d[k],
+                      "vars": v
                     }))
                   }
                   ,2000
                 )
               })(k)
 
+
           } else {
+            var v = vars[k] || app
             dispatch.call("sendToElectron", this,
               JSON.stringify({
                 "code": "createExt",
-                "data": d[k]
+                "data": d[k],
+                "vars": v
               }))
-          }
+            }
+
 
         }
       }
@@ -374,7 +371,7 @@
     d3.json(url, function(error, config) {
       //console.log("config",error,config)
       //initPanels(config, $('#layoutContainer'))
-      if (config[-1]) { //windows format
+      if (config[-1] || config["states"]) { //windows format
         //console.log("initWindow config is ",config) // config map[int]string
         dispatch.call("initWindows", this, config)
       } else { // one window format

@@ -127,6 +127,7 @@ func CmdApp(c *cli.Context) error {
 	// Create window
 	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
 	ws := make(map[int]*astilectron.Window)
+	wsVars := make(map[int]map[string]string)
 	idx := 1
 	app := make(map[string]string)
 
@@ -169,6 +170,7 @@ func CmdApp(c *cli.Context) error {
 
 	mi1, _ := m.Item(0, 1)
 	mi1.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+		wsVars[idx] = app
 		go createNewWindow(a, port, 1000, 700, "external", ws, idx, app, ch)
 		idx++
 		return false
@@ -182,6 +184,7 @@ func CmdApp(c *cli.Context) error {
 			"genome":  genome,
 			"server":  "http://genome.compbio.cs.cmu.edu:8084",
 		}
+		wsVars[idx] = local
 		go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
 		idx++
 		return false
@@ -210,6 +213,7 @@ func CmdApp(c *cli.Context) error {
 		e.Message.Unmarshal(&m)
 		astilog.Infof("Received message %s", m)
 		var dat map[string]interface{}
+		//var vars map[string]string
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
@@ -262,9 +266,15 @@ func CmdApp(c *cli.Context) error {
 						m[id] = d
 					}
 				}
-				c, err := json.Marshal(m)
+				c, _ := json.Marshal(m)
+				c2, _ := json.Marshal(wsVars)
+				ms := map[string]string{
+					"states": string(c),
+					"vars":   string(c2),
+				}
+				msg, err := json.Marshal(ms)
 				if err == nil {
-					w.Send("states " + string(c)) //return ext states to main window
+					w.Send("states " + string(msg)) //return ext states to main window
 				} else {
 					w.Send("error codingExtStates")
 				}
@@ -282,7 +292,16 @@ func CmdApp(c *cli.Context) error {
 			go func() {
 				var id int
 				id = idx
-				createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
+				if dat, ok := dat["vars"]; ok {
+					//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
+					vars := make(map[string]string)
+					for k, v := range dat.(map[string]interface{}) {
+						vars[k] = v.(string)
+					}
+					createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
+				} else {
+					createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
+				}
 				v := map[string]string{
 					"code": "setState",
 					"data": dat["data"].(string),
