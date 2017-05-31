@@ -63,7 +63,7 @@
   var eventHub;
   var isAstilectron = false;
   var dialog = require("electron").remote.dialog;
-
+  var idx = 0
 
   (function($, d3, S) {
     //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
@@ -130,7 +130,7 @@
           var v = message.replace("file ", "");
           var config = JSON.parse(v)
           if (config[-1] || config["states"]) { //windows format
-            console.log(config) // config map[int]string
+            //console.log(config) // config map[int]string
             dispatch.call("initWindows", this, config)
           } else { // one window format
             dispatch.call("initPanels", this, config)
@@ -142,7 +142,7 @@
         } else if (state.test(message)) { //TODO.
           var v = message.replace("states ", "")
           var o = JSON.parse(v) || {}
-          console.log("Ext States ", o)
+          //console.log("Ext States ", o)
           //var state = JSON.stringify(layout.toConfig());
           //o[-1] = state;
           dispatch.call("exportStatesToFile", this, o)
@@ -158,7 +158,7 @@
 
     })
     var ws = {}
-    var idx = 0
+
     dispatch.on("closeExt", function() {
       console.log("close Ext")
       for (var key in ws) {
@@ -329,8 +329,15 @@
       $("#layoutContainer").empty();
       initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
       for (var k in d) {
+        /*
+        if (idx <= k) {
+          idx=k+1;
+          console.log("idx now",idx)
+        }
+        */
         if (k != -1) {
-          console.log("sending K to CREATE", k, JSON.parse(d[k]))
+          //console.log("sending K to CREATE", k, JSON.parse(d[k]))
+
           if (!isAstilectron) {
               console.log("Astilectron is not ready");
               //var bk = k;
@@ -339,8 +346,8 @@
                 setTimeout(
                   function(){
                     var v = vars[k] || app
-                    console.log("isAstilectron ready?",isAstilectron)
-                    console.log("sending k",k)
+                    //console.log("isAstilectron ready?",isAstilectron)
+                    //console.log("sending k",k)
                     dispatch.call("sendToElectron", this,
                     JSON.stringify({
                       "code": "createExt",
@@ -380,7 +387,7 @@
       }
     })
     $("#sideToggle").on("click", function() {
-      console.log("still click")
+      //console.log("still click")
       if ($('#menuContainer').css('display') == 'none') {
         console.log("show")
         $("#menuContainer").show();

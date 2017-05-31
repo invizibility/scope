@@ -274,7 +274,7 @@
       $("#layoutContainer").empty();
       initPanels(d, $("#layoutContainer"))
     })
-    dispatch.on("initWindows", function(d) {
+    dispatch.on("initWindows", function(d) { //TODO Support Version 3 configs.
       console.log("init windows")
       dispatch.call("closeExt", this, {})
       $("#layoutContainer").empty();

@@ -289,9 +289,9 @@ func CmdApp(c *cli.Context) error {
 		}
 		if dat["code"] == "createExt" {
 			log.Println("createExt")
-			go func() {
-				var id int
-				id = idx
+			go func(id int) {
+				//var id int
+				//id = idx
 				if dat, ok := dat["vars"]; ok {
 					//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
 					vars := make(map[string]string)
@@ -309,7 +309,7 @@ func CmdApp(c *cli.Context) error {
 				c, _ := json.Marshal(v)
 				log.Println("coding for set state", string(c))
 				ws[id].Send(string(c))
-			}()
+			}(idx)
 			idx++
 		}
 		return
@@ -395,7 +395,7 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 
 		return false
 	})
-
+	//TODO id increase .
 	ws[id] = w1
 
 }
