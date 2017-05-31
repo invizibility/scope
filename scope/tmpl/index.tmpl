@@ -319,8 +319,9 @@
       console.log("init windows", d)
       //dispatch.call("closeExt",this,{})
       var hasVars = false;
+      var vars = {}
       if (d["states"]) {
-          var vars = JSON.parse(d["vars"]);
+          vars = JSON.parse(d["vars"]);
 
           d = JSON.parse(d["states"]);
           hasVars = true;
