@@ -276,6 +276,14 @@ func CmdConnect(c *cli.Context) error {
 	a.On(astilectron.EventNameAppCmdStop, func(e astilectron.Event) bool {
 		return false
 	})
+	/* FIX BUG */
+	var ni = m.NewItem(&astilectron.MenuItemOptions{
+		Label:   astilectron.PtrStr("Add"),
+		SubMenu: []*astilectron.MenuItemOptions{},
+	})
+	if err = m.Insert(1, ni); err != nil {
+		astilog.Fatal(errors.Wrap(err, "inserting menu item failed"))
+	}
 	a.Wait()
 	return nil
 }

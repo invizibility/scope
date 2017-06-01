@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
@@ -79,16 +80,13 @@ func CmdApp(c *cli.Context) error {
 				{Type: astilectron.MenuItemTypeSeparator},
 				{Label: astilectron.PtrStr("About"), Role: astilectron.MenuItemRoleAbout},
 			},
-		},
-
-		{
+		}, {
 			Label: astilectron.PtrStr("Config"),
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Label: astilectron.PtrStr("Load")},
 				{Label: astilectron.PtrStr("Save")},
 			},
-		},
-		{
+		}, {
 			Label: astilectron.PtrStr("Genome"),
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Human - hg19"), Type: astilectron.MenuItemTypeRadio},
@@ -112,7 +110,11 @@ func CmdApp(c *cli.Context) error {
 	miSaveCfg, _ := m.Item(1, 1)
 
 	// Create the menu
-	m.Create()
+	if err = m.Create(); err != nil {
+		astilog.Fatal(errors.Wrap(err, "creating app menu failed"))
+		log.Fatal("wrong create menu")
+	}
+	fmt.Println("create menu err", err)
 
 	miLoadCfg.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		//TODO Wait for astilectron update with dialog
@@ -132,6 +134,7 @@ func CmdApp(c *cli.Context) error {
 	app := make(map[string]string)
 
 	//TODO Handle Multi Genomes;
+
 	m11, _ := m.Item(1, 1)
 	m11.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		if app["genome"] != "mm10" || app["species"] != "mouse" {
@@ -324,6 +327,35 @@ func CmdApp(c *cli.Context) error {
 	a.On(astilectron.EventNameAppCmdStop, func(e astilectron.Event) bool {
 		return false
 	})
+
+	sm := []*astilectron.MenuItemOptions{}
+	for _, v := range managers["server"].List() {
+		sm = append(sm, &astilectron.MenuItemOptions{
+			Label: astilectron.PtrStr(v),
+			OnClick: func(e astilectron.Event) (deleteListener bool) {
+				server, _ := managers["server"].Get(v)
+				species, _ := app["species"]
+				genome, _ := app["genome"]
+				local := map[string]string{
+					"species": species,
+					"genome":  genome,
+					"server":  server,
+				}
+				wsVars[idx] = local
+				go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
+				idx++
+				return false
+			},
+		})
+	}
+	var ni = m.NewItem(&astilectron.MenuItemOptions{
+		Label:   astilectron.PtrStr("Ext Server"),
+		SubMenu: sm,
+	})
+	if err = m.Insert(3, ni); err != nil {
+		astilog.Fatal(errors.Wrap(err, "inserting menu item failed"))
+	}
+
 	a.Wait()
 	return nil
 }
@@ -398,5 +430,6 @@ func createNewWindow(a *astilectron.Astilectron, port int, width int, height int
 	})
 	//TODO id increase .
 	ws[id] = w1
+	time.Sleep(time.Second)
 
 }

@@ -62,8 +62,8 @@
 <script>
   var eventHub;
   var isAstilectron = false;
-  var dialog = require("electron").remote.dialog;
-  var idx = 0
+  var dialogE = require("electron").remote.dialog;
+  var idx = 0;
 
   (function($, d3, S) {
     //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
@@ -263,7 +263,7 @@
       dispatch.on("importStates", function(_) {
         //console.log(layout.toConfig()) //TODO export json file.
         if (isAstilectron) {
-          dialog.showOpenDialog({
+          dialogE.showOpenDialog({
             properties: ['openFile'],
             filters: [{
               extensions: ['txt']
