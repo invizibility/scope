@@ -278,6 +278,13 @@
       console.log("init windows")
       dispatch.call("closeExt", this, {})
       $("#layoutContainer").empty();
+      var hasVars = false;
+      var vars = {}
+      if (d["states"]) {
+        vars = JSON.parse(d["vars"])
+        d = JSON.parse(d["states"]);
+        hasVars = "true"
+      }
       var dmain = JSON.parse(d[-1])
       dispatch.call("initPanels", this, dmain)
       //initPanels(JSON.parse(d[-1]), $("#layoutContainer"))
@@ -286,15 +293,13 @@
           //TODO Create New Opener
           //var c = JSON.parse(d[k])
           var id = idx
-          ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
-          //TODO add warning for popup blocks.
-          // console.log("init id",id)
-          /*
-          ws[id].onloadend = function(){
-              console.log("id on load end",id)
-              ws[id].postMessage(message[id], domain)
+          if (hasVars) {
+            ws[id] = window.open("/v1/external.html?genome=" + vars[k].genome + "&" + "species=" + vars[k].species+"&server="+vars[k].server, "external_" + idx, "width=1000,height=618")
+          } else {
+            ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
+
           }
-          */
+          //TODO add warning for popup blocks.
           ws[id].onbeforeunload = function() {
             ws.delete(id)
           }
@@ -309,29 +314,17 @@
             console.log(id, "inited")
             ws[id].postMessage(message[id], domain)
           })
-
-
           //setTimeout(ws[id].postMessage(message[id],"http://127.0.0.1:5050"),5000)
           idx += 1
         }
       }
-
-      //TODO TO FIX TO EVENT DRIVEN ws on ready send state
-      /*
-        setTimeout(function(){
-          for (var k in ws) {
-            console.log("postMessage", k, message[k])
-            ws[k].postMessage(message[k], domain)
-          }
-        },5000)
-      */
     })
 
     //})
     var url = S.toolsGetUrlParam("config") || "/data/config.json"
     d3.json(server + url, function(error, config) {
       console.log("config", error, config)
-      if (config[-1]) { //windows format
+      if (config[-1] || config["states"]) { //windows format
         //console.log(config) // config map[int]string
         dispatch.call("initWindows", this, config)
       } else { // one window format
