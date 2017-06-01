@@ -115,8 +115,17 @@
         var readFile = RegExp("file *")
         var data = RegExp("data *")
         var state = RegExp("states *")
-
-        if (message == "resize") {
+        if (message == "loadCfg") {
+          dispatch.call("importStates", this, function(d) {
+            console.log(d)
+            dispatch.call("sendToElectron", this, JSON.stringify({
+              "code": "readFile",
+              "data": d[0]
+            }))
+          })
+        } else if (message=="saveCfg") {
+              dispatch.call("exportStates", this, {})
+        } else if (message == "resize") {
           dispatch.call("resize")
         } else if (r.test(message)) {
           var v = message.split(" ")

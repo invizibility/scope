@@ -75,7 +75,7 @@ func CmdApp(c *cli.Context) error {
 			SubMenu: []*astilectron.MenuItemOptions{
 				{Label: astilectron.PtrStr("Data Manager")},
 				{Label: astilectron.PtrStr("Add External Window")},
-				{Label: astilectron.PtrStr("Add Window From Server")},
+				//{Label: astilectron.PtrStr("Add Window From Server")},
 				{Label: astilectron.PtrStr("Quit"), Role: astilectron.MenuItemRoleClose},
 				{Type: astilectron.MenuItemTypeSeparator},
 				{Label: astilectron.PtrStr("About"), Role: astilectron.MenuItemRoleAbout},
@@ -104,7 +104,7 @@ func CmdApp(c *cli.Context) error {
 	})
 
 	mi0, _ := m.Item(0, 0)
-	mi2, _ := m.Item(0, 2)
+	//mi2, _ := m.Item(0, 2)
 
 	miLoadCfg, _ := m.Item(1, 0)
 	miSaveCfg, _ := m.Item(1, 1)
@@ -118,11 +118,13 @@ func CmdApp(c *cli.Context) error {
 
 	miLoadCfg.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		//TODO Wait for astilectron update with dialog
+		w.Send("loadCfg")
 		return false
 	})
 
 	miSaveCfg.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		//TODO Wait for astilectron update with dialog
+		w.Send("saveCfg")
 		return false
 	})
 	//end menu
@@ -178,21 +180,22 @@ func CmdApp(c *cli.Context) error {
 		idx++
 		return false
 	})
-
-	mi2.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
-		species, _ := app["species"]
-		genome, _ := app["genome"]
-		server, _ := managers["server"].Get("main") //TODO.
-		local := map[string]string{
-			"species": species,
-			"genome":  genome,
-			"server":  server,
-		}
-		wsVars[idx] = local
-		go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
-		idx++
-		return false
-	})
+	/*
+		mi2.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
+			species, _ := app["species"]
+			genome, _ := app["genome"]
+			server, _ := managers["server"].Get("main") //TODO.
+			local := map[string]string{
+				"species": species,
+				"genome":  genome,
+				"server":  server,
+			}
+			wsVars[idx] = local
+			go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
+			idx++
+			return false
+		})
+	*/
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(618),
