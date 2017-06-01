@@ -293,7 +293,7 @@
           //TODO Create New Opener
           //var c = JSON.parse(d[k])
           var id = idx
-          if (hasVars) {
+          if (hasVars && vars[k]) {
             ws[id] = window.open("/v1/external.html?genome=" + vars[k].genome + "&" + "species=" + vars[k].species+"&server="+vars[k].server, "external_" + idx, "width=1000,height=618")
           } else {
             ws[id] = window.open("/v1/external.html?genome=" + app.genome + "&" + "species=" + app.species, "external_" + idx, "width=1000,height=618")
