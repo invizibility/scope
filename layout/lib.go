@@ -160,6 +160,51 @@ func (x *App) addCode() {
 			w1.Send(string(m))
 		}
 	})
+
+	/** TODO  Ext **/
+	o.On("openExt", func(dat map[string]interface{}) {
+		fmt.Println("openExt", dat)
+		//app := make(map[string]string)
+		for k, v := range dat["data"].(map[string]interface{}) {
+			x.app[k] = v.(string)
+		}
+		//go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
+		go x.NewWindow("external", 1000, 618)
+		x.idx++
+		astilog.Infof("window %d", x.idx)
+	})
+
+	o.On("closeExt", func(dat map[string]interface{}) {
+		log.Println("close ext")
+		closeAll(x.ws)
+		x.idx = 1
+	})
+
+	o.On("createExt", func(dat map[string]interface{}) {
+		log.Println("createExt")
+		go func() {
+			var w0 *astilectron.Window
+			if dat, ok := dat["vars"]; ok {
+				//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
+				vars := make(map[string]string)
+				for k, v := range dat.(map[string]interface{}) {
+					vars[k] = v.(string)
+				}
+				//TODO vars createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
+				w0 = x.NewWindow("external", 1000, 618)
+			} else {
+				//TODO createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
+				w0 = x.NewWindow("external", 1000, 618)
+			}
+			v := map[string]string{
+				"code": "setState",
+				"data": dat["data"].(string),
+			}
+			c, _ := json.Marshal(v)
+			log.Println("coding for set state", string(c))
+			w0.Send(string(c))
+		}()
+	})
 }
 
 func (app *App) Start() {
@@ -217,7 +262,7 @@ func generateLinks(port int, name string, app map[string]string) string {
 	return url
 }
 
-func (L *App) NewWindow(page string, width int, height int) {
+func (L *App) NewWindow(page string, width int, height int) *astilectron.Window {
 	port := 5050 //TODO FIX
 	var w1 *astilectron.Window
 	var err error
@@ -266,5 +311,5 @@ func (L *App) NewWindow(page string, width int, height int) {
 	})
 
 	L.ws[id] = w1
-
+	return w1
 }
