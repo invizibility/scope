@@ -3,6 +3,7 @@ package layout
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -135,6 +136,17 @@ func (x *App) addCode() {
 	})
 
 	//Customized Code Message.
+	o.On("readFile", func(dat map[string]interface{}) {
+		content, err := ioutil.ReadFile(dat["data"].(string))
+		if err == nil {
+			s := "file " + string(content)
+			log.Println(s)
+			x.w.Send(s)
+		} else {
+			x.w.Send("file null")
+		}
+	})
+
 	o.On("brush", func(dat map[string]interface{}) {
 		m, _ := json.Marshal(dat)
 		for _, w1 := range x.ws {
