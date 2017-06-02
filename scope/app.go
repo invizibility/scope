@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -32,13 +31,8 @@ func CmdApp(c *cli.Context) error {
 	var err error
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	var managers map[string]data.DataManager
-	ext := path.Ext(uri)
-	if ext == ".json" {
-		managers = data.ReadJsonToManagers(uri, router)
-	} else {
-		managers = data.AddDataManagers(uri, router)
-	}
+
+	managers := data.Load(uri, router)
 	/* add Socket */
 	chatroom := "scope"
 
@@ -181,22 +175,7 @@ func CmdApp(c *cli.Context) error {
 		idx++
 		return false
 	})
-	/*
-		mi2.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
-			species, _ := app["species"]
-			genome, _ := app["genome"]
-			server, _ := managers["server"].Get("main") //TODO.
-			local := map[string]string{
-				"species": species,
-				"genome":  genome,
-				"server":  server,
-			}
-			wsVars[idx] = local
-			go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
-			idx++
-			return false
-		})
-	*/
+
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/index.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(618),

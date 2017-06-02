@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
 
 	astilectron "github.com/asticode/go-astilectron"
 	"github.com/gorilla/mux"
@@ -197,4 +198,18 @@ func AddAsticodeToWindow(w *astilectron.Window, dbmap map[string]DataManager) {
 		}
 		return false
 	})
+}
+
+/* Load: load uri to router
+ *			 uri ext is json or tsv.
+ */
+func Load(uri string, router *mux.Router) map[string]DataManager {
+	var managers map[string]DataManager
+	ext := path.Ext(uri)
+	if ext == ".json" {
+		managers = ReadJsonToManagers(uri, router)
+	} else {
+		managers = AddDataManagers(uri, router)
+	}
+	return managers
 }

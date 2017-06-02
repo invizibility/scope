@@ -24,7 +24,7 @@ func CmdData(c *cli.Context) error { //serve Data Manager.
 	//AddStaticHandle(router)
 	//TODO host this.
 	uri := c.String("input")
-	data.AddDataManagers(uri, router)
+	data.Load(uri, router)
 	log.Print("start data manager")
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
@@ -39,7 +39,7 @@ func CmdDM(c *cli.Context) error {
 
 	//TODO host this.
 	uri := c.String("input")
-	dbmap := data.AddDataManagers(uri, router)
+	dbmap := data.Load(uri, router)
 
 	go http.ListenAndServe(":"+strconv.Itoa(port), router)
 
