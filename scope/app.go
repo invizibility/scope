@@ -15,6 +15,7 @@ import (
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
 	"github.com/gorilla/mux"
+	"github.com/nimezhu/scope/data"
 	"github.com/nimezhu/snowjs"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -31,12 +32,12 @@ func CmdApp(c *cli.Context) error {
 	var err error
 	snowjs.AddHandlers(router, "")
 	AddStaticHandle(router)
-	var managers map[string]DataManager
+	var managers map[string]data.DataManager
 	ext := path.Ext(uri)
 	if ext == ".json" {
-		managers = ReadJsonToManagers(uri, router)
+		managers = data.ReadJsonToManagers(uri, router)
 	} else {
-		managers = AddDataManagers(uri, router)
+		managers = data.AddDataManagers(uri, router)
 	}
 	/* add Socket */
 	chatroom := "scope"
@@ -167,7 +168,7 @@ func CmdApp(c *cli.Context) error {
 				createNewWindow(a, port, 1000, 618, "dm", ws, 0, app, ch)
 				w1 = ws[0]
 				fmt.Println(w1)
-				AddAsticodeToWindow(w1, managers)
+				data.AddAsticodeToWindow(w1, managers)
 			}()
 		}
 		return false

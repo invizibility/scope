@@ -10,6 +10,7 @@ import (
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
 	"github.com/gorilla/mux"
+	"github.com/nimezhu/scope/data"
 	"github.com/nimezhu/snowjs"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -23,7 +24,7 @@ func CmdData(c *cli.Context) error { //serve Data Manager.
 	//AddStaticHandle(router)
 	//TODO host this.
 	uri := c.String("input")
-	AddDataManagers(uri, router)
+	data.AddDataManagers(uri, router)
 	log.Print("start data manager")
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
@@ -38,7 +39,7 @@ func CmdDM(c *cli.Context) error {
 
 	//TODO host this.
 	uri := c.String("input")
-	dbmap := AddDataManagers(uri, router)
+	dbmap := data.AddDataManagers(uri, router)
 
 	go http.ListenAndServe(":"+strconv.Itoa(port), router)
 
@@ -76,7 +77,7 @@ func CmdDM(c *cli.Context) error {
 		//a.Close()
 		return
 	})
-	AddAsticodeToWindow(w, dbmap)
+	data.AddAsticodeToWindow(w, dbmap)
 
 	a.On(astilectron.EventNameAppCmdStop, func(e astilectron.Event) bool {
 		return false

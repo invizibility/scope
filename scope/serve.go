@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/nimezhu/scope/data"
 	"github.com/nimezhu/snowjs"
 
 	"github.com/urfave/cli"
@@ -18,8 +19,8 @@ var codeGetState, _ = json.Marshal(v)
 
 func serveBufferURI(uri string, router *mux.Router, prefix string) {
 	//hicExt := strings.ToLower(path.Ext(uri))
-	uriMap := LoadURI(uri)
-	AddBuffersHandle(router, uriMap, prefix)
+	uriMap := data.LoadURI(uri)
+	data.AddBuffersHandle(router, uriMap, prefix)
 }
 
 /* CmdServe: serve bigwigs and hic, and static html
@@ -35,9 +36,9 @@ func CmdServe(c *cli.Context) error {
 	//var managers map[string]DataManager
 	ext := path.Ext(uri)
 	if ext == ".json" {
-		ReadJsonToManagers(uri, router)
+		data.ReadJsonToManagers(uri, router)
 	} else {
-		AddDataManagers(uri, router)
+		data.AddDataManagers(uri, router)
 	}
 	log.Println("Listening...")
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
