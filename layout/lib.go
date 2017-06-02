@@ -99,57 +99,54 @@ func (x *App) addCode() {
 		//Layout Messages.
 
 		o.Trigger(dat["code"].(string), dat)
-
-		/* init channel for gather states*/
-		o.On("getStates", func(dat map[string]interface{}) {
-			go func() {
-				m := make(map[int]string)
-				for k, _ := range x.ws {
-					if k > 0 { //skip data manager window
-						a := <-x.ch
-						fmt.Println("get id", a["sender"])
-						d, _ := a["data"].(string)
-						id, _ := a["sender"].(int)
-						m[id] = d
-					}
-				}
-				c, _ := json.Marshal(m)
-				c2, _ := json.Marshal(x.vars)
-				ms := map[string]string{
-					"states": string(c),
-					"vars":   string(c2),
-				}
-				msg, err := json.Marshal(ms)
-				if err == nil {
-					x.w.Send("states " + string(msg)) //return ext states to main window
-				} else {
-					x.w.Send("error codingExtStates")
-				}
-			}()
-			/* request state from Ext Windows */
-			for k, w0 := range x.ws {
-				if k != 0 { //skip data manager for now.
-					w0.Send(string(codeGetState))
-				}
-			}
-		})
-
-		//Customized Code Message.
-		o.On("brush", func(dat map[string]interface{}) {
-			m, _ := json.Marshal(dat)
-			for _, w1 := range x.ws {
-				log.Println("brush to ext", string(m))
-				w1.Send(string(m))
-			}
-		})
-		o.On("update", func(dat map[string]interface{}) {
-			m, _ := json.Marshal(dat)
-			for _, w1 := range x.ws {
-				w1.Send(string(m))
-			}
-		})
-
 		return false
+	})
+	o.On("getStates", func(dat map[string]interface{}) {
+		go func() {
+			m := make(map[int]string)
+			for k, _ := range x.ws {
+				if k > 0 { //skip data manager window
+					a := <-x.ch
+					fmt.Println("get id", a["sender"])
+					d, _ := a["data"].(string)
+					id, _ := a["sender"].(int)
+					m[id] = d
+				}
+			}
+			c, _ := json.Marshal(m)
+			c2, _ := json.Marshal(x.vars)
+			ms := map[string]string{
+				"states": string(c),
+				"vars":   string(c2),
+			}
+			msg, err := json.Marshal(ms)
+			if err == nil {
+				x.w.Send("states " + string(msg)) //return ext states to main window
+			} else {
+				x.w.Send("error codingExtStates")
+			}
+		}()
+		/* request state from Ext Windows */
+		for k, w0 := range x.ws {
+			if k != 0 { //skip data manager for now.
+				w0.Send(string(codeGetState))
+			}
+		}
+	})
+
+	//Customized Code Message.
+	o.On("brush", func(dat map[string]interface{}) {
+		m, _ := json.Marshal(dat)
+		for _, w1 := range x.ws {
+			log.Println("brush to ext", string(m))
+			w1.Send(string(m))
+		}
+	})
+	o.On("update", func(dat map[string]interface{}) {
+		m, _ := json.Marshal(dat)
+		for _, w1 := range x.ws {
+			w1.Send(string(m))
+		}
 	})
 }
 
