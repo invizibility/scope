@@ -6,10 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
-	"time"
 
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
@@ -25,7 +22,7 @@ func CmdApp(c *cli.Context) error {
 	port := c.Int("port")
 	uri := c.String("input")
 	router := mux.NewRouter()
-	var a *astilectron.Astilectron
+	//var a *astilectron.Astilectron
 	var w *astilectron.Window
 	var w1 *astilectron.Window
 	var err error
@@ -42,28 +39,18 @@ func CmdApp(c *cli.Context) error {
 	// Create astilectron
 	log.Print("start app")
 	//var err error
-	if a, err = astilectron.New(astilectron.Options{
-		AppName:           "Scope",
-		BaseDirectoryPath: os.Getenv("HOME") + "/lib",
-	}); err != nil {
-		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
-	}
+	/*
+		if a, err = astilectron.New(astilectron.Options{
+			AppName:           "Scope",
+			BaseDirectoryPath: os.Getenv("HOME") + "/lib",
+		}); err != nil {
+			astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
+		}
+	*/
 	//a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
+	a, _ := NewApp("Scope")
 	defer a.Close()
-	a.HandleSignals()
-	a.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
-		a.Stop()
-		return
-	})
 
-	// Start
-	if err = a.Start(); err != nil {
-		astilog.Fatal(errors.Wrap(err, "starting failed"))
-	}
-
-	// menu
-	// Init a new app menu
-	// You can do the same thing with a window
 	var m = a.NewMenu([]*astilectron.MenuItemOptions{
 		{
 			Label: astilectron.PtrStr("Admin"),
@@ -107,7 +94,6 @@ func CmdApp(c *cli.Context) error {
 	// Create the menu
 	if err = m.Create(); err != nil {
 		astilog.Fatal(errors.Wrap(err, "creating app menu failed"))
-		log.Fatal("wrong create menu")
 	}
 	fmt.Println("create menu err", err)
 
@@ -341,78 +327,4 @@ func CmdApp(c *cli.Context) error {
 
 	a.Wait()
 	return nil
-}
-func closeAll(ws map[int]*astilectron.Window) {
-	keys := []int{}
-	for k, _ := range ws {
-		keys = append(keys, k)
-	}
-	for i := 0; i < len(keys); i++ {
-		go func(j int) {
-			ws[keys[j]].Close()
-		}(i)
-	}
-	return
-}
-func generateLinks(port int, name string, app map[string]string) string {
-	url := fmt.Sprintf("http://127.0.0.1:%d/v1/%s.html?", port, name)
-	for k, v := range app {
-		url += k + "=" + v + "&"
-	}
-	url = strings.Trim(url, "?")
-	url = strings.Trim(url, "&")
-	fmt.Println("url", url)
-	return url
-}
-func createNewWindow(a *astilectron.Astilectron, port int, width int, height int, page string, ws map[int]*astilectron.Window, idx int, app map[string]string, ch chan map[string]interface{}) {
-	var w1 *astilectron.Window
-	var err error
-	var id int
-	id = idx
-	log.Println("create ", id)
-	if w1, err = a.NewWindow(generateLinks(port, page, app), &astilectron.WindowOptions{
-		Center: astilectron.PtrBool(true),
-		Icon:   astilectron.PtrStr(os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples/6.icons/gopher.png"),
-		Height: astilectron.PtrInt(height),
-		Width:  astilectron.PtrInt(width),
-	}); err != nil {
-		astilog.Fatal(errors.Wrap(err, "new window failed"))
-	}
-	if err := w1.Create(); err != nil {
-		astilog.Fatal(errors.Wrap(err, "creating window failed"))
-	}
-	w1.On(astilectron.EventNameWindowEventResize, func(e astilectron.Event) (deleteListener bool) {
-		astilog.Info("w1 Window resize")
-		//w1.Send("w1 resize") // TODO
-		log.Println("resize", id)
-		return
-	})
-	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
-		log.Println("delete", id)
-		delete(ws, id)
-		return
-	})
-
-	w1.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) bool {
-		var m string
-		//var m map[string]interface{}
-		e.Message.Unmarshal(&m)
-		astilog.Infof("Received message %s", m)
-		var dat map[string]interface{}
-		if err := json.Unmarshal([]byte(m), &dat); err != nil {
-			panic(err)
-		}
-		if dat["code"] == "state" {
-			dat["sender"] = id
-			log.Println("sender id", id)
-			ch <- dat
-			//get ext state and return it through ch to w.
-		}
-
-		return false
-	})
-	//TODO id increase .
-	ws[id] = w1
-	time.Sleep(time.Second)
-
 }

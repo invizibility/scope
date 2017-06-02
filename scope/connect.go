@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	astilectron "github.com/asticode/go-astilectron"
@@ -22,7 +21,7 @@ func CmdConnect(c *cli.Context) error {
 	port := c.Int("port")
 	uri := c.String("input") //uri is server uri.
 	router := mux.NewRouter()
-	var a *astilectron.Astilectron
+	//var a *astilectron.Astilectron
 	var w *astilectron.Window
 	//var w1 *astilectron.Window
 	var err error
@@ -38,24 +37,10 @@ func CmdConnect(c *cli.Context) error {
 	// Create astilectron
 	log.Print("start app")
 	//var err error
-	if a, err = astilectron.New(astilectron.Options{
-		AppName:           "Scope",
-		BaseDirectoryPath: os.Getenv("HOME") + "/lib",
-	}); err != nil {
-		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
-	}
-	//a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
-	defer a.Close()
-	a.HandleSignals()
-	a.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
-		a.Stop()
-		return
-	})
 
-	// Start
-	if err = a.Start(); err != nil {
-		astilog.Fatal(errors.Wrap(err, "starting failed"))
-	}
+	//a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
+	a, _ := NewApp("Scope")
+	defer a.Close()
 
 	// menu
 	// Init a new app menu

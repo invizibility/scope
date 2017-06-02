@@ -10,6 +10,7 @@ import (
 )
 
 func AddStaticHandle(router *mux.Router) {
+	//TODO FIX
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		bytes, _ := Asset("web/index.html")
 		w.Write(bytes)

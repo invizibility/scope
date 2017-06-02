@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	astilectron "github.com/asticode/go-astilectron"
@@ -44,24 +43,12 @@ func CmdDM(c *cli.Context) error {
 	go http.ListenAndServe(":"+strconv.Itoa(port), router)
 
 	/* Create App TODO: wrap into function*/
-	var a *astilectron.Astilectron
+	//var a *astilectron.Astilectron
 	var err error
 	var w *astilectron.Window
-	if a, err = astilectron.New(astilectron.Options{
-		AppName:           "Scope",
-		BaseDirectoryPath: os.Getenv("HOME") + "/lib",
-	}); err != nil {
-		astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
-	}
+	a, _ := NewApp("Scope Data Manager")
 	defer a.Close()
-	a.HandleSignals()
-	a.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
-		a.Stop()
-		return
-	})
-	if err = a.Start(); err != nil {
-		astilog.Fatal(errors.Wrap(err, "starting failed"))
-	}
+
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/dm.html", port), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
 		Height: astilectron.PtrInt(618),
@@ -79,9 +66,6 @@ func CmdDM(c *cli.Context) error {
 	})
 	data.AddAsticodeToWindow(w, dbmap)
 
-	a.On(astilectron.EventNameAppCmdStop, func(e astilectron.Event) bool {
-		return false
-	})
 	a.Wait()
 	return nil
 }
