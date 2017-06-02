@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	observable "github.com/GianlucaGuarini/go-observable"
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
 	"github.com/pkg/errors"
@@ -84,6 +85,7 @@ func NewApp(name string, app map[string]string) (*App, error) {
 	return x, nil
 }
 func (x *App) addCode() {
+	o := observable.New()
 	x.w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
 		var m string
 		//var m map[string]interface{}
@@ -95,8 +97,11 @@ func (x *App) addCode() {
 			panic(err)
 		}
 		//Layout Messages.
-		if dat["code"] == "getStates" {
-			/* init channel for gather states*/
+
+		o.Trigger(dat["code"].(string), dat)
+
+		/* init channel for gather states*/
+		o.On("getStates", func(dat map[string]interface{}) {
 			go func() {
 				m := make(map[int]string)
 				for k, _ := range x.ws {
@@ -127,13 +132,22 @@ func (x *App) addCode() {
 					w0.Send(string(codeGetState))
 				}
 			}
-		}
+		})
+
 		//Customized Code Message.
-		if dat["code"] == "brush" || dat["code"] == "update" {
+		o.On("brush", func(dat map[string]interface{}) {
+			m, _ := json.Marshal(dat)
 			for _, w1 := range x.ws {
-				w1.Send(m)
+				log.Println("brush to ext", string(m))
+				w1.Send(string(m))
 			}
-		}
+		})
+		o.On("update", func(dat map[string]interface{}) {
+			m, _ := json.Marshal(dat)
+			for _, w1 := range x.ws {
+				w1.Send(string(m))
+			}
+		})
 
 		return false
 	})
@@ -200,6 +214,7 @@ func (L *App) NewWindow(page string, width int, height int) {
 	var err error
 	var id int
 	id = L.idx
+	o := observable.New()
 
 	if w1, err = L.a.NewWindow(generateLinks(port, page, L.app), &astilectron.WindowOptions{
 		Center: astilectron.PtrBool(true),
@@ -232,12 +247,13 @@ func (L *App) NewWindow(page string, width int, height int) {
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
-		//Dispatcher.
-		if dat["code"] == "state" {
-			dat["sender"] = id
-			L.ch <- dat
-		}
+		o.Trigger(dat["code"].(string), dat)
 		return false
+	})
+
+	o.On("state", func(dat map[string]interface{}) {
+		dat["sender"] = id
+		L.ch <- dat
 	})
 
 	L.ws[id] = w1
