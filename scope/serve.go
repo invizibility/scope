@@ -17,12 +17,6 @@ import (
 var v = map[string]string{"code": "getState", "data": ""}
 var codeGetState, _ = json.Marshal(v)
 
-func serveBufferURI(uri string, router *mux.Router, prefix string) {
-	//hicExt := strings.ToLower(path.Ext(uri))
-	uriMap := data.LoadURI(uri)
-	data.AddBuffersHandle(router, uriMap, prefix)
-}
-
 /* CmdServe: serve bigwigs and hic, and static html
  *
  */
