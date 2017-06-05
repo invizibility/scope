@@ -19,3 +19,14 @@ type App struct {
 	//idx  int
 	ch chan map[string]interface{}
 }
+type Win struct {
+	w    *astilectron.Window
+	vars map[string]string
+}
+
+func (a *App) Window() *astilectron.Window {
+	return a.w
+}
+func (a *App) App() *astilectron.Astilectron {
+	return a.a
+}

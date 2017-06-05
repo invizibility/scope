@@ -249,7 +249,7 @@ func CmdApp(c *cli.Context) error {
 	o.On("brush", func(dat map[string]interface{}) {
 		m, _ := json.Marshal(dat)
 		for _, w1 := range ws {
-			log.Println("brush to ext", string(m))
+			//log.Println("brush to ext", string(m))
 			w1.Send(string(m))
 		}
 	})

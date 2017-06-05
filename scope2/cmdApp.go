@@ -17,6 +17,8 @@ func CmdApp(c *cli.Context) error {
 	router := mux.NewRouter()
 	port := c.Int("port")
 	uri := c.String("input")
+	/* add Socket */
+	chatroom := "scope"
 	//managers := data.Load(uri, router)
 	data.Load(uri, router)
 	snowjs.AddHandlers(router, "")
@@ -26,8 +28,10 @@ func CmdApp(c *cli.Context) error {
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	vars := make(map[string]string)
 	app, _ := layout.NewApp("scope2", vars)
+	AddSocket(chatroom, router, app.Window())
 	app.Start()
-	app.Wait()
 
+	a := app.App()
+	a.Wait()
 	return nil
 }

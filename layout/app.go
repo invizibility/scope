@@ -41,7 +41,7 @@ func NewApp(name string, app map[string]string) (*App, error) {
 	}
 	ws := make(map[int]*astilectron.Window)
 	ws[-1] = w
-	vars := make(map[int]map[string]string) //TODO
+	vars := make(map[int]map[string]string) //TODO Manage Vars for each Window.
 	//app := make(map[string]string)          //TODO
 	//idx := 1
 	x := &App{a, m, w, ws, vars, app, ch}
@@ -63,6 +63,27 @@ func NewApp(name string, app map[string]string) (*App, error) {
 		astilog.Fatal(errors.Wrap(err, "inserting menu item failed"))
 	}
 	log.Println(err)
+
+	/* Debug Button */
+	debugBtn := m.NewItem(&astilectron.MenuItemOptions{
+		Label: astilectron.PtrStr("Debug"),
+		//SubMenu: sm,
+		OnClick: func(e astilectron.Event) (deleteListener bool) {
+			//go x.NewWindow("external", 1000, 618, x.app, -100)
+			//x.idx++ //TODO
+			for k, _ := range x.ws {
+				log.Println(k)
+			}
+			return false
+		},
+	})
+	if err = m.Insert(2, debugBtn); err != nil {
+		//log.Println(err)
+		panic(err)
+		astilog.Fatal(errors.Wrap(err, "inserting menu item failed"))
+	}
+	log.Println(err)
+	/******************************/
 
 	return x, nil
 }

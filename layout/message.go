@@ -97,7 +97,7 @@ func (x *App) addCode() {
 			if i == -1 {
 				continue
 			}
-			log.Println("brush to ext", string(m))
+			//log.Println("brush to ext", string(m))
 			w1.Send(string(m))
 		}
 	})
@@ -146,9 +146,11 @@ func (x *App) addCode() {
 					vars[k] = v.(string)
 				}
 				//TODO vars createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
+				log.Println("create window ", id)
 				w0 = x.NewWindow("external", 1000, 618, vars, id)
 			} else {
 				//TODO createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
+				log.Println("create window ", id)
 				w0 = x.NewWindow("external", 1000, 618, x.app, id)
 			}
 			v := map[string]string{
@@ -160,4 +162,5 @@ func (x *App) addCode() {
 			w0.Send(string(c))
 		}()
 	})
+
 }

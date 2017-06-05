@@ -53,6 +53,10 @@ func (x *App) NewWindow(page string, width int, height int, vars map[string]stri
 		log.Println("delete", id)
 		//w1.Send("delete")
 		delete(x.ws, id)
+		log.Println("deleted", id)
+		for i, _ := range x.ws {
+			log.Println("left", i)
+		}
 		return
 	})
 
@@ -71,9 +75,6 @@ func (x *App) NewWindow(page string, width int, height int, vars map[string]stri
 	o.On("state", func(dat map[string]interface{}) {
 		dat["sender"] = id
 		x.ch <- dat
-	})
-	o.On("vars", func(dat map[string]interface{}) {
-
 	})
 
 	x.ws[id] = w1

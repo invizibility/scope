@@ -22,6 +22,7 @@ func newApp(name string) (*astilectron.Astilectron, error) {
 	}
 	a.HandleSignals()
 	a.On(astilectron.EventNameAppClose, func(e astilectron.Event) (deleteListener bool) {
+		fmt.Println("event name app close")
 		a.Stop()
 		return
 	})
