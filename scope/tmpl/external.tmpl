@@ -92,29 +92,25 @@
           dispatch.on("sendToElectron", function(d) {
               astilectron.send(d)
           });
+
+          var process = d3.dispatch("brush","update","getState","setState")
+          process.on("brush",function(d){
+            dispatch.call("brush",this,S.toolsParseRegions(d))
+          })
+          process.on("update",function(d){
+            dispatch.call("update",this,S.toolsParseRegions(d))
+          })
+          process.on("getState",function(d){
+            dispatch.call("sendState",this,d)
+          })
+          process.on("setState",function(d){
+            var state = JSON.parse(d)
+            $("#container").empty()
+            initPanels(state,$("#container"))
+          })
           astilectron.listen(function(message) {
-
-              // This will send a message back to GO
-              // astilectron.send("I'm good bro")
-              //document.getElementById('message').innerHTML = message
-              console.log("message",message)
               var d = JSON.parse(message)
-              if (d.code == "brush" || d.code == "update") {
-                dispatch.call(d.code,this,S.toolsParseRegions(d.data))
-              }
-              if (d.code == "getState") {
-                console.log("server asked for getState")
-                dispatch.call("sendState",this,{})
-              }
-              if (d.code == "setState") {
-                console.log("setState")
-                var state = JSON.parse(d.data)
-                console.log("state",state)
-                //dispatch.call("sendState",this,{})
-                $("#container").empty()
-                initPanels(state,$("#container"))
-              }
-
+              process.call(d.code,this,d.data)
           });
       })
 

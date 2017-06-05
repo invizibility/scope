@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	observable "github.com/GianlucaGuarini/go-observable"
 	astilectron "github.com/asticode/go-astilectron"
 	astilog "github.com/asticode/go-astilog"
 	"github.com/gorilla/mux"
@@ -180,6 +181,7 @@ func CmdApp(c *cli.Context) error {
 		return
 	})
 
+	o := observable.New()
 	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
 		var m string
 		//var m map[string]interface{}
@@ -190,102 +192,119 @@ func CmdApp(c *cli.Context) error {
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
 			panic(err)
 		}
+		o.Trigger(dat["code"].(string), dat)
 		//fmt.Println("message", dat["code"])
-		if dat["code"] == "app" {
-			for k, v := range dat["data"].(map[string]interface{}) {
-				app[k] = v.(string)
-			}
-		}
-		if dat["code"] == "openExt" {
-			fmt.Println("openExt", dat)
-			//app := make(map[string]string)
-			for k, v := range dat["data"].(map[string]interface{}) {
-				app[k] = v.(string)
-			}
-			go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
-			idx++
-			astilog.Infof("window %d", idx)
-		}
-		if dat["code"] == "closeExt" {
-			log.Println("close ext")
-			closeAll(ws)
-			idx = 1
-		}
-		if dat["code"] == "brush" || dat["code"] == "update" {
-			for _, w1 := range ws {
-				w1.Send(m)
-			}
-		}
-		if dat["code"] == "readFile" {
-			content, err := ioutil.ReadFile(dat["data"].(string))
-			if err == nil {
-				s := "file " + string(content)
-				w.Send(s)
-			} else {
-				w.Send("file null")
-			}
-		}
-		//get states from extWindws.
-		if dat["code"] == "getStates" {
-			/* init channel for gather states*/
-			go func() {
-				m := make(map[int]string)
-				for k, _ := range ws {
-					if k != 0 { //skip data manager window
-						a := <-ch
-						fmt.Println("get id", a["sender"])
-						d, _ := a["data"].(string)
-						id, _ := a["sender"].(int)
-						m[id] = d
-					}
-				}
-				c, _ := json.Marshal(m)
-				c2, _ := json.Marshal(wsVars)
-				ms := map[string]string{
-					"states": string(c),
-					"vars":   string(c2),
-				}
-				msg, err := json.Marshal(ms)
-				if err == nil {
-					w.Send("states " + string(msg)) //return ext states to main window
-				} else {
-					w.Send("error codingExtStates")
-				}
-			}()
-			/* request state from Ext Windows */
-			for k, w0 := range ws {
-				if k != 0 { //skip data manager for now.
-					w0.Send(string(codeGetState))
-				}
-			}
 
-		}
-		if dat["code"] == "createExt" {
-			log.Println("createExt")
-			go func(id int) {
-				//var id int
-				//id = idx
-				if dat, ok := dat["vars"]; ok {
-					//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
-					vars := make(map[string]string)
-					for k, v := range dat.(map[string]interface{}) {
-						vars[k] = v.(string)
-					}
-					createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
-				} else {
-					createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
-				}
-				v := map[string]string{
-					"code": "setState",
-					"data": dat["data"].(string),
-				}
-				c, _ := json.Marshal(v)
-				log.Println("coding for set state", string(c))
-				ws[id].Send(string(c))
-			}(idx)
-			idx++
-		}
 		return
+	})
+	o.On("app", func(dat map[string]interface{}) {
+		for k, v := range dat["data"].(map[string]interface{}) {
+			app[k] = v.(string)
+		}
+	})
+	o.On("getStates", func(dat map[string]interface{}) {
+		go func() {
+			m := make(map[int]string)
+			for k, _ := range ws {
+				if k != 0 { //skip data manager window
+					a := <-ch
+					fmt.Println("get id", a["sender"])
+					d, _ := a["data"].(string)
+					id, _ := a["sender"].(int)
+					m[id] = d
+				}
+			}
+			c, _ := json.Marshal(m)
+			c2, _ := json.Marshal(wsVars)
+			ms := map[string]string{
+				"states": string(c),
+				"vars":   string(c2),
+			}
+			msg, err := json.Marshal(ms)
+			if err == nil {
+				w.Send("states " + string(msg)) //return ext states to main window
+			} else {
+				w.Send("error codingExtStates")
+			}
+		}()
+		for k, w0 := range ws {
+			if k != 0 { //skip data manager for now.
+				w0.Send(string(codeGetState))
+			}
+		}
+	})
+
+	//Customized Code Message.
+	o.On("readFile", func(dat map[string]interface{}) {
+		content, err := ioutil.ReadFile(dat["data"].(string))
+		if err == nil {
+			s := "file " + string(content)
+			log.Println(s)
+			w.Send(s)
+		} else {
+			w.Send("file null")
+		}
+	})
+
+	o.On("brush", func(dat map[string]interface{}) {
+		m, _ := json.Marshal(dat)
+		for _, w1 := range ws {
+			log.Println("brush to ext", string(m))
+			w1.Send(string(m))
+		}
+	})
+	o.On("update", func(dat map[string]interface{}) {
+		m, _ := json.Marshal(dat)
+		for _, w1 := range ws {
+			w1.Send(string(m))
+		}
+	})
+
+	/** TODO  Ext **/
+	o.On("openExt", func(dat map[string]interface{}) {
+		fmt.Println("openExt", dat)
+		//app := make(map[string]string)
+		for k, v := range dat["data"].(map[string]interface{}) {
+			app[k] = v.(string)
+		}
+		go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
+		//go x.NewWindow("external", 1000, 618)
+		idx++
+		astilog.Infof("window %d", idx)
+	})
+
+	o.On("closeExt", func(dat map[string]interface{}) {
+		log.Println("close ext")
+		closeAll(ws)
+		idx = 1
+	})
+
+	o.On("createExt", func(dat map[string]interface{}) {
+		log.Println("createExt")
+		go func(id int) {
+			//var w0 *astilectron.Window
+			if dat, ok := dat["vars"]; ok {
+				//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
+				vars := make(map[string]string)
+				for k, v := range dat.(map[string]interface{}) {
+					vars[k] = v.(string)
+				}
+				createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
+				//w0 = NewWindow("external", 1000, 618)
+			} else {
+				createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
+				//w0 = NewWindow("external", 1000, 618)
+			}
+			v := map[string]string{
+				"code": "setState",
+				"data": dat["data"].(string),
+			}
+			c, _ := json.Marshal(v)
+			//log.Println("coding for set state", string(c))
+			log.Println("sending to", id, ws[id])
+			ws[id].Send(string(c))
+		}(idx)
+		idx++
 	})
 
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {

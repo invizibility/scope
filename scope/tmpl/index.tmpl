@@ -108,54 +108,58 @@
         console.log("on sendToElection", d)
         astilectron.send(d)
       });
+      var process = d3.dispatch("app","file","data","states","loadCfg","saveCfg","resize")
+      process.on("loadCfg",function(_){
+        dispatch.call("importStates", this, function(d) {
+          console.log(d)
+          dispatch.call("sendToElectron", this, JSON.stringify({
+            "code": "readFile",
+            "data": d[0]
+          }))
+        })
+      })
+      process.on("saveCfg",function(_){
+        dispatch.call("exportStates", this, _)
+      })
+      process.on("resize",function(_){
+          dispatch.call("resize")
+      })
+      process.on("app",function(d){
+        var v = d.split(" ")
+        app["species"] = v[1]
+        app["genome"] = v[2]
+        if (v.length > 2) {
+          app["server"] = v[3]
+        }
+        updateLinks(app)
+      })
+      process.on("file",function(v){
+        var config = JSON.parse(v)
+        if (config[-1] || config["states"]) { //windows format
+          dispatch.call("initWindows", this, config)
+        } else { // one window format
+          dispatch.call("initPanels", this, config)
+        }
+      })
+
+      process.on("data",function(v){
+          dispatch.call("input", this, S.toolsParseRegions(v)) //TODO FIX chr
+      })
+      process.on("states",function(v){
+        var o = JSON.parse(v) || {}
+        console.log("Ext States ", o)
+        //var state = JSON.stringify(layout.toConfig());
+        //o[-1] = state;
+        dispatch.call("exportStatesToFile", this, o)
+      })
 
       astilectron.listen(function(message) {
         //TODO FIX This Messages ;
-        var r = RegExp("app *")
-        var readFile = RegExp("file *")
-        var data = RegExp("data *")
-        var state = RegExp("states *")
-        if (message == "loadCfg") {
-          dispatch.call("importStates", this, function(d) {
-            console.log(d)
-            dispatch.call("sendToElectron", this, JSON.stringify({
-              "code": "readFile",
-              "data": d[0]
-            }))
-          })
-        } else if (message=="saveCfg") {
-              dispatch.call("exportStates", this, {})
-        } else if (message == "resize") {
-          dispatch.call("resize")
-        } else if (r.test(message)) {
-          var v = message.split(" ")
-          app["species"] = v[1]
-          app["genome"] = v[2]
-          if (v.length > 3) {
-            app["server"] = v[3]
-          }
-          updateLinks(app)
-        } else if (readFile.test(message)) {
-          var v = message.replace("file ", "");
-          var config = JSON.parse(v)
-          if (config[-1] || config["states"]) { //windows format
-            //console.log(config) // config map[int]string
-            dispatch.call("initWindows", this, config)
-          } else { // one window format
-            dispatch.call("initPanels", this, config)
-          }
+        var a = message.split(" ")
+        var code = a.shift()
+        var data = a.join(" ")
 
-        } else if (data.test(message)) {
-          var v = message.replace("data ", "")
-          dispatch.call("input", this, S.toolsParseRegions(v)) //TODO FIX chr
-        } else if (state.test(message)) { //TODO.
-          var v = message.replace("states ", "")
-          var o = JSON.parse(v) || {}
-          //console.log("Ext States ", o)
-          //var state = JSON.stringify(layout.toConfig());
-          //o[-1] = state;
-          dispatch.call("exportStatesToFile", this, o)
-        }
+        process.call(code,this,data)
       });
 
       //TODO add change genome.
