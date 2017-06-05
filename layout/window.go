@@ -14,12 +14,22 @@ import (
 /* NewWindow: create new window for application
  * astilectron code : state , send to application chan.
  */
-func (L *App) NewWindow(page string, width int, height int, vars map[string]string) *astilectron.Window {
+func (L *App) assignId() int {
+	i := 100
+	for _, ok := L.ws[i]; ok; i++ {
+		_, ok = L.ws[i]
+	}
+	return i
+}
+func (L *App) NewWindow(page string, width int, height int, vars map[string]string, id int) *astilectron.Window {
 	port := 5050 //TODO FIX
 	var w1 *astilectron.Window
 	var err error
-	var id int
-	id = L.idx
+	//var id int
+	//id = L.idx
+	if id < 0 {
+		id = L.assignId()
+	}
 	o := observable.New()
 
 	if w1, err = L.a.NewWindow(generateLinks(port, page, vars), &astilectron.WindowOptions{ //TODO change L.app

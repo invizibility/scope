@@ -66,7 +66,7 @@ func (x *App) addCode() {
 		}()
 		/* request state from Ext Windows */
 		for k, w0 := range x.ws {
-			if k != 0 { //skip data manager for now.
+			if k > 0 { //skip data manager for now.
 				w0.Send(string(codeGetState))
 			}
 		}
@@ -109,7 +109,7 @@ func (x *App) addCode() {
 			x.app[k] = v.(string)
 		}
 		//go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
-		go x.NewWindow("external", 1000, 618, x.app)
+		go x.NewWindow("external", 1000, 618, x.app, -100)
 		x.idx++
 		astilog.Infof("window %d", x.idx)
 	})
@@ -131,10 +131,10 @@ func (x *App) addCode() {
 					vars[k] = v.(string)
 				}
 				//TODO vars createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
-				w0 = x.NewWindow("external", 1000, 618, vars)
+				w0 = x.NewWindow("external", 1000, 618, vars, -100)
 			} else {
 				//TODO createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
-				w0 = x.NewWindow("external", 1000, 618, x.app)
+				w0 = x.NewWindow("external", 1000, 618, x.app, -100)
 			}
 			v := map[string]string{
 				"code": "setState",
