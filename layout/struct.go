@@ -16,6 +16,6 @@ type App struct {
 	ws   map[int]*astilectron.Window //external windows.
 	vars map[int]map[string]string
 	app  map[string]string
-	idx  int
-	ch   chan map[string]interface{}
+	//idx  int
+	ch chan map[string]interface{}
 }

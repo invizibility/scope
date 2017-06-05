@@ -8,7 +8,6 @@ import (
 
 	observable "github.com/GianlucaGuarini/go-observable"
 	astilectron "github.com/asticode/go-astilectron"
-	astilog "github.com/asticode/go-astilog"
 )
 
 /*  add astilectron code
@@ -28,7 +27,7 @@ func (x *App) addCode() {
 		var m string
 		//var m map[string]interface{}
 		e.Message.Unmarshal(&m)
-		log.Printf("Received message %s\n", m)
+		//log.Printf("Received message %s\n", m)
 		var dat map[string]interface{}
 		//var vars map[string]string
 		if err := json.Unmarshal([]byte(m), &dat); err != nil {
@@ -38,6 +37,12 @@ func (x *App) addCode() {
 
 		o.Trigger(dat["code"].(string), dat)
 		return false
+	})
+
+	o.On("windowsIds", func(dat map[string]interface{}) { //for debug
+		for k, _ := range x.ws {
+			log.Println(k)
+		}
 	})
 	o.On("getStates", func(dat map[string]interface{}) {
 		go func() {
@@ -100,7 +105,11 @@ func (x *App) addCode() {
 			w1.Send(string(m))
 		}
 	})
-
+	o.On("app", func(dat map[string]interface{}) {
+		for k, v := range dat["data"].(map[string]interface{}) {
+			x.app[k] = v.(string)
+		}
+	})
 	/** TODO  Ext **/
 	o.On("openExt", func(dat map[string]interface{}) {
 		fmt.Println("openExt", dat)
@@ -110,14 +119,14 @@ func (x *App) addCode() {
 		}
 		//go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
 		go x.NewWindow("external", 1000, 618, x.app, -100)
-		x.idx++
-		astilog.Infof("window %d", x.idx)
+		//x.idx++
+		//astilog.Infof("window %d", x.idx)
 	})
 
 	o.On("closeExt", func(dat map[string]interface{}) {
 		log.Println("close ext")
-		closeAll(x.ws)
-		x.idx = 1
+		closeExt(x.ws)
+		//x.idx = 1
 	})
 
 	o.On("createExt", func(dat map[string]interface{}) {

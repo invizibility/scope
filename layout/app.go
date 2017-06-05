@@ -43,8 +43,8 @@ func NewApp(name string, app map[string]string) (*App, error) {
 	ws[-1] = w
 	vars := make(map[int]map[string]string) //TODO
 	//app := make(map[string]string)          //TODO
-	idx := 1
-	x := &App{a, m, w, ws, vars, app, idx, ch}
+	//idx := 1
+	x := &App{a, m, w, ws, vars, app, ch}
 	x.addCode() //TODO
 	//sm := []*astilectron.MenuItemOptions{}
 	m.Create()
@@ -52,8 +52,8 @@ func NewApp(name string, app map[string]string) (*App, error) {
 		Label: astilectron.PtrStr("Ext"),
 		//SubMenu: sm,
 		OnClick: func(e astilectron.Event) (deleteListener bool) {
-			go x.NewWindow("external", 680, 1000, x.app, -100)
-			x.idx++
+			go x.NewWindow("external", 1000, 618, x.app, -100)
+			//x.idx++
 			return false
 		},
 	})

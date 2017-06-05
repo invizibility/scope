@@ -33,9 +33,12 @@ func newApp(name string) (*astilectron.Astilectron, error) {
 	return a, err
 }
 
-func closeAll(ws map[int]*astilectron.Window) {
+func closeExt(ws map[int]*astilectron.Window) {
 	keys := []int{}
 	for k, _ := range ws {
+		if k == -1 {
+			continue
+		}
 		keys = append(keys, k)
 	}
 	for i := 0; i < len(keys); i++ {
