@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strconv"
 
 	observable "github.com/GianlucaGuarini/go-observable"
 	astilectron "github.com/asticode/go-astilectron"
@@ -15,8 +16,9 @@ import (
  *  - readFile
  *  - brush and update
  *  - openExt, closeExt, createExt.
+ *  - app
  *  TODO:
- *    app
+ *
  *    vars
  *  TODO:
  *    add customized message.
@@ -133,6 +135,10 @@ func (x *App) addCode() {
 		log.Println("createExt")
 		go func() {
 			var w0 *astilectron.Window
+			id := -100
+			if ids, ok := dat["id"]; ok {
+				id, _ = strconv.Atoi(ids.(string))
+			}
 			if dat, ok := dat["vars"]; ok {
 				//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
 				vars := make(map[string]string)
@@ -140,10 +146,10 @@ func (x *App) addCode() {
 					vars[k] = v.(string)
 				}
 				//TODO vars createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
-				w0 = x.NewWindow("external", 1000, 618, vars, -100)
+				w0 = x.NewWindow("external", 1000, 618, vars, id)
 			} else {
 				//TODO createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
-				w0 = x.NewWindow("external", 1000, 618, x.app, -100)
+				w0 = x.NewWindow("external", 1000, 618, x.app, id)
 			}
 			v := map[string]string{
 				"code": "setState",

@@ -17,8 +17,9 @@ import (
 func (x *App) assignId() int {
 	i := 100
 	for _, ok := x.ws[i]; ok; i++ {
-		_, ok = x.ws[i]
+		_, ok = x.ws[i+1]
 	}
+	//fmt.Println("create", i)
 	return i
 }
 func (x *App) NewWindow(page string, width int, height int, vars map[string]string, id int) *astilectron.Window {
