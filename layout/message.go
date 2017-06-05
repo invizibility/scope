@@ -39,7 +39,7 @@ func (x *App) addCode() {
 		return false
 	})
 
-	o.On("windowsIds", func(dat map[string]interface{}) { //for debug
+	o.On("windowIds", func(dat map[string]interface{}) { //for debug
 		for k, _ := range x.ws {
 			log.Println(k)
 		}

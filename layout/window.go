@@ -14,25 +14,25 @@ import (
 /* NewWindow: create new window for application
  * astilectron code : state , send to application chan.
  */
-func (L *App) assignId() int {
+func (x *App) assignId() int {
 	i := 100
-	for _, ok := L.ws[i]; ok; i++ {
-		_, ok = L.ws[i]
+	for _, ok := x.ws[i]; ok; i++ {
+		_, ok = x.ws[i]
 	}
 	return i
 }
-func (L *App) NewWindow(page string, width int, height int, vars map[string]string, id int) *astilectron.Window {
+func (x *App) NewWindow(page string, width int, height int, vars map[string]string, id int) *astilectron.Window {
 	port := 5050 //TODO FIX
 	var w1 *astilectron.Window
 	var err error
 	//var id int
-	//id = L.idx
+	//id = x.idx
 	if id < 0 {
-		id = L.assignId()
+		id = x.assignId()
 	}
 	o := observable.New()
 
-	if w1, err = L.a.NewWindow(generateLinks(port, page, vars), &astilectron.WindowOptions{ //TODO change L.app
+	if w1, err = x.a.NewWindow(generateLinks(port, page, vars), &astilectron.WindowOptions{ //TODO change x.app
 		Center: astilectron.PtrBool(true),
 		Icon:   astilectron.PtrStr(os.Getenv("GOPATH") + "/src/github.com/asticode/go-astilectron/examples/6.icons/gopher.png"),
 		Height: astilectron.PtrInt(height),
@@ -51,7 +51,7 @@ func (L *App) NewWindow(page string, width int, height int, vars map[string]stri
 	w1.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
 		log.Println("delete", id)
 		//w1.Send("delete")
-		delete(L.ws, id)
+		delete(x.ws, id)
 		return
 	})
 
@@ -69,12 +69,12 @@ func (L *App) NewWindow(page string, width int, height int, vars map[string]stri
 
 	o.On("state", func(dat map[string]interface{}) {
 		dat["sender"] = id
-		L.ch <- dat
+		x.ch <- dat
 	})
 	o.On("vars", func(dat map[string]interface{}) {
 
 	})
 
-	L.ws[id] = w1
+	x.ws[id] = w1
 	return w1
 }
