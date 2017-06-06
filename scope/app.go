@@ -18,6 +18,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+func assignId(ws map[int]*astilectron.Window) int {
+	i := 100
+	for _, ok := ws[i]; ok; i++ {
+		_, ok = ws[i+1]
+	}
+	return i
+}
+
 func CmdApp(c *cli.Context) error {
 	ch := make(chan map[string]interface{})
 	port := c.Int("port")
@@ -39,52 +47,12 @@ func CmdApp(c *cli.Context) error {
 	log.Println("Please open http://127.0.0.1:" + strconv.Itoa(port))
 	// Create astilectron
 	log.Print("start app")
-	//var err error
-	/*
-		if a, err = astilectron.New(astilectron.Options{
-			AppName:           "Scope",
-			BaseDirectoryPath: os.Getenv("HOME") + "/lib",
-		}); err != nil {
-			astilog.Fatal(errors.Wrap(err, "creating new astilectron failed"))
-		}
-	*/
+
 	//a.SetProvisioner(astilectron.NewDisembedderProvisioner(Asset, "vendor/astilectron-v0.1.0.zip", "vendor/electron-v1.6.5.zip"))
-	a, _ := NewApp("Scope")
+	a, _ := newApp("Scope")
 	defer a.Close()
 
-	var m = a.NewMenu([]*astilectron.MenuItemOptions{
-		{
-			Label: astilectron.PtrStr("Admin"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Data Manager")},
-				{Label: astilectron.PtrStr("Add External Window")},
-				//{Label: astilectron.PtrStr("Add Window From Server")},
-				{Label: astilectron.PtrStr("Quit"), Role: astilectron.MenuItemRoleClose},
-				{Type: astilectron.MenuItemTypeSeparator},
-				{Label: astilectron.PtrStr("About"), Role: astilectron.MenuItemRoleAbout},
-			},
-		}, {
-			Label: astilectron.PtrStr("Config"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("Load")},
-				{Label: astilectron.PtrStr("Save")},
-			},
-		}, {
-			Label: astilectron.PtrStr("Genome"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Checked: astilectron.PtrBool(true), Label: astilectron.PtrStr("Human - hg19"), Type: astilectron.MenuItemTypeRadio},
-				{Label: astilectron.PtrStr("Mouse - mm10"), Type: astilectron.MenuItemTypeRadio},
-			},
-		},
-		{
-			Label: astilectron.PtrStr("View"),
-			SubMenu: []*astilectron.MenuItemOptions{
-				{Label: astilectron.PtrStr("DevTools"), Role: astilectron.MenuItemRoleToggleDevTools},
-				{Label: astilectron.PtrStr("Minimize"), Role: astilectron.MenuItemRoleMinimize},
-				{Label: astilectron.PtrStr("Close"), Role: astilectron.MenuItemRoleClose},
-			},
-		},
-	})
+	var m = scopeMenu(a)
 
 	mi0, _ := m.Item(0, 0)
 	//mi2, _ := m.Item(0, 2)
@@ -180,7 +148,7 @@ func CmdApp(c *cli.Context) error {
 		w.Send("resize")
 		return
 	})
-
+	/** START OF CODES */
 	o := observable.New()
 	w.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
 		var m string
@@ -234,7 +202,6 @@ func CmdApp(c *cli.Context) error {
 		}
 	})
 
-	//Customized Code Message.
 	o.On("readFile", func(dat map[string]interface{}) {
 		content, err := ioutil.ReadFile(dat["data"].(string))
 		if err == nil {
@@ -249,7 +216,6 @@ func CmdApp(c *cli.Context) error {
 	o.On("brush", func(dat map[string]interface{}) {
 		m, _ := json.Marshal(dat)
 		for _, w1 := range ws {
-			//log.Println("brush to ext", string(m))
 			w1.Send(string(m))
 		}
 	})
@@ -263,12 +229,11 @@ func CmdApp(c *cli.Context) error {
 	/** TODO  Ext **/
 	o.On("openExt", func(dat map[string]interface{}) {
 		fmt.Println("openExt", dat)
-		//app := make(map[string]string)
 		for k, v := range dat["data"].(map[string]interface{}) {
 			app[k] = v.(string)
 		}
-		go createNewWindow(a, port, 1000, 618, "external", ws, idx, app, ch)
-		//go x.NewWindow("external", 1000, 618)
+		id := assignId(ws)
+		go createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
 		idx++
 		astilog.Infof("window %d", idx)
 	})
@@ -281,32 +246,27 @@ func CmdApp(c *cli.Context) error {
 
 	o.On("createExt", func(dat map[string]interface{}) {
 		log.Println("createExt")
+		ida := assignId(ws)
 		go func(id int) {
-			//var w0 *astilectron.Window
 			if dat, ok := dat["vars"]; ok {
-				//err := json.Unmarshal([]byte(v.(map[string]interface{})), &vars)
 				vars := make(map[string]string)
 				for k, v := range dat.(map[string]interface{}) {
 					vars[k] = v.(string)
 				}
 				createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
-				//w0 = NewWindow("external", 1000, 618)
 			} else {
 				createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
-				//w0 = NewWindow("external", 1000, 618)
 			}
 			v := map[string]string{
 				"code": "setState",
 				"data": dat["data"].(string),
 			}
 			c, _ := json.Marshal(v)
-			//log.Println("coding for set state", string(c))
-			log.Println("sending to", id, ws[id])
 			ws[id].Send(string(c))
-		}(idx)
+		}(ida)
 		idx++
 	})
-
+	/*  END OF CODES */
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
 		closeAll(ws)
 		return
@@ -329,9 +289,9 @@ func CmdApp(c *cli.Context) error {
 					"genome":  genome,
 					"server":  server,
 				}
-				wsVars[idx] = local
-				go createNewWindow(a, port, 1000, 700, "external", ws, idx, local, ch)
-				idx++
+				ida := assignId(ws)
+				wsVars[ida] = local
+				go createNewWindow(a, port, 1000, 700, "external", ws, ida, local, ch)
 				return false
 			},
 		})

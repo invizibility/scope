@@ -46,7 +46,7 @@ func CmdDM(c *cli.Context) error {
 	//var a *astilectron.Astilectron
 	var err error
 	var w *astilectron.Window
-	a, _ := NewApp("Scope Data Manager")
+	a, _ := newApp("Scope Data Manager")
 	defer a.Close()
 
 	if w, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d/v1/dm.html", port), &astilectron.WindowOptions{

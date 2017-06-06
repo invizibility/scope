@@ -13,34 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-/*
-type App struct {
-	a        *astilectron.Astilectron
-	m        *astilectron.Menu
-	w        *astilectron.Window         //main windows
-	ws       map[int]*astilectron.Window //external windows.
-	vars     map[int]map[string]string
-	app      map[string]string
-	server   string
-	index    string
-	external string
-}
-
-func (e *App) Menu() *astilectron.Menu {
-	return e.m
-}
-
-func (e *App) States() {
-
-}
-*/
-func RunApp(name string, f func(*astilectron.Astilectron)) {
-	a, _ := NewApp(name)
-	defer a.Close()
-	f(a)
-	a.Wait()
-}
-func NewApp(name string) (*astilectron.Astilectron, error) {
+func newApp(name string) (*astilectron.Astilectron, error) {
 	var a *astilectron.Astilectron
 	var err error
 	if a, err = astilectron.New(astilectron.Options{
@@ -61,10 +34,6 @@ func NewApp(name string) (*astilectron.Astilectron, error) {
 	}
 
 	return a, err
-}
-
-func AddCodeToWindow(w *astilectron.Window) {
-
 }
 
 func closeAll(ws map[int]*astilectron.Window) {
