@@ -52,7 +52,7 @@ func NewApp(name string, app map[string]string) (*App, error) {
 		Label: astilectron.PtrStr("Ext"),
 		//SubMenu: sm,
 		OnClick: func(e astilectron.Event) (deleteListener bool) {
-			go x.NewWindow("external", 1000, 618, x.app, -100)
+			x.NewWindow("external", 1000, 618, x.app, -100)
 			//x.idx++
 			return false
 		},

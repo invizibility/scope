@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+/*
 type App struct {
 	a        *astilectron.Astilectron
 	m        *astilectron.Menu
@@ -29,12 +30,10 @@ func (e *App) Menu() *astilectron.Menu {
 	return e.m
 }
 
-/*States : get layouts states for each window
- */
 func (e *App) States() {
 
 }
-
+*/
 func RunApp(name string, f func(*astilectron.Astilectron)) {
 	a, _ := NewApp(name)
 	defer a.Close()
@@ -71,6 +70,9 @@ func AddCodeToWindow(w *astilectron.Window) {
 func closeAll(ws map[int]*astilectron.Window) {
 	keys := []int{}
 	for k, _ := range ws {
+		if k == -1 {
+			continue
+		}
 		keys = append(keys, k)
 	}
 	for i := 0; i < len(keys); i++ {
