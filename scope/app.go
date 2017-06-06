@@ -65,9 +65,10 @@ func CmdApp(c *cli.Context) error {
 		astilog.Fatal(errors.Wrap(err, "creating app menu failed"))
 	}
 	fmt.Println("create menu err", err)
-
+	ws := make(map[int]*astilectron.Window)
 	miLoadCfg.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		//TODO Wait for astilectron update with dialog
+		closeAll(ws)
 		w.Send("loadCfg")
 		return false
 	})
@@ -80,14 +81,13 @@ func CmdApp(c *cli.Context) error {
 	//end menu
 	// Create window
 	// w1 := createNewWindow(a, port, 800, 600, "ucsc") //simple monitor 1
-	ws := make(map[int]*astilectron.Window)
+
 	wsVars := make(map[int]map[string]string)
-	idx := 1
 	app := make(map[string]string)
 
-	//TODO Handle Multi Genomes;
+	//TODO Handle Multi Genomes; Make this as app.
 
-	m11, _ := m.Item(1, 1)
+	m11, _ := m.Item(2, 1)
 	m11.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		if app["genome"] != "mm10" || app["species"] != "mouse" {
 			app["genome"] = "mm10"
@@ -97,7 +97,7 @@ func CmdApp(c *cli.Context) error {
 		}
 		return false
 	})
-	m10, _ := m.Item(1, 0)
+	m10, _ := m.Item(2, 0)
 	m10.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
 		if app["genome"] != "hg19" || app["species"] != "human" {
 			app["genome"] = "hg19"
@@ -125,9 +125,9 @@ func CmdApp(c *cli.Context) error {
 
 	mi1, _ := m.Item(0, 1)
 	mi1.On(astilectron.EventNameMenuItemEventClicked, func(e astilectron.Event) bool {
-		wsVars[idx] = app
-		go createNewWindow(a, port, 1000, 700, "external", ws, idx, app, ch)
-		idx++
+		id := assignId(ws)
+		wsVars[id] = app
+		go createNewWindow(a, port, 1000, 700, "external", ws, id, app, ch)
 		return false
 	})
 
@@ -234,29 +234,33 @@ func CmdApp(c *cli.Context) error {
 		}
 		id := assignId(ws)
 		go createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
-		idx++
-		astilog.Infof("window %d", idx)
+		astilog.Infof("window %d", id)
 	})
 
 	o.On("closeExt", func(dat map[string]interface{}) {
 		log.Println("close ext")
 		closeAll(ws)
-		idx = 1
 	})
 
 	o.On("createExt", func(dat map[string]interface{}) {
 		log.Println("createExt")
-		ida := assignId(ws)
+		var ida int
+		if d, ok := dat["id"]; ok {
+			ida, _ = strconv.Atoi(d.(string))
+		} else {
+			ida = assignId(ws)
+		}
 		go func(id int) {
-			if dat, ok := dat["vars"]; ok {
-				vars := make(map[string]string)
-				for k, v := range dat.(map[string]interface{}) {
+			vars := make(map[string]string)
+			for k, v := range app {
+				vars[k] = v
+			}
+			if d, ok := dat["vars"]; ok {
+				for k, v := range d.(map[string]interface{}) {
 					vars[k] = v.(string)
 				}
-				createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
-			} else {
-				createNewWindow(a, port, 1000, 618, "external", ws, id, app, ch)
 			}
+			createNewWindow(a, port, 1000, 618, "external", ws, id, vars, ch)
 			v := map[string]string{
 				"code": "setState",
 				"data": dat["data"].(string),
@@ -264,7 +268,6 @@ func CmdApp(c *cli.Context) error {
 			c, _ := json.Marshal(v)
 			ws[id].Send(string(c))
 		}(ida)
-		idx++
 	})
 	/*  END OF CODES */
 	w.On(astilectron.EventNameWindowEventClosed, func(e astilectron.Event) (deleteListener bool) {
@@ -281,14 +284,12 @@ func CmdApp(c *cli.Context) error {
 		sm = append(sm, &astilectron.MenuItemOptions{
 			Label: astilectron.PtrStr(v),
 			OnClick: func(e astilectron.Event) (deleteListener bool) {
-				server, _ := managers["server"].Get(v)
-				species, _ := app["species"]
-				genome, _ := app["genome"]
-				local := map[string]string{
-					"species": species,
-					"genome":  genome,
-					"server":  server,
+				local := make(map[string]string)
+				for k, v0 := range app {
+					local[k] = v0
 				}
+				local["server"], _ = managers["server"].Get(v)
+				//fmt.Println("get server", v, local["server"])
 				ida := assignId(ws)
 				wsVars[ida] = local
 				go createNewWindow(a, port, 1000, 700, "external", ws, ida, local, ch)

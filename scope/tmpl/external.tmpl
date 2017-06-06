@@ -1,16 +1,19 @@
-{{define "title"}}external{{end}}
-{{define "html"}}
+{{define "title"}}external{{end}} {{define "html"}}
 <html>
+
 <head>
-<title>{{template "title"}}</title>
-{{template "lib"}}
-{{template "css"}}
-<script src="/lib0/snow.js"></script>
-<link rel="stylesheet" href="/style0/snow.css">
+  <title>{{template "title"}}</title>
+  {{template "lib"}} {{template "css"}}
+  <script src="/lib0/snow.js"></script>
+  <link rel="stylesheet" href="/style0/snow.css">
 </head>
+
 <body>
-   {{template "menubar2"}}
-  <div id="container" style="height:100%"></div>
+  {{template "menubar2"}}
+  <div id="wrapper">
+    <div id="menuContainer" style="display:none"></div>
+    <div id="layoutContainer" style="width:100%;left:0%"></div>
+  </div>
 </body>
 <template type="text/html" id="cfgbtn">
 <div class='config'>
@@ -24,218 +27,241 @@
 </div>
 </template>
 <script>
+  //layout is global;
+  (function(S, d3, jQuery) {
+    var eventHub
+    var event = new Event('begin')
+    window.dispatchEvent(event)
+    var eventInited = new Event('inited')
+    var url = window.location.href
+    var arr = url.split("/");
+    var domain = arr[0] + "//" + arr[2]
+    var isAstilectron = false;
+    if (window.opener) {
+      eventHub = window.opener.eventHub;
+    }
+    /* TODO FIX TO VARS */
+    var genome = S.toolsGetUrlParam("genome")
+    var species = S.toolsGetUrlParam("species")
+    var server = S.toolsGetUrlParam("server") || ""
+    //console.log(genome, species)
+    var configDiv = d3.select("#menuContainer").append("div")
+       .classed("panel",true)
+       .style("padding","5px")
+       .style("overflow-x","scroll")
+    configDiv.html("<table class='table' style＝'font-size:smaller'><tr><td>genome</td><td>"+genome+"</td></tr><tr><td>Server</td><td>"+server+"</td></tr></table>")
 
-//layout is global;
-    (function(S,d3,jQuery){
-      var eventHub
-      var event = new Event('begin')
-      window.dispatchEvent(event)
-      var eventInited = new Event('inited')
-      var url = window.location.href
-      var arr = url.split("/");
-      var domain = arr[0] + "//" + arr[2]
-      var isAstilectron = false;
-      if (window.opener) {
-        eventHub = window.opener.eventHub;
+    var renderList = ["simple", "hicMonitor", "ucsc"] //availble renderers
+    var dispatch = d3.dispatch("update", "brush", "add", "resize", "sendToElectron", "sendState", "setState")
+
+    /* window communication in web version */
+    function message(event) {
+      if (event.origin !== domain) //TODO FIX
+        return;
+      var d = event.data
+      if (d.code == "setState") {
+        console.log("setState", d.data)
+        dispatch.call(d.code, this, d.data)
       }
-      var genome = S.toolsGetUrlParam("genome")
-      var species = S.toolsGetUrlParam("species")
-      var server = S.toolsGetUrlParam("server") || ""
-      console.log(genome,species)
-      var renderList = ["simple","hicMonitor","ucsc"] //availble renderers
-      var dispatch = d3.dispatch("update","brush","add","resize","sendToElectron","sendState","setState")
+    }
+    dispatch.on("setState", function(d) {
+      console.log("setState", d)
+      $("#layoutContainer").empty()
+      initPanels(d, $("#layoutContainer"))
+    })
+    window.addEventListener("message", message, false);
 
-      /* window communication in web version */
-      function message(event) {
-        console.log(event.origin)
-        console.log(event.data)
+    /*  window communication on app verion */
 
-        if (event.origin !== domain) //TODO FIX
-          return;
 
-        var d = event.data
-        if (d.code == "setState") {
-            console.log("setState",d.data)
-            dispatch.call(d.code,this,d.data)
-        }
+    var brush = function(d) {
+      dispatch.call("brush", this, d)
+    }
+    var update = function(d) {
+      dispatch.call("update", this, d)
+    }
+    if (eventHub != undefined) {
+      eventHub.on("brush", brush)
+      eventHub.on("update", update)
+      window.onbeforeunload = function() {
+        // Do something
+        eventHub.off("brush", brush)
+        eventHub.off("update", update)
       }
-      dispatch.on("setState",function(d){
-        console.log("setState",d)
-        $("#container").empty()
-        initPanels(d,$("#container"))
+    }
+
+    document.addEventListener('astilectron-ready', function() {
+
+      // This will listes to messages sent by GO
+      isAstilectron = true;
+      dispatch.on("sendToElectron", function(d) {
+        astilectron.send(d)
+      });
+
+      var process = d3.dispatch("brush", "update", "getState", "setState")
+      process.on("brush", function(d) {
+        dispatch.call("brush", this, S.toolsParseRegions(d))
       })
-      window.addEventListener("message", message, false);
-
-      /*  window communication on app verion */
-
-
-      var brush = function(d) {
-        dispatch.call("brush",this,d)
-      }
-      var update = function(d){
-        dispatch.call("update",this,d)
-      }
-     if(eventHub!=undefined){
-       eventHub.on("brush",brush)
-       eventHub.on("update",update)
-       window.onbeforeunload = function(){
-            // Do something
-            eventHub.off("brush",brush)
-            eventHub.off("update",update)
-      }
-     }
-
-      document.addEventListener('astilectron-ready', function() {
-
-          // This will listes to messages sent by GO
-          isAstilectron = true;
-          dispatch.on("sendToElectron", function(d) {
-              astilectron.send(d)
-          });
-
-          var process = d3.dispatch("brush","update","getState","setState")
-          process.on("brush",function(d){
-            dispatch.call("brush",this,S.toolsParseRegions(d))
-          })
-          process.on("update",function(d){
-            dispatch.call("update",this,S.toolsParseRegions(d))
-          })
-          process.on("getState",function(d){
-            dispatch.call("sendState",this,d)
-          })
-          process.on("setState",function(d){
-            var state = JSON.parse(d)
-            $("#container").empty()
-            initPanels(state,$("#container"))
-          })
-          astilectron.listen(function(message) {
-              var d = JSON.parse(message)
-              process.call(d.code,this,d.data)
-          });
+      process.on("update", function(d) {
+        dispatch.call("update", this, S.toolsParseRegions(d))
       })
+      process.on("getState", function(d) {
+        dispatch.call("sendState", this, d)
+      })
+      process.on("setState", function(d) {
+        var state = JSON.parse(d)
+        $("#layoutContainer").empty()
+        initPanels(state, $("#layoutContainer"))
+      })
+      astilectron.listen(function(message) {
+        var d = JSON.parse(message)
+        process.call(d.code, this, d.data)
+      });
+    })
 
-        var config = {
-            settings: {
-                showPopoutIcon: false
-            },
-            dimensions: {
-                borderWidth: 2
-            },
-            content: [{
-                type: 'row',
-                content: [{
-                        type: "component",
-                        componentName: "canvas",
-                        title: "canvas101",
-                        isClosable: false,
-                        componentState: {
-                            "name": "101",
-                            "render": "simple",
-                            "server": "#"
-                        }
-                    }
-                ]
-            }]
+    var config = {
+      settings: {
+        showPopoutIcon: false
+      },
+      dimensions: {
+        borderWidth: 2
+      },
+      content: [{
+        type: 'row',
+        content: [{
+          type: "component",
+          componentName: "canvas",
+          title: "canvas101",
+          isClosable: false,
+          componentState: {
+            "name": "101",
+            "render": "simple",
+            "server": "#"
+          }
+        }]
+      }]
+    }
+    var initPanels = function(config, el) {
+      layout = new GoldenLayout(config, el);
+      dispatch.on("add", function(d) {
+        layout.root.contentItems[0].addChild(d);
+      })
+      dispatch.on("sendState", function(d) {
+        var state = JSON.stringify(layout.toConfig());
+        console.log("send State")
+        dispatch.call("sendToElectron", this, JSON.stringify({
+          "code": "state",
+          "data": state
+        }))
+      })
+      dispatch.on("brush", function(d) {
+        layout.eventHub.emit("brush", d)
+      })
+      dispatch.on("update", function(d) {
+        layout.eventHub.emit("update", d)
+      })
+      dispatch.on("resize.inner", function(d) {
+        //console.log("resize")
+        layout.updateSize();
+      })
+      layout.registerComponent("canvas", function(container, state) {
+        console.log("DEBUG", state.render, S.render)
+        var r = renders[state.render] || S.render[state.render]
+        r(layout, container, state, app)
+        //TODO renderer...
+        var configContainer = container.getElement().find(".cfg")
+        var contentContainer = container.getElement().find(".content")
+        if (state.configView) {
+          configContainer.show();
+          contentContainer.hide();
+        } else {
+          configContainer.hide();
+          contentContainer.show();
         }
-        var initPanels = function(config, el){
-            layout = new GoldenLayout(config, el);
-            dispatch.on("add", function(d) {
-                layout.root.contentItems[0].addChild(d);
-            })
-            dispatch.on("sendState",function(d){
-                var state = JSON.stringify(layout.toConfig());
-                console.log("send State")
-                dispatch.call("sendToElectron",this,JSON.stringify({"code":"state","data":state}))
-            })
-            dispatch.on("brush",function(d){
-              layout.eventHub.emit("brush",d)
-            })
-            dispatch.on("update",function(d){
-              layout.eventHub.emit("update",d)
-            })
-            dispatch.on("resize.inner", function(d) {
-                //console.log("resize")
-                layout.updateSize();
-            })
-            layout.registerComponent("canvas", function(container, state) {
-              console.log("DEBUG",state.render,S.render)
-                var r = renders[state.render] || S.render[state.render]
-                r(layout, container, state, app)
-                //TODO renderer...
-                var configContainer = container.getElement().find(".cfg")
-                var contentContainer = container.getElement().find(".content")
-                if (state.configView) {
-                    configContainer.show();
-                    contentContainer.hide();
-                } else {
-                    configContainer.hide();
-                    contentContainer.show();
-                }
-            });
-            layout.on('stackCreated', function(stack) {
-                var toggle = $($('#cfgbtn').html())
-                stack.header.controlsContainer.prepend(toggle);
-                toggle.on("click", function() {
-                    toggleConfig();
-                })
-                var toggleConfig = function() {
-                    var container = stack.getActiveContentItem().container;
-                    var toggled = !container.getState().configView
-                    container.extendState({
-                        configView: toggled
-                    });
-                    if (toggled) {
-                        container.getElement().find(".cfg").show()
-                        container.getElement().find(".content").hide()
+      });
+      layout.on('stackCreated', function(stack) {
+        var toggle = $($('#cfgbtn').html())
+        stack.header.controlsContainer.prepend(toggle);
+        toggle.on("click", function() {
+          toggleConfig();
+        })
+        var toggleConfig = function() {
+          var container = stack.getActiveContentItem().container;
+          var toggled = !container.getState().configView
+          container.extendState({
+            configView: toggled
+          });
+          if (toggled) {
+            container.getElement().find(".cfg").show()
+            container.getElement().find(".content").hide()
 
-                    } else {
-                        container.getElement().find(".cfg").hide()
-                        container.getElement().find(".content").show()
-                    }
-                };
-            });
-            layout.init()
-        }
-        initPanels(config,$("#container"))
-        window.dispatchEvent(eventInited)
+          } else {
+            container.getElement().find(".cfg").hide()
+            container.getElement().find(".content").show()
+          }
+        };
+      });
+      layout.init()
+    }
+    initPanels(config, $("#layoutContainer"))
+    window.dispatchEvent(eventInited)
 
-        var renders = {}
-        var app = {
-          "genome":genome || "hg19",
-          "species": species || "human"
-        } // parameters. TODO mm10 ...
-        if (server!="") {
-          app["server"] = server
+    var renders = {}
+    var app = {
+      "genome": genome || "hg19",
+      "species": species || "human"
+    } // parameters. TODO mm10 ...
+    if (server != "") {
+      app["server"] = server
+    }
+    var factory = function(d) {
+      return {
+        title: d,
+        type: 'component',
+        componentName: 'canvas',
+        componentState: {
+          name: d,
+          render: d
         }
-        var factory = function(d) {
-            return {
-                title: d,
-                type: 'component',
-                componentName: 'canvas',
-                componentState: {
-                    name: d,
-                    render: d
-                }
-            };
+      };
+    }
+    d3.select("#renders").selectAll("li")
+      .data(renderList)
+      .enter()
+      .append("li")
+      .append("a")
+      .attr("id", function(d) {
+        return d
+      }).text(
+        function(d) {
+          return d
         }
-        d3.select("#renders").selectAll("li")
-            .data(renderList)
-            .enter()
-            .append("li")
-            .append("a")
-            .attr("id", function(d) {
-                return d
-            }).text(
-                function(d) {
-                    return d
-                }
-            ).on("click", function(d) {
-                dispatch.call("add", this, factory(d))
-            })
-            window.onresize = function() {
-              dispatch.call("resize",this,{})
-            }
-    })(snow,d3,jQuery)
+      ).on("click", function(d) {
+        dispatch.call("add", this, factory(d))
+      })
+    window.onresize = function() {
+      dispatch.call("resize", this, {})
+    }
+
+    $("#sideToggle").on("click", function() {
+      //console.log("still click")
+      if ($('#menuContainer').css('display') == 'none') {
+        console.log("show")
+        $("#menuContainer").show();
+        $("#layoutContainer").css(
+          "width", "80%"
+        ).css("left", "20%");
+      } else {
+        console.log("hide")
+        $("#menuContainer").hide();
+        $("#layoutContainer").css(
+          "width", "100%"
+        ).css("left", "0%");
+      }
+      dispatch.call("resize", this, {})
+    })
+  })(snow, d3, jQuery)
 </script>
+
 </html>
 {{end}}
