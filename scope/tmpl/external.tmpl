@@ -3,9 +3,14 @@
 
 <head>
   <title>{{template "title"}}</title>
-  {{template "lib"}} {{template "css"}}
-  <script src="/lib0/snow.js"></script>
+  {{template "css"}}
   <link rel="stylesheet" href="/style0/snow.css">
+  <link rel="stylesheet" href="/style0/dna3d.css"> {{template "lib"}}
+  <script src="/lib/three.min.js"></script>
+  <script src="/lib0/TrackballControls.js"></script>
+  <script src="/lib0/CanvasRenderer.js"></script>
+  <script src="/lib0/Projector.js"></script>
+  <script src="/lib0/snow.js"></script>
 </head>
 
 <body>
@@ -26,6 +31,7 @@
 <div class="cfg">
 </div>
 </template>
+{{template "dna3d"}}
 <script>
   //layout is global;
   (function(S, d3, jQuery) {
@@ -50,8 +56,10 @@
        .style("padding","5px")
        .style("overflow-x","scroll")
     configDiv.html("<table class='table' style＝'font-size:smaller'><tr><td>genome</td><td>"+genome+"</td></tr><tr><td>Server</td><td>"+server+"</td></tr></table>")
-
-    var renderList = ["simple", "hicMonitor", "ucsc"] //availble renderers
+    var renders = {
+      "3d": S.render.dna3d
+    }
+    var renderList = ["simple", "hicMonitor", "ucsc", "3d"] //availble renderers
     var dispatch = d3.dispatch("update", "brush", "add", "resize", "sendToElectron", "sendState", "setState")
 
     /* window communication in web version */
@@ -165,7 +173,7 @@
         layout.updateSize();
       })
       layout.registerComponent("canvas", function(container, state) {
-        console.log("DEBUG", state.render, S.render)
+        console.log("DEBUG", state.render, S.render,renders)
         var r = renders[state.render] || S.render[state.render]
         r(layout, container, state, app)
         //TODO renderer...
@@ -206,7 +214,7 @@
     initPanels(config, $("#layoutContainer"))
     window.dispatchEvent(eventInited)
 
-    var renders = {}
+    
     var app = {
       "genome": genome || "hg19",
       "species": species || "human"
