@@ -1104,7 +1104,7 @@ var B = {
 
         var response = function (e) {
             var rdata = [];
-            console.log(e,regions);
+            //console.log(e,regions)
             regions.forEach(function (r, i) {
                 e.forEach(function (d, j) {
                     if (overlap(r, d)) {
@@ -1117,7 +1117,7 @@ var B = {
                     }
                 });
             });
-            console.log("rdata",rdata);
+            //console.log("rdata",rdata)
             var r1 = respSvg.selectAll("rect").data(rdata);
               r1.exit().remove();
               r1.enter()
@@ -2387,7 +2387,7 @@ var toolsTrimChrPrefix = function(r) {
     return a
 };
 
-var addChrPrefix = function(r) { 
+var toolsAddChrPrefix = function(r) { 
     var s = [];
     r.forEach(function(d) {
         s.push({
@@ -2702,7 +2702,7 @@ var hic = function (layout, container, state, app) {
     });
 
     var URI = server + "/hic/default"; //TODO This For All HiC selection.
-    var hicId = localStorage.getItem("hicId");
+    var hicId = localStorage.getItem("hicId"); //TODO Fix this
     if (hicId) {
         URI = server + "/hic/" + hicId;
         container.setTitle(hicId);
@@ -2781,7 +2781,7 @@ var hic = function (layout, container, state, app) {
                 .y(scope.edge / 2 + 40 + i * 80)
                 .width(scope.edge)
                 .gap(20) //TODO REMV
-                .regions(addChrPrefix(regions))
+                .regions(toolsAddChrPrefix(regions))
                 .panel(main)
                 .mode(1)
                 .pos(i)
@@ -2810,10 +2810,10 @@ var hic = function (layout, container, state, app) {
         //prefixed = false;
       }
         var scopebrush = brush$1().width(scope.edge).on("brush", function (d) {
-            dispatch.call("brush", this, addChrPrefix(d));
-            layout.eventHub.emit("brush", addChrPrefix(d));
+            dispatch.call("brush", this, toolsAddChrPrefix(d));
+            layout.eventHub.emit("brush", toolsAddChrPrefix(d));
         }).on("click", function (d) {
-            dispatch.call("update", this, addChrPrefix(d));
+            dispatch.call("update", this, toolsAddChrPrefix(d));
         }).regions(regions);
         axesG.selectAll("*").remove();
         axesG.call(scopebrush);
@@ -2908,7 +2908,7 @@ var hic = function (layout, container, state, app) {
 
     dispatch.on("update.local", function (d) {
         console.log("update.local",d);
-        render(addChrPrefix(d));
+        render(toolsAddChrPrefix(d));
     });
     var fixRegions = function (d) {
         d.forEach(function (c, i) {
@@ -2923,7 +2923,7 @@ var hic = function (layout, container, state, app) {
         return d
     };
     layout.eventHub.on("input", function (d) {
-        d = fixRegions(addChrPrefix(d));
+        d = fixRegions(toolsAddChrPrefix(d));
         render(d);
     });
     dispatch.on("replot", function (d) {
@@ -3685,12 +3685,12 @@ var links = function(layout, container, state, app) {
 
     div1.style("color",config.color); // TODO.
     layout.eventHub.on("brush", function(d) {
-        brush = addChrPrefix(d);
+        brush = toolsAddChrPrefix(d);
         setdiv(div2,"brushing",brush);
 
     });
     layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
+       update = toolsAddChrPrefix(d);
        setdiv(div1,"current", update);
        div2.selectAll("*").remove();
     });
@@ -3801,12 +3801,12 @@ var popouts = function(layout, container, state, app) {
 
     div1.style("color",config.color); // TODO.
     layout.eventHub.on("brush", function(d) {
-        brush = addChrPrefix(d);
+        brush = toolsAddChrPrefix(d);
         setdiv(div2,"brushing",brush);
 
     });
     layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
+       update = toolsAddChrPrefix(d);
        setdiv(div1,"current", update);
        div2.selectAll("*").remove();
     });
@@ -3882,7 +3882,7 @@ var ucsc$2 = function(layout, container, state, app) {
 
     layout.eventHub.on("brush", function(d) {
       if(!container.isHidden){
-        brush = addChrPrefix(d);
+        brush = toolsAddChrPrefix(d);
         //TODO
         var pos=[];
         brush.forEach(function(d){
@@ -3905,7 +3905,7 @@ var ucsc$2 = function(layout, container, state, app) {
 
     });
     layout.eventHub.on("update", function(d) {
-       update = addChrPrefix(d);
+       update = toolsAddChrPrefix(d);
        if (!container.isHidden) {
          setiframe(div1, update);
        }
@@ -4034,7 +4034,7 @@ var load = function(callback) {
 		var chr = null;
 		var index = -1;
 
-		console.log("Loading and Parsing",dataURI,data);
+		//console.log("Loading and Parsing",dataURI,data)
 		//load coordinates
 		for (var i = 0; i < pdb.length - 1; i++){
 			var row = pdb[i].split('\t');
@@ -4339,7 +4339,7 @@ var external = function (layout, container, state, app) {
     /* render config panel and configs */
     var windows = [window.open("", "", "width=800,height=500"), window.open("", "", "width=800,height=500")];
     var updated = function (d) {
-        var r = addChrPrefix(d);
+        var r = toolsAddChrPrefix(d);
         console.log(windows);
         if (!windows[0].location.href) {
             windows[0].location = ucsc$4(app.species || "human", app.genome || "hg19", r[0], 800);
@@ -4474,6 +4474,112 @@ var ideogram = function(layout,container,state,app) {
 
 };
 
+var bigwig = function(layout,container,state,app) {
+  var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
+  var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
+  var main = content.append("div").attr("id","main").style("position","relative");
+  var canvas = main.append("canvas");
+  var server = state["server"] || app["server"] || "";
+  var bigwig;
+  var init = false;
+  var dispatch = d3.dispatch("brush","update");
+  var scope = {
+    "edge" : 500
+  };
+  var initBw = function (data) {
+      console.log("bigwig", data);
+      bigwig = data;
+      init = true;
+  };
+  B.Get(server+"/bw", initBw);
+  var bwconfig = state["bwconfig"] || undefined;
+  var renderBigwig = function (regions) {
+      var bw = [];
+      var tracks = [];
+      //TODO : load localStorage configure?
+      if (!bwconfig) {
+          bigwig.trackIds.forEach(function (b, i) {
+              tracks.push(b);
+
+          });
+      } else {
+          bwconfig.data.forEach(function (d) {
+              if (d.values[1] == "show") {
+                  tracks.push(d.values[0]);
+              }
+          });
+      }
+      tracks.forEach(function (b, i) {
+          bw.push(
+              B.canvas()
+              .URI(server + "/bw") //set this?
+              .id(b)
+              .x(10)
+              .y(40 + i * 80)
+              .width(scope.edge)
+              .gap(20) //TODO REMV
+              .regions(toolsAddChrPrefix(regions))
+              .panel(main)
+              .mode(1)
+              .pos(i)
+          );
+      });
+      dispatch.on("brush.local", function (e) {
+          bw.forEach(function (b, i) {
+              b.response(e);
+          });
+      });
+      bw.forEach(function (b) {
+          canvas.call(b);
+      });
+  };
+  //var svg = content.append("svg").attr("height",container.height).attr("width",container.width)
+  var regions = state.regions || [];
+  layout.eventHub.on("brush", function(d) {
+      //brush = d
+      if(!container.isHidden){
+        //div2.html("BRUSHING   " + regionsText(d))
+        dispatch.call("brush",this,d);
+      }
+
+  });
+  layout.eventHub.on("update", function(d) {
+     container.extendState({"regions":d});
+     //main.html("")
+     regions = d;
+     if(!container.isHidden && init){
+       //console.log("CALL RENDER BIGWIG",d)
+       //div.html("CURRENT   " + regionsText(d))
+       renderBigwig(d);
+     }
+  });
+  container.on("show",function(d) {
+    //div1.html("WAKEUP "+ regionsText(update))
+    //div2.html("WAKEUP BRUSHING "+ regionsText(brush))
+    /*
+    if (init) {
+      renderBigwig(d)
+    }
+    */
+  });
+  var resize = function() {
+    canvas.attr("height", container.height)
+        .attr("width", container.width);
+    scope.edge = container.width - 40;
+    scope.width = container.width;
+    scope.height = container.height;
+    if (init){
+      renderBigwig(regions);
+    }
+  };
+  var TO = false;
+  container.on("resize", function (e) {
+      if (TO !== false) clearTimeout(TO);
+      TO = setTimeout(resize, 2000);
+  });
+
+};
+
 var render = {
   simple : simple,
   links : links,
@@ -4484,7 +4590,8 @@ var render = {
   ucsc : ucsc$2,
   dna3d  : dna3d,
   external : external,
-  ideogram : ideogram
+  ideogram : ideogram,
+  bigwig   : bigwig
 };
 
 exports.symbolTriangle = symbolTriangle;
@@ -4509,7 +4616,7 @@ exports.toolsAddPanelTo = addPanelTo;
 exports.toolsRegionText = regionText;
 exports.toolsRegionsText = regionsText;
 exports.toolsTrimChrPrefix = toolsTrimChrPrefix;
-exports.toolsAddChrPrefix = addChrPrefix;
+exports.toolsAddChrPrefix = toolsAddChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
 exports.render = render;

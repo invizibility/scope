@@ -8,6 +8,7 @@ import ucsc from "./renderer/ucsc"
 import dna3d from "./renderer/dna3d"
 import external from "./renderer/external"
 import ideogram from "./renderer/ideogram"
+import bigwig from "./renderer/bigwig"
 
 export default {
   simple : simple,
@@ -19,5 +20,6 @@ export default {
   ucsc : ucsc,
   dna3d  : dna3d,
   external : external,
-  ideogram : ideogram
+  ideogram : ideogram,
+  bigwig   : bigwig
 }

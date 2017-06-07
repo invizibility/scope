@@ -150,7 +150,7 @@ export default function (layout, container, state, app) {
     })
 
     var URI = server + "/hic/default" //TODO This For All HiC selection.
-    var hicId = localStorage.getItem("hicId")
+    var hicId = localStorage.getItem("hicId") //TODO Fix this
     if (hicId) {
         URI = server + "/hic/" + hicId
         container.setTitle(hicId)

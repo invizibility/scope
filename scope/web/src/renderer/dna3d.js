@@ -116,7 +116,7 @@ var load = function(callback) {
 		var chr = null;
 		var index = -1;
 
-		console.log("Loading and Parsing",dataURI,data)
+		//console.log("Loading and Parsing",dataURI,data)
 		//load coordinates
 		for (var i = 0; i < pdb.length - 1; i++){
 			var row = pdb[i].split('\t');

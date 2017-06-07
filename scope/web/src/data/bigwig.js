@@ -172,7 +172,7 @@ export default {
 
         var response = function (e) {
             var rdata = []
-            console.log(e,regions)
+            //console.log(e,regions)
             regions.forEach(function (r, i) {
                 e.forEach(function (d, j) {
                     if (overlap(r, d)) {
@@ -185,7 +185,7 @@ export default {
                     }
                 })
             })
-            console.log("rdata",rdata)
+            //console.log("rdata",rdata)
             var r1 = respSvg.selectAll("rect").data(rdata)
               r1.exit().remove()
               r1.enter()
