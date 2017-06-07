@@ -47,9 +47,37 @@
 </head>
 
 <body>
-    <div id="wrapper">
-        <div id="menuContainer" style="padding:3px">
+  <!-- Modal -->
+<div class="modal fade" id="myModal" role="dialog">
+  <div class="modal-dialog">
 
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Modal Header</h4>
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <tr><td>DB</td><td><input type="text" id="modalDb"></input></td></tr>
+          <tr><td>Label</td><td><input type="text" id="modalLabel"></input></td></tr>
+          <tr><td>URL</td><td><input type="text" id="modalUri"></input></td></tr>
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" id="modalAdd">Add</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- end of modal -->
+
+    <div id="wrapper">
+
+        <div id="menuContainer" style="padding:3px">
         <button id="getJson">Dowload as Json</button>
         </div>
         <div id="layoutContainer" style="overflow-y:scroll;padding:3px">
@@ -160,6 +188,7 @@
 
 
         var data = []
+        var crtGrid;
         var simple = function() {
             var chart = function(selection) {
                 selection.each(function(d) {
@@ -188,7 +217,22 @@
                     });
                     grid.renderGrid(divname, "datagrid");
                     var footer = d3.select(this).append("div").classed("footer",true)
-                    var addBtn = footer.append("button").text("add")
+                    var addBtn = footer.append("button").text("Add　File")
+                    /*
+                      <button type="button" class="btn" data-toggle="modal" data-target="#myModal">Open Modal</button>
+                    */
+                    // Shared One Modal;
+                    var addURIBtn = footer.append("button")
+                      .attr("type","button")
+                      .attr("data-toggle","modal")
+                      .attr("data-target","#myModal")
+                      .text("Add URI")
+                      .on("click",function(){
+                        $("#modalDb").val(d.name)
+                        crtGrid = grid;
+                      })
+                    //event driven to get modal information.
+
                     addBtn.on("click",function(){
                       dispatch.call("openfile",this,function(d){
                         //console.log("callback",d)
@@ -206,6 +250,18 @@
             }
             return chart;
         }
+        $("#modalAdd").on("click",function(){
+          var db = $("#modalDb").val()
+          var id = $("#modalLabel").val()
+          var uri = $("#modalUri").val()
+          dispatch.call("send",this, JSON.stringify({
+            "code":"add",
+            "dbname": db, //TODO prefix?
+            "id": id,
+            "uri":uri,
+          }))
+          crtGrid.append(crtGrid.data.length, { 'shortLabel': id,'url':uri }, true);
+        })
         //var prefixs;
         var container = d3.select("#dataMap")
         var dm = simple();

@@ -1,8 +1,9 @@
 import B from "../data/bigwig"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
-
+//TODO Config Part
 export default function(layout,container,state,app) {
   var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg",true);
+  cfg.html("TODO CONFIG")
   var content = d3.select(container.getElement()[0]).append("div").classed("content",true);
   var main = content.append("div").attr("id","main").style("position","relative")
   var canvas = main.append("canvas")
@@ -14,9 +15,12 @@ export default function(layout,container,state,app) {
     "edge" : 500
   }
   var initBw = function (data) {
-      console.log("bigwig", data)
+      //console.log("bigwig", data)
       bigwig = data;
       init = true;
+  }
+  var renderCfg = function() {
+    
   }
   B.Get(server+"/bw", initBw)
   var bwconfig = state["bwconfig"] || undefined
