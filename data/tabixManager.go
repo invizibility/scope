@@ -93,6 +93,11 @@ func (T *TabixManager) ServeTo(router *mux.Router) {
 		jsonHic, _ := json.Marshal(keys)
 		w.Write(jsonHic)
 	})
+	router.HandleFunc(prefix+"/ls", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		jsonHic, _ := json.Marshal(T.uriMap)
+		w.Write(jsonHic)
+	})
 	router.HandleFunc(prefix+"/{id}/list", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		params := mux.Vars(r)
