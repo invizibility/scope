@@ -51,6 +51,8 @@ func newDataManager(dbname string, uri string, format string) DataManager {
 		return NewHicManager(uri, dbname)
 	case "map":
 		return NewMapManager(uri, dbname)
+	case "tabix":
+		return NewTabixManager(uri, dbname)
 	}
 	return nil
 }
