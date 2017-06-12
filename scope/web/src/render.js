@@ -9,6 +9,7 @@ import dna3d from "./renderer/dna3d"
 import external from "./renderer/external"
 import ideogram from "./renderer/ideogram"
 import bigwig from "./renderer/bigwig"
+import bigbed from "./renderer/bigbed"
 
 export default {
   simple : simple,
@@ -21,5 +22,6 @@ export default {
   dna3d  : dna3d,
   external : external,
   ideogram : ideogram,
-  bigwig   : bigwig
+  bigwig   : bigwig,
+  bigbed   : bigbed
 }

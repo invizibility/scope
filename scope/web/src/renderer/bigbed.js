@@ -1,27 +1,29 @@
-import B from "../data/bigwig"
+import B from "../data/bigbed"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
+import regionsText from "../tools/regionsText"
 //TODO Config Part
 export default function (layout, container, state, app) {
   var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg", true);
   //cfg.html("TODO CONFIG")
   var content = d3.select(container.getElement()[0]).append("div")
     .classed("content", true)
-  var main = content.append("div")
-    //.attr("id","main")
-    .style("position", "relative")
+  var main = content.append("div").style("position", "relative")
   var canvas = main.append("canvas")
-  var server = state["server"] || app["server"] || ""
-  var bigwig;
+  var server = state["server"] || app["server"] || "" //TODO
+  var trackNames;
   var init = false
   var dispatch = d3.dispatch("brush", "update","replot")
-  var bwconfig = state["bwconfig"] || undefined
+  var trackConfig = state["trackConfig"] || undefined
   var scope = {
     "edge": 500,
     "background": "#BBB"
   }
-  var initBw = function (data) {
+  var dbname = state["dbname"] || "bigbed"
+
+  var initTracks = function (data) {
     //console.log("bigwig", data)
-    bigwig = data;
+
+    trackNames = data;
     init = true;
     renderCfg(data)
   }
@@ -34,7 +36,6 @@ export default function (layout, container, state, app) {
       return a
     }
     var text = factory(data.trackIds)
-
     var gui = new dat.GUI({ autoPlace: false });
     data.trackIds.forEach(function(d){
       gui.add(text,d)
@@ -49,64 +50,27 @@ export default function (layout, container, state, app) {
     .text("submit")
     .on("click",function(){
       //console.log(text)
-      bwconfig = text;
+      trackConfig = text;
       cfg.style("display", "none")
       content.style("display", "block")
 
       container.extendState({
-          "bwconfig":bwconfig
+          "trackConfig":trackConfig
       })
       container.extendState({
           "configView": false
       })
       dispatch.call("replot", this, {})
     })
+  }
+  B.Get(server + "/"+dbname, initTracks)
+  var render = function(d) {
+    content.html("todo render" + regionsText(d) )
+  }
+  var brush = function(d) {
+    content.html("todo brush " + regionsText(d))
+  }
 
-  }
-  B.Get(server + "/bw", initBw)
-  var renderBigwig = function (regions) {
-    var ctx = canvas.node().getContext("2d")
-    ctx.fillStyle = scope.background;
-    ctx.fillRect(0, 0, scope.width, scope.height);
-    var bw = []
-    var tracks = []
-    //TODO : load localStorage configure?
-    if (!bwconfig) {
-      bigwig.trackIds.forEach(function (b, i) {
-        tracks.push(b)
-      })
-    } else {
-      for (var k in bwconfig) {
-        if (bwconfig[k]) {
-          tracks.push(k)
-        }
-      }
-    }
-    tracks.forEach(function (b, i) {
-      bw.push(
-        B.canvas()
-        .URI(server + "/bw") //set this?
-        .id(b)
-        .x(10)
-        .y(40 + i * 80)
-        .width(scope.edge)
-        .gap(20) //TODO REMV
-        .regions(toolsAddChrPrefix(regions))
-        .panel(main)
-        .mode(1)
-        .pos(i)
-      )
-    })
-    dispatch.on("brush.local", function (e) {
-      bw.forEach(function (b, i) {
-        b.response(e)
-      })
-    })
-    bw.forEach(function (b) {
-      canvas.call(b)
-    })
-  }
-  //var svg = content.append("svg").attr("height",container.height).attr("width",container.width)
   var regions = state.regions || [];
   layout.eventHub.on("brush", function (d) {
     //brush = d
@@ -120,36 +84,25 @@ export default function (layout, container, state, app) {
     container.extendState({
       "regions": d
     });
-    //main.html("")
     regions = d
     if (!container.isHidden && init) {
-      //console.log("CALL RENDER BIGWIG",d)
-      //div.html("CURRENT   " + regionsText(d))
-      renderBigwig(d)
+      render(d)
     }
   })
   dispatch.on("replot",function(){
-    renderBigwig(regions)
+    render(regions)
   })
-  container.on("show", function (d) {
-    //div1.html("WAKEUP "+ regionsText(update))
-    //div2.html("WAKEUP BRUSHING "+ regionsText(brush))
-    /*
-    if (init) {
-      renderBigwig(d)
-    }
-    */
+  dispatch.on("brush",function(d){
+    brush(d)
   })
   var resize = function () {
     canvas.attr("height", container.height)
       .attr("width", container.width)
-
-
     scope.edge = container.width - 40
     scope.width = container.width
     scope.height = container.height
     if (init) {
-      renderBigwig(regions)
+      render(regions)
     }
   }
   var TO = false
