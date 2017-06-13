@@ -4647,19 +4647,150 @@ var B$1 = {
       .awaitAll(ready);
   },
   canvas: function () {
+    var id = "gene"; //TODO
+    var pos = 0; //for response rect TODO remove this limitation (change to id or get the response var)
+    var height = 20;
+    var x = 0;
+    var y = 0;
+    var coord;
+    var regions;
+    var el;
+    var ctx;
+    var URI = "";
+    var _render_ = function (error, results) {
+      ctx.fillStyle = "grey";
+      ctx.fillRect(0,0,coord.width(),height);
+      results.forEach(function (d) {
+        //onsole.log(d)
+        var lines = d.split("\n");
+        lines.forEach(function (d) {
+          var t = d.split("\t");
+          var a = {
+            "chr": t[0],
+            "start": parseInt(t[1]),
+            "end": parseInt(t[2]),
+            "name": t[3]
+          };
+          var xs = coord(a);
+          //console.log(a,x)
+          //TODO console.log(coord(a))
+          ctx.fillStyle = "blue";
+          xs.forEach(function(o){
+            var width = o.l > 1 ? o.l : 1;
+            ctx.fillRect(x + o.x, y, width, height);
+          });
+
+        });
+      });
+    };
+    var render = function () {
+      /* NOT JSON BUT BED */
+      var q = d3_queue.queue(2);
+      regions.forEach(function (d) {
+        q.defer(d3.text, URI + "/" + id + "/get/" + d.chr + ":" + d.start + "-" + d.end);
+      });
+      q.awaitAll(_render_);
+    };
     var chart = function (selection) {
-      var id = "default";
-      var pos = 0; //for response rect TODO remove this limitation (change to id or get the response var)
-      var height;
-      var width;
-      var regions;
-      var x;
-      var y;
-      var URI = "";
+      el = selection; //canvas?
+      ctx = el.node().getContext("2d");
+      render();
+    };
+    chart.x = function (_) {
+      return arguments.length ? (x = _, chart) : x;
+    };
+    chart.y = function (_) {
+      return arguments.length ? (y = _, chart) : y;
+    };
+    chart.height = function (_) {
+      return arguments.length ? (height = _, chart) : height;
+    };
+    chart.URI = function (_) {
+      return arguments.length ? (URI = _, chart) : URI;
+    };
+    chart.coord = function (_) {
+      return arguments.length ? (coord = _, chart) : coord;
+    };
+    chart.regions = function (_) {
+      return arguments.length ? (regions = _, chart) : regions;
+    };
+    chart.id = function (_) {
+      return arguments.length ? (id = _, chart) : id;
     };
     return chart
   }
 
+};
+
+var coord = function () {
+  var regions;
+  var width = 500;
+  var gap = 10;
+  var inited = false;
+  var scales, offsets, widths;
+  /* x.chr x.start x.end */
+  /* TODO add overflow fix */
+  var chart = function (e) {
+    if (!inited) {
+      init();
+    }
+    var rdata = [];
+    //console.log(e,regions)
+
+    regions.forEach(function (r, i) {
+      if (Object.prototype.toString.call(e) === '[object Array]') {
+        e.forEach(function (d, j) {
+          if (overlap(r, d)) {
+            var x = scales[i](d.start) + offsets[i];
+            var l = scales[i](d.end) + offsets[i] - x;
+            rdata.push({
+              "x": x,
+              "l": l
+            });
+          }
+        });
+      } else {
+        if (overlap(r, e)) {
+          var x = scales[i](e.start) + offsets[i];
+          var l = scales[i](e.end) + offsets[i] - x;
+          rdata.push({
+            "x": x,
+            "l": l
+          });
+        }
+      }
+    });
+
+    return rdata
+  };
+  var init = function () {
+    inited = true;
+    scales = [];
+    offsets = [];
+    widths = [];
+    var offset = 0;
+    var totalLen = totalLength(regions);
+    var effectWidth = width - (regions.length - 1) * gap;
+    regions.forEach(function (d) {
+      var w = (+(d.end) - (+d.start)) * effectWidth / totalLen;
+      var scale = d3.scaleLinear().domain([+(d.start), +(d.end)]).range([0, w]);
+      scales.push(scale);
+      offsets.push(offset);
+      offset += w + gap;
+      widths.push(w);
+    });
+  };
+  chart.width = function (_) {
+    return arguments.length ? (width = _, inited = false, chart) : width;
+  };
+  chart.regions = function (_) {
+    return arguments.length ? (regions = _, inited = false, chart) : regions;
+    e;
+  };
+  chart.gap = function (_) {
+    return arguments.length ? (gap = _, inited = false, chart) : gap;
+  };
+  return chart
 };
 
 //TODO Config Part
@@ -4669,17 +4800,19 @@ var bigbed = function (layout, container, state, app) {
   var content = d3.select(container.getElement()[0]).append("div")
     .classed("content", true);
   var main = content.append("div").style("position", "relative");
-  var canvas = main.append("canvas");
+  var canvas = content.append("canvas");
+  var svg = content.append("svg");
   var server = state["server"] || app["server"] || ""; //TODO
   var trackNames;
   var init = false;
-  var dispatch = d3.dispatch("brush", "update","replot");
+  var dispatch = d3.dispatch("brush", "update", "replot");
   var trackConfig = state["trackConfig"] || undefined;
   var scope = {
     "edge": 500,
     "background": "#BBB"
   };
   var dbname = state["dbname"] || "bigbed";
+  var coords;
 
   var initTracks = function (data) {
     //console.log("bigwig", data)
@@ -4689,50 +4822,93 @@ var bigbed = function (layout, container, state, app) {
     renderCfg(data);
   };
   var renderCfg = function (data) { // TODO make checkbox working
-    var factory = function(d) {
+    var factory = function (d) {
       var a = {};
-      d.forEach(function(id){
-        a[id]=true;
+      d.forEach(function (id) {
+        a[id] = true;
       });
       return a
     };
     var text = factory(data.trackIds);
-    var gui = new dat.GUI({ autoPlace: false });
-    data.trackIds.forEach(function(d){
-      gui.add(text,d);
+    var gui = new dat.GUI({
+      autoPlace: false
+    });
+    data.trackIds.forEach(function (d) {
+      gui.add(text, d);
     });
     //console.log("CFG",cfg.node())
     var container0 = cfg.append("div").node();
     container0.appendChild(gui.domElement);
-    cfg.append("div").style("height","25px");
+    cfg.append("div").style("height", "25px");
     cfg.append("div").append("input")
-    .attr("type","button")
-    .attr("value","submit")
-    .text("submit")
-    .on("click",function(){
-      //console.log(text)
-      trackConfig = text;
-      cfg.style("display", "none");
-      content.style("display", "block");
+      .attr("type", "button")
+      .attr("value", "submit")
+      .text("submit")
+      .on("click", function () {
+        //console.log(text)
+        trackConfig = text;
+        cfg.style("display", "none");
+        content.style("display", "block");
 
-      container.extendState({
-          "trackConfig":trackConfig
-      });
-      container.extendState({
+        container.extendState({
+          "trackConfig": trackConfig
+        });
+        container.extendState({
           "configView": false
+        });
+        dispatch.call("replot", this, {});
       });
-      dispatch.call("replot", this, {});
-    });
   };
-  B$1.Get(server + "/"+dbname, initTracks);
-  var render = function(d) {
-    content.html("todo render" + regionsText(d) );
+  B$1.Get(server + "/" + dbname, initTracks);
+  var regions = state.regions || [];
+  var render = function (d) {
+    main.html("todo render" + regionsText(d));
+    svg.selectAll(".resp").remove();
+    coords = coord().regions(regions).width(scope.width);
+    var ctx = canvas.node().getContext("2d");
+    ctx.fillStyle = scope.background;
+    ctx.fillRect(0,0,scope.width,scope.height);
+    //TODO Add Ids
+    var i = 0;
+    var height = 25;
+    for (var id in trackConfig) {
+      if(trackConfig[id]) {
+        var chart = B$1.canvas().coord(coords).regions(regions).URI(server + "/" + dbname).id(id).y(i*height);
+        canvas.call(chart);
+        i+=1;
+      }
+    }
   };
-  var brush = function(d) {
-    content.html("todo brush " + regionsText(d));
+  var brush = function (d) {
+    main.html("todo brush " + regionsText(d));
+    var r = coords(d);
+    var resp = svg.selectAll(".resp")
+      .data(r);
+    resp.exit().remove();
+    resp.enter()
+      .append("g")
+      .attr("class", "resp")
+
+      .merge(resp)
+      .attr("transform",function(d){
+        return "translate("+d.x+",0)"
+      });
+   var rect = resp.selectAll("rect")
+      .data(function(d){
+        return [d]
+      });
+      rect.enter()
+      .append("rect")
+      .merge(rect)
+      .attr("height", scope.height)
+      .attr("width", function (d) {
+        return d.l > 1 ? d.l : 1
+      })
+      .attr("fill", "black")
+      .attr("opacity", 0.2);
+
   };
 
-  var regions = state.regions || [];
   layout.eventHub.on("brush", function (d) {
     //brush = d
     if (!container.isHidden) {
@@ -4750,19 +4926,22 @@ var bigbed = function (layout, container, state, app) {
       render(d);
     }
   });
-  dispatch.on("replot",function(){
+  dispatch.on("replot", function () {
     render(regions);
   });
-  dispatch.on("brush",function(d){
+  dispatch.on("brush", function (d) {
     brush(d);
   });
   var resize = function () {
     canvas.attr("height", container.height)
       .attr("width", container.width);
+    svg.attr("height", container.height)
+        .attr("width", container.width);
     scope.edge = container.width - 40;
     scope.width = container.width;
     scope.height = container.height;
     if (init) {
+      coords.regions(regions).width(scope.width);
       render(regions);
     }
   };
