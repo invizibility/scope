@@ -4977,7 +4977,8 @@ var ctrlCanvas = function (layout, container, state, app) {
     };
     var server = app["server"] || "";
     var hic = {};
-    var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor");
+    var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor","switchHic","switchBw");
+    //switch means
     var main = d3.select(container.getElement()[0])
         .append("div")
         .attr("class", "content")
@@ -4990,33 +4991,31 @@ var ctrlCanvas = function (layout, container, state, app) {
     /* MODULIZED THIS PART */
 
     var renderCfg = function(data,config) { //TODO SOFISTIGATED OPTIONS
-      //var text = {}
       var factory = function(data,config) {
           //var c = {}
           var c = config;
           for(var k in data){
             if (Object.prototype.toString.call( data[k] ) === '[object Array]'){
-               c[k] = data[0];
+               c[k] = data[k][0];
             } else if (typeof data[k] === 'string') {
+              c[k] = data[k];
+            } else if (typeof data[k] ===　"boolean") {
               c[k] = data[k];
             } else {
               c[k] = 0; //TODO
             }
           }
-          //return c
       };
       var gui = new dat.GUI({autoPlace: false}); //dat gui
 
-      //var config = factory(data)
-      //hic.state={}
       factory(data,config);
-
-
       for (var k in data) {
         if (Object.prototype.toString.call( data[k] ) === '[object Array]'){
           gui.add(config,k,data[k]).listen();
         } else if (typeof data[k]  === 'string' && data[k].match(/^#\S\S\S\S\S\S$/)) {
           gui.addColor(config,k).listen();
+        } else if (typeof data[k]  === 'boolean') {
+          gui.add(config,k).listen();
         } else {
           gui.add(config,k, data[k]).listen();
         }
@@ -5026,28 +5025,16 @@ var ctrlCanvas = function (layout, container, state, app) {
       //TODO.
 
       cfg.append("div").style("height", "25px");
-      /*
-      cfg.append("div").append("input")
-        .attr("type", "button")
-        .attr("value", "submit")
-        .text("submit")
-        .on("click", function () {
-          /*
-          cfg.style("display", "none")
-          content.style("display", "block")
-          container.extendState({
-            "configView": false
-          })
-          dispatch.call("replot", this, {})
-          */
-        //console.log(config)
-        //})
+
 
     };
 
     dispatch.on("cfg", function (data) { //Config HiC
         //TODO FIX THIS .
+        console.log("hic",hic);
         var opts = {
+          //"hic" : hic.opts.hic,
+          "hic":hic.hics,
           "color2": "#ff0000",
           "color1": "#ffffff"
         };
@@ -5064,6 +5051,7 @@ var ctrlCanvas = function (layout, container, state, app) {
         });
         hic.state = {};
         renderCfg(opts,hic.state);
+
         //hic.ctrl = H.chart().data(data)
         //console.log("hic state", container.getState().state)
         //TODO add hics options.
@@ -5101,17 +5089,10 @@ var ctrlCanvas = function (layout, container, state, app) {
     var div = main.append("div").style("position", "absolute")
         .style("top", 10).style("left", 10).style("width", 50).style("height", 100);
     var div1 = main.append("div").style("position", "absolute");
-    //.style("background-color","#FEF")
-    //console.log("container", container)
-    //console.log("title", container.title)
-    //console.log("width",container.width)
-    //console.log("state", state)
-    /*
-        var div2 =  main.append("div").style("position", "absolute")
-            .style("top", 10).style("left", 3*container.width/4).style("width", container.width / 4).style("height", container.width/4)
-            .style("background-color","#DFD")
 
-        /* CTRL Inside */
+
+    var state = {}; // TODO canvas state for hic , bigwigs and bigbeds....
+
     var btnPrint = div.append("button")
     .classed("btn", true)
     .html('<small><span class="glyphicon glyphicon-print"></span></small>')
@@ -5123,7 +5104,6 @@ var ctrlCanvas = function (layout, container, state, app) {
       .text("");
       a.node().click();
       a.remove();
-
     });
 
 
@@ -5190,14 +5170,21 @@ var ctrlCanvas = function (layout, container, state, app) {
         TO = setTimeout(resizePanel,2000);
     });
 
-    var URI = server + "/hic/default"; //TODO This For All HiC selection.
-    var hicId = localStorage.getItem("hicId"); //TODO Fix this
+
+
+    /*
+    TODO FIX this part.
+    var URI = server + "/hic/default" //TODO This For All HiC selection.
+    var hicId = localStorage.getItem("hicId") //TODO Fix this
     if (hicId) {
-        URI = server + "/hic/" + hicId;
-        container.setTitle(hicId);
+        URI = server + "/hic/" + hicId
+        container.setTitle(hicId)
     } else {
-        hicId = "";
+        hicId = ""
     }
+    */
+
+
 
 
     var testBeds = [{
@@ -5232,37 +5219,62 @@ var ctrlCanvas = function (layout, container, state, app) {
     };
 
     var bigwig;
+    var bw = {
+      "opts":{},
+      "config":{}
+    };
     var initBw = function (data) {
         console.log("bigwig", data);
         bigwig = data;
+        bigwig.trackIds.forEach(function(d){
+          bw.opts[d]=false;
+          bw.config[d]=true;
+        });
+        renderCfg(bw.opts,bw.config);
         init.bigwig = true;
     };
+    /*
     var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
     if (bwconfig) {
-        bwconfig = JSON.parse(bwconfig);
+        bwconfig = JSON.parse(bwconfig)
     }
+    */
     B.Get(server + "/bw", initBw);
-    H.Get(URI, initHic); //TODO get localStorage hic id
+
+    // URI is default now. change this. TODO : handle
+    var URI;
+    d3.json(server+"/hic/list",function(d){
+      hic.hics = d;
+      console.log(d);
+      URI = server+"/hic/"+d[0];
+      H.Get(URI,initHic);
+    });
+
 
     var renderBigwig = function (regions) {
-        var bw = [];
+        var bws = [];
         var tracks = [];
         //TODO : load localStorage configure?
-        if (!bwconfig) {
+        if (!bw.config) {
             bigwig.trackIds.forEach(function (b, i) {
                 tracks.push(b);
-
             });
         } else {
-
-            bwconfig.data.forEach(function (d) {
+            for (var k in bw.config) {
+              if (bw.config[k]) {
+                tracks.push(k);
+              }
+            }
+            /*
+            bw.config.forEach(function (d) {
                 if (d.values[1] == "show") {
-                    tracks.push(d.values[0]);
+                    tracks.push(d.values[0])
                 }
-            });
+            })
+            */
         }
         tracks.forEach(function (b, i) {
-            bw.push(
+            bws.push(
                 B.canvas()
                 .URI(server + "/bw") //set this?
                 .id(b)
@@ -5277,11 +5289,11 @@ var ctrlCanvas = function (layout, container, state, app) {
             );
         });
         dispatch.on("brush.local", function (e) {
-            bw.forEach(function (b, i) {
+            bws.forEach(function (b, i) {
                 b.response(e);
             });
         });
-        bw.forEach(function (b) {
+        bws.forEach(function (b) {
             canvas.call(b);
         });
     };
