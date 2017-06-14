@@ -5246,9 +5246,9 @@ var ctrlCanvas = function (layout, container, state, app) {
       H.Get(URI, initHic);
     };
     renderCfg(opts,cfg, callback);
-    console.log(d);
     URI = server + "/hic/" + d[0];
     H.Get(URI, initHic);
+
   });
 
 
