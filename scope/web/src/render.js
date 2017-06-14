@@ -10,6 +10,7 @@ import external from "./renderer/external"
 import ideogram from "./renderer/ideogram"
 import bigwig from "./renderer/bigwig"
 import bigbed from "./renderer/bigbed"
+import ctrlCanvas from "./renderer/ctrlCanvas"
 
 export default {
   simple : simple,
@@ -23,5 +24,6 @@ export default {
   external : external,
   ideogram : ideogram,
   bigwig   : bigwig,
-  bigbed   : bigbed
+  bigbed   : bigbed,
+  ctrlCanvas : ctrlCanvas
 }

@@ -14,7 +14,7 @@
                 "isClosable": false,
                 "componentState": {
                     "name": "101",
-                    "render": "hic",
+                    "render": "ctrlCanvas",
                     "server": "#"
                 }
             },
