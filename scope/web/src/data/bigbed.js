@@ -28,7 +28,7 @@ export default {
     var URI = ""
     var _render_ = function (error, results) {
       ctx.fillStyle = "grey"
-      ctx.fillRect(0,0,coord.width(),height)
+      ctx.fillRect(x,y,coord.width(),height)
       results.forEach(function (d) {
         //onsole.log(d)
         var lines = d.split("\n")

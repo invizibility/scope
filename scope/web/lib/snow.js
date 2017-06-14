@@ -4634,7 +4634,7 @@ var bigwig = function (layout, container, state, app) {
 
 };
 
-var B$1 = {
+var BB = {
   Get: function (URI, callback) {
     var config = {};
     var ready = function (error, results) {
@@ -4659,7 +4659,7 @@ var B$1 = {
     var URI = "";
     var _render_ = function (error, results) {
       ctx.fillStyle = "grey";
-      ctx.fillRect(0,0,coord.width(),height);
+      ctx.fillRect(x,y,coord.width(),height);
       results.forEach(function (d) {
         //onsole.log(d)
         var lines = d.split("\n");
@@ -4859,7 +4859,7 @@ var bigbed = function (layout, container, state, app) {
         dispatch.call("replot", this, {});
       });
   };
-  B$1.Get(server + "/" + dbname, initTracks);
+  BB.Get(server + "/" + dbname, initTracks);
   var regions = state.regions || [];
   var render = function (d) {
     main.html("todo render" + regionsText(d));
@@ -4873,7 +4873,7 @@ var bigbed = function (layout, container, state, app) {
     var height = 25;
     for (var id in trackConfig) {
       if(trackConfig[id]) {
-        var chart = B$1.canvas().coord(coords).regions(regions).URI(server + "/" + dbname).id(id).y(i*height);
+        var chart = BB.canvas().coord(coords).regions(regions).URI(server + "/" + dbname).id(id).y(i*height);
         canvas.call(chart);
         i+=1;
       }
@@ -4955,6 +4955,7 @@ var bigbed = function (layout, container, state, app) {
 
 const norms$2 = constant().norms;
 const units$2 = constant().units;
+const _barHeight = 30;
 
 
 var ctrlCanvas = function (layout, container, state, app) {
@@ -5216,12 +5217,27 @@ var ctrlCanvas = function (layout, container, state, app) {
   var initBw = function (data) {
     console.log("bigwig", data);
     bigwig = data;
-    bigwig.trackIds.forEach(function (d) {
-      bw.opts[d] = false;
-      bw.config[d] = true;
+    bigwig.trackIds.forEach(function (d, i) {
+      bw.opts[d] = (i < 4);
     });
     renderCfg(bw.opts, bw.config);
     init.bigwig = true;
+  };
+
+
+  var bb = {
+    "opts": {},
+    "config": {}
+  };
+  var bigbed;
+  var initBb = function (data) {
+    console.log("bigwig", data);
+    bigbed = data;
+    bigbed.trackIds.forEach(function (d, i) {
+      bb.opts[d] = false;
+    });
+    renderCfg(bb.opts, bb.config);
+    init.bigbed = true;
   };
   /*
   var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
@@ -5230,28 +5246,81 @@ var ctrlCanvas = function (layout, container, state, app) {
   }
   */
   B.Get(server + "/bw", initBw);
+  BB.Get(server + "/bigbed", initBb);
 
   // URI is default now. change this. TODO : handle
   var URI;
   d3.json(server + "/hic/list", function (d) {
     hic.hics = d;
     var opts = {
-      "hic":d
+      "hic": d
     };
     var cfg = {
 
     };
-    var callback = function(k,v) {
+    var callback = function (k, v) {
       URI = server + "/hic/" + v;
       H.Get(URI, initHic);
     };
-    renderCfg(opts,cfg, callback);
+    renderCfg(opts, cfg, callback);
     URI = server + "/hic/" + d[0];
     H.Get(URI, initHic);
 
   });
+  var renderBigbed = function (regions) {
+    //console.log("TODO render BigBed", regions)
+    var dbname = "bigbed";
+    var _bedHeight = 10;
+    var bbs = [];
+    var tracks = [];
+    var yoffset = scope.edge/2 + 40 + 4 * (_barHeight+10) + 5;
+    //var yoffset = 300
+    var coords = coord().regions(regions).width(scope.edge);
+    //TODO : load localStorage configure?
+    if (!bb.config) {
+      bigbed.trackIds.forEach(function (b, i) {
+        tracks.push(b);
+      });
+    } else {
+      for (var k in bb.config) {
+        if (bb.config[k]) {
+          tracks.push(k);
+        }
+      }
+    }
+    tracks.forEach(function (id, i) {
+      /*
+      bbs.push(
+        BB.canvas()
+        .URI(server + "/bw") //set this?
+        .id(b)
+        .x(10)
+        .y(scope.edge / 2 + 40 + i * _barHeight)
+        .width(scope.edge)
+        .barHeight(_barHeight)
+        .gap(20) //TODO REMV
+        .regions(toolsAddChrPrefix(regions))
+        .panel(main)
+        .mode(1)
+        .pos(i)
+      )
+      */
 
-
+      var chart = BB.canvas().coord(coords).regions(regions).URI(server + "/" + dbname).id(id).x(10).y(yoffset + i * _bedHeight);
+      canvas.call(chart);
+      console.log("TODO Render", b, i);
+    });
+    /*
+    dispatch.on("brush.local", function (e) {
+      bws.forEach(function (b, i) {
+        b.response(e)
+      })
+    })
+    bws.forEach(function (b) {
+      canvas.call(b)
+    })
+    */
+  };
   var renderBigwig = function (regions) {
     var bws = [];
     var tracks = [];
@@ -5273,8 +5342,9 @@ var ctrlCanvas = function (layout, container, state, app) {
         .URI(server + "/bw") //set this?
         .id(b)
         .x(10)
-        .y(scope.edge / 2 + 40 + i * 80)
+        .y(scope.edge / 2 + 40 + i * (_barHeight + 10))
         .width(scope.edge)
+        .barHeight(_barHeight)
         .gap(20) //TODO REMV
         .regions(toolsAddChrPrefix(regions))
         .panel(main)
@@ -5365,6 +5435,9 @@ var ctrlCanvas = function (layout, container, state, app) {
     }
     if (init.hic) {
       renderHic(regions);
+    }
+    if (init.bigbed) {
+      renderBigbed(regions);
     }
   };
   layout.eventHub.on("update", function (d) {
