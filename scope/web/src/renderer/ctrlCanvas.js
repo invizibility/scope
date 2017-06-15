@@ -60,14 +60,16 @@ export default function (layout, container, state, app) {
       //var c = {}
       var c = config
       for (var k in data) {
-        if (Object.prototype.toString.call(data[k]) === '[object Array]') {
-          c[k] = data[k][0]
-        } else if (typeof data[k] === 'string') {
-          c[k] = data[k]
-        } else if (typeof data[k] === 　"boolean") {
-          c[k] = data[k]
-        } else {
-          c[k] = 0 //TODO
+        if (!c[k]) {
+          if (Object.prototype.toString.call(data[k]) === '[object Array]') {
+            c[k] = data[k][0]
+          } else if (typeof data[k] === 'string') {
+            c[k] = data[k]
+          } else if (typeof data[k] === 　"boolean") {
+            c[k] = data[k]
+          } else {
+            c[k] = 0 //TODO
+          }
         }
       }
     }
@@ -105,13 +107,11 @@ export default function (layout, container, state, app) {
 
   var hicCfgDiv;
   dispatch.on("cfgHic", function (data) { //Config HiC
-    //TODO FIX THIS .
     if (hicCfgDiv) {
       hicCfgDiv.remove()
     }
     console.log("hic", hic)
     var opts = {
-      //"hic" : hic.opts.hic,
       "color2": "#ff0000",
       "color1": "#ffffff"
     }
@@ -127,10 +127,11 @@ export default function (layout, container, state, app) {
       opts["norm"][k] = d
     })
     hic.state = {}
-    hicCfgDiv = renderCfg(opts, hic.state, undefined)
     if (container.getState().hicState && sign == false) {
       hic.state = container.getState().hicState
-      console.log("load hic STATE")
+      //console.log("load hic STATE")
+      opts["color1"] = hic.state.color1
+      opts["color2"] = hic.state.color2
       sign = true; //load once.
     } else {
       container.extendState({
@@ -138,6 +139,7 @@ export default function (layout, container, state, app) {
       })
       sign = true;
     }
+    hicCfgDiv = renderCfg(opts, hic.state, undefined)
 
   })
   //console.log("container",container)
@@ -242,7 +244,6 @@ export default function (layout, container, state, app) {
     dispatch.call("cfgHic", this, data)
     init.hic = true;
     var r = state.regions || testBeds
-    console.log("hic",hic)
     renderHic(r) //TODO d3 queue ?
   }
   cfg.append("input")
@@ -250,6 +251,7 @@ export default function (layout, container, state, app) {
     .attr("value", "submit")
     .on("click", function (d) {
       container.extendState({
+        "hicsState": hic.hics,
         "hicState": hic.state,
         "bigWigState": bw.config,
         "bigBedState": bb.config
@@ -325,21 +327,33 @@ export default function (layout, container, state, app) {
 
   // URI is default now. change this. TODO : handle
   var URI //TODO THIS
-
+  var hics = {
+    "opts": {},
+    "config": {}
+  }
   d3.json(server + "/hic/list", function (d) {
     hic.hics = d;
-    var opts = {
+    hics.opts = {
       "hic": d
     }
-    var cfg = {
-      "hic" : d[0]
+    if (container.getState().hicsState) {
+      hics.cfg = container.getState().hicsState
+    } else {
+      hics.cfg = {
+        "hic": d[0]
+      }
     }
+
     var callback = function (k, v) {
+      container.extendState({
+        "hicsState": hics.cfg
+      })
       URI = server + "/hic/" + v
       H.Get(URI, initHic)
     }
-    renderCfg(opts, cfg, callback)
-    URI = server + "/hic/" + d[0]
+
+    renderCfg(hics.opts, hics.cfg, callback)
+    URI = server + "/hic/" + hics.cfg.hic
     H.Get(URI, initHic)
 
   })
