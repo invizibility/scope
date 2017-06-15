@@ -5,7 +5,14 @@ import toolsFixRegions from "../tools/fixRegions"
 import toolsTrimChrPrefix from "../tools/trimChrPrefix"
 import scaleScope from "../scaleScope"
 import symbolTriangle from "../symbol/triangle"
+import datgui from "../datgui"
 //import brush from "../scopebrush" //TODO
+import {
+  default as constant
+} from "../data/hicvar"
+const norms = constant().norms
+const units = constant().units
+const _barHeight = 30
 
 export default function (layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
@@ -13,7 +20,6 @@ export default function (layout, container, state, app) {
         "background": "#BBB"
     }
     var init = {
-        "bigwig": false,
         "hic": false
     }
     var hic = {}
@@ -27,27 +33,62 @@ export default function (layout, container, state, app) {
         .append("div")
         .attr("class", "cfg")
     var sign = false
+    //var hicCfgDiv
+    var datIO = datgui()
     dispatch.on("cfg", function (data) {
-        hic.ctrl = H.chart().data(data)
-        //console.log("hic state", state.state)
-        cfg.call(hic.ctrl)
-
-        if (state.state && sign == false) {
-            hic.ctrl.state(container.getState().state)
-            sign = true; //load once.
+        //console.log("hic", hic)
+        var opts = {
+          "color2": "#ff0000",
+          "color1": "#ffffff"
+        }
+        opts["unit"] = {}
+        data.units.forEach(function (d) {
+          var k = units[d]
+          opts["unit"][k] = d
+        })
+        opts["norm"] = {}
+        data.norms.forEach(function (d) {
+          //opts.norms.push({norms[d]:d})
+          var k = norms[d]
+          opts["norm"][k] = d
+        })
+        hic.state = {}
+        if (container.getState().hicState && sign == false) {
+          hic.state = container.getState().hicState
+          //console.log("load hic STATE")
+          opts["color1"] = hic.state.color1
+          opts["color2"] = hic.state.color2
+          sign = true; //load once.
         } else {
-            container.extendState({
-                "state": hic.ctrl.state()
-            })
+          /*
+          container.extendState({
+            "hicState": hic.state
+          })
+          */
+          sign = true;
         }
 
+        //hicCfgDiv = renderCfg(opts, hic.state, undefined)
+        cfg.selectAll(".datgui").remove();
+        cfg.selectAll(".datgui")
+        .data([
+          {"options":opts,"config":hic.state}
+        ])
+        .enter()
+        .append("div")
+        .classed("datgui",true)
+        .call(datIO)
+
+        container.extendState({
+          "hicState": hic.state
+        })
 
         cfg.append("input")
             .attr("type", "button")
             .attr("value", "submit")
             .on("click", function (d) {
                 container.extendState({
-                    "state": hic.ctrl.state()
+                    "hicState": hic.state
                 })
                 container.extendState({
                     "configView": false
@@ -58,11 +99,11 @@ export default function (layout, container, state, app) {
                 dispatch.call("replot", this, {})
             })
         cfg.append("hr")
-
+        /*
         var uri = cfg.append("select")
 
         d3.json(server + "/hic/list",function(d){  //TODO Server
-          console.log("hic data",d)
+          //console.log("hic data",d)
           uri.selectAll("option")
              .data(d)
              .enter()
@@ -96,6 +137,8 @@ export default function (layout, container, state, app) {
                     dispatch.call("replot", this, {})
                 }
             })
+            */
+
     })
 
     var canvas = main.append("canvas").style("position", "absolute")
@@ -146,6 +189,7 @@ export default function (layout, container, state, app) {
             end: 10000000
         }
     ]
+
     var initHic = function (data) {
         hic.opts = data;
         dispatch.call("cfg", this, data)
@@ -155,7 +199,51 @@ export default function (layout, container, state, app) {
     }
 
 
-    H.Get(URI, initHic)
+
+    var hics = {
+      "options":{},
+      "config":{}
+    };
+    var resetHics = function (k, v) {
+      container.extendState({
+        "hicsState": hics.config
+      })
+      URI = server + "/hic/" + v
+      H.Get(URI, initHic)
+    }
+    var hicIO = datgui().callback(resetHics)
+    var initHics = function(){
+      d3.json(server + "/hic/list", function (d) {
+        hic.hics = d;
+        hics.options = {
+          "hic": d
+        }
+        if (container.getState().hicsState) {
+          hics.config = container.getState().hicsState
+        } else {
+          hics.config = {
+            "hic": d[0]
+          }
+        }
+
+        cfg.selectAll(".hicsgui").remove();
+        cfg.selectAll(".hicsgui")
+        .data([
+          hics
+        ])
+        .enter()
+        .append("div")
+        .classed("hicsgui",true)
+        .call(hicIO)
+        //renderCfg(hics.opts, hics.cfg, callback)
+        URI = server + "/hic/" + hics.config.hic
+        H.Get(URI, initHic)
+      })
+    }
+
+
+    //H.Get(URI, initHic)
+    initHics();
     var prefixed = true;
     var renderHic = function (r) {
         var regions ;
@@ -173,7 +261,7 @@ export default function (layout, container, state, app) {
             ctx.fillStyle = scope.background
             ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40)
         }
-        hic.state = hic.ctrl.state();
+        //hic.state = hic.ctrl.state();
         hic.chart = H.canvas() //just for canvas view.
             .URI(URI)
             .norm(hic.state.norm)

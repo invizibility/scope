@@ -76,6 +76,7 @@ export default function (layout, container, state, app) {
     var gui = new dat.GUI({
       autoPlace: false
     }) //dat gui
+    gui.__closeButton.style.display = "none" //TODO
     factory(data, config)
     var inputs = {}
     for (var k in data) {
@@ -99,7 +100,7 @@ export default function (layout, container, state, app) {
 
     var container0 = cfg.append("div").node();
     container0.appendChild(gui.domElement)
-    cfg.append("div").style("height", "25px")
+    //cfg.append("div").style("height", "25px") //TODO
     return container0
   }
 
@@ -134,12 +135,17 @@ export default function (layout, container, state, app) {
       opts["color2"] = hic.state.color2
       sign = true; //load once.
     } else {
+      /*
       container.extendState({
         "hicState": hic.state
       })
+      */
       sign = true;
     }
     hicCfgDiv = renderCfg(opts, hic.state, undefined)
+    container.extendState({
+      "hicState": hic.state
+    })
 
   })
   //console.log("container",container)

@@ -3005,16 +3005,85 @@ var scaleScope = function() {
   return chart
 };
 
+var factory = function (data, config) {
+  var c = config;
+  for (var k in data) {
+    if (!c[k]) {
+      if (Object.prototype.toString.call(data[k]) === '[object Array]') {
+        c[k] = data[k][0];
+      } else if (typeof data[k] === 'string') {
+        c[k] = data[k];
+      } else if (typeof data[k] === 　"boolean") {
+        c[k] = data[k];
+      } else {
+        c[k] = 0; //TODO
+      }
+    }
+  }
+};
+
+var datgui = function() {
+  var callback;
+  var chart = function(selection) {
+    selection.each(function(d){
+      var el = d3.select(this);
+      el.selectAll(".guidiv").remove();
+      var gui = new dat.GUI({
+        autoPlace: false
+      });
+      factory(d.options,d.config);
+      var inputs = {};
+      for (var k in d.options) {
+        if (Object.prototype.toString.call(d.options[k]) === '[object Array]') {
+          inputs[k] = gui.add(d.config, k, d.options[k]).listen();
+        } else if (typeof d.options[k] === 'string' && d.options[k].match(/^#\S\S\S\S\S\S$/)) {
+          inputs[k] = gui.addColor(d.config, k).listen();
+        } else if (typeof d.options[k] === 'boolean') {
+          inputs[k] = gui.add(d.config, k).listen();
+        } else {
+          inputs[k] = gui.add(d.config, k, d.options[k]).listen();
+        }
+      }
+      if (callback) {
+        for (var k in inputs) {
+          inputs[k].onFinishChange(function (value) {
+            callback(k, value);
+          });
+        }
+      }
+      var el0 = el.append("div").classed("guidiv",true).node();
+      el0.appendChild(gui.domElement);
+    });
+  };
+  chart.callback = function(_) { return arguments.length ? (callback= _, chart) : callback; };
+  return chart
+};
+
+/*
+var renderCfg = function (data, config, callback) { //TODO SOFISTIGATED OPTIONS
+
+
+  if (callback) {
+    for (var k in inputs) {
+      inputs[k].onFinishChange(function (value) {
+        callback(k, value)
+      })
+    }
+  }
+
+}
+*/
+
 //import toolsAddChrPrefix from "../tools/addChrPrefix"
 //import brush from "../scopebrush" //TODO
-
+const norms$2 = constant().norms;
+const units$2 = constant().units;
 var hicMonitor = function (layout, container, state, app) {
     //TODO RM Global Variables, make it as a renderer in Snow;
     var scope = {
         "background": "#BBB"
     };
     var init = {
-        "bigwig": false,
         "hic": false
     };
     var hic = {};
@@ -3028,27 +3097,62 @@ var hicMonitor = function (layout, container, state, app) {
         .append("div")
         .attr("class", "cfg");
     var sign = false;
+    //var hicCfgDiv
+    var datIO = datgui();
     dispatch.on("cfg", function (data) {
-        hic.ctrl = H.chart().data(data);
-        //console.log("hic state", state.state)
-        cfg.call(hic.ctrl);
-
-        if (state.state && sign == false) {
-            hic.ctrl.state(container.getState().state);
-            sign = true; //load once.
+        //console.log("hic", hic)
+        var opts = {
+          "color2": "#ff0000",
+          "color1": "#ffffff"
+        };
+        opts["unit"] = {};
+        data.units.forEach(function (d) {
+          var k = units$2[d];
+          opts["unit"][k] = d;
+        });
+        opts["norm"] = {};
+        data.norms.forEach(function (d) {
+          //opts.norms.push({norms[d]:d})
+          var k = norms$2[d];
+          opts["norm"][k] = d;
+        });
+        hic.state = {};
+        if (container.getState().hicState && sign == false) {
+          hic.state = container.getState().hicState;
+          //console.log("load hic STATE")
+          opts["color1"] = hic.state.color1;
+          opts["color2"] = hic.state.color2;
+          sign = true; //load once.
         } else {
-            container.extendState({
-                "state": hic.ctrl.state()
-            });
+          /*
+          container.extendState({
+            "hicState": hic.state
+          })
+          */
+          sign = true;
         }
 
+        //hicCfgDiv = renderCfg(opts, hic.state, undefined)
+        cfg.selectAll(".datgui").remove();
+        cfg.selectAll(".datgui")
+        .data([
+          {"options":opts,"config":hic.state}
+        ])
+        .enter()
+        .append("div")
+        .classed("datgui",true)
+        .call(datIO);
+
+        container.extendState({
+          "hicState": hic.state
+        });
 
         cfg.append("input")
             .attr("type", "button")
             .attr("value", "submit")
             .on("click", function (d) {
                 container.extendState({
-                    "state": hic.ctrl.state()
+                    "hicState": hic.state
                 });
                 container.extendState({
                     "configView": false
@@ -3059,11 +3163,11 @@ var hicMonitor = function (layout, container, state, app) {
                 dispatch.call("replot", this, {});
             });
         cfg.append("hr");
-
-        var uri = cfg.append("select");
+        /*
+        var uri = cfg.append("select")
 
         d3.json(server + "/hic/list",function(d){  //TODO Server
-          console.log("hic data",d);
+          //console.log("hic data",d)
           uri.selectAll("option")
              .data(d)
              .enter()
@@ -3073,30 +3177,32 @@ var hicMonitor = function (layout, container, state, app) {
              })
              .text(function(d){
                return d
-             });
-        });
+             })
+        })
         cfg.append("input")
             .attr("type", "button")
             .attr("value", "load new data")
             .on("click", function (d) {
                 container.extendState({
                     "URI": uri.node().value
-                });
+                })
                 if (uri.node().value != URI) {
                     URI = uri.node().value;
-                    container.setTitle(URI);
-                    H.Get(URI, initHic);
+                    container.setTitle(URI)
+                    H.Get(URI, initHic)
                     container.extendState({
                         "configView": false
-                    });
+                    })
                     container.extendState({
                         "URI": URI
-                    });
-                    cfg.style("display", "none");
-                    main.style("display", "block");
-                    dispatch.call("replot", this, {});
+                    })
+                    cfg.style("display", "none")
+                    main.style("display", "block")
+                    dispatch.call("replot", this, {})
                 }
-            });
+            })
+            */
+
     });
 
     var canvas = main.append("canvas").style("position", "absolute");
@@ -3147,6 +3253,7 @@ var hicMonitor = function (layout, container, state, app) {
             end: 10000000
         }
     ];
+
     var initHic = function (data) {
         hic.opts = data;
         dispatch.call("cfg", this, data);
@@ -3156,7 +3263,51 @@ var hicMonitor = function (layout, container, state, app) {
     };
 
 
-    H.Get(URI, initHic);
+
+    var hics = {
+      "options":{},
+      "config":{}
+    };
+    var resetHics = function (k, v) {
+      container.extendState({
+        "hicsState": hics.config
+      });
+      URI = server + "/hic/" + v;
+      H.Get(URI, initHic);
+    };
+    var hicIO = datgui().callback(resetHics);
+    var initHics = function(){
+      d3.json(server + "/hic/list", function (d) {
+        hic.hics = d;
+        hics.options = {
+          "hic": d
+        };
+        if (container.getState().hicsState) {
+          hics.config = container.getState().hicsState;
+        } else {
+          hics.config = {
+            "hic": d[0]
+          };
+        }
+
+        cfg.selectAll(".hicsgui").remove();
+        cfg.selectAll(".hicsgui")
+        .data([
+          hics
+        ])
+        .enter()
+        .append("div")
+        .classed("hicsgui",true)
+        .call(hicIO);
+        //renderCfg(hics.opts, hics.cfg, callback)
+        URI = server + "/hic/" + hics.config.hic;
+        H.Get(URI, initHic);
+      });
+    };
+
+
+    //H.Get(URI, initHic)
+    initHics();
     var prefixed = true;
     var renderHic = function (r) {
         var regions;
@@ -3174,7 +3325,7 @@ var hicMonitor = function (layout, container, state, app) {
             ctx.fillStyle = scope.background;
             ctx.fillRect(0, scope.width / 2 - 20, scope.width, 40);
         };
-        hic.state = hic.ctrl.state();
+        //hic.state = hic.ctrl.state();
         hic.chart = H.canvas() //just for canvas view.
             .URI(URI)
             .norm(hic.state.norm)
@@ -4953,9 +5104,9 @@ var bigbed = function (layout, container, state, app) {
 
 };
 
-const norms$2 = constant().norms;
-const units$2 = constant().units;
-const _barHeight = 30;
+const norms$3 = constant().norms;
+const units$3 = constant().units;
+const _barHeight$1 = 30;
 
 
 var ctrlCanvas = function (layout, container, state, app) {
@@ -5019,6 +5170,7 @@ var ctrlCanvas = function (layout, container, state, app) {
     var gui = new dat.GUI({
       autoPlace: false
     }); //dat gui
+    gui.__closeButton.style.display = "none"; //TODO
     factory(data, config);
     var inputs = {};
     for (var k in data) {
@@ -5042,7 +5194,7 @@ var ctrlCanvas = function (layout, container, state, app) {
 
     var container0 = cfg.append("div").node();
     container0.appendChild(gui.domElement);
-    cfg.append("div").style("height", "25px");
+    //cfg.append("div").style("height", "25px") //TODO
     return container0
   };
 
@@ -5060,13 +5212,13 @@ var ctrlCanvas = function (layout, container, state, app) {
     };
     opts["unit"] = {};
     data.units.forEach(function (d) {
-      var k = units$2[d];
+      var k = units$3[d];
       opts["unit"][k] = d;
     });
     opts["norm"] = {};
     data.norms.forEach(function (d) {
       //opts.norms.push({norms[d]:d})
-      var k = norms$2[d];
+      var k = norms$3[d];
       opts["norm"][k] = d;
     });
     hic.state = {};
@@ -5077,12 +5229,17 @@ var ctrlCanvas = function (layout, container, state, app) {
       opts["color2"] = hic.state.color2;
       sign = true; //load once.
     } else {
+      /*
       container.extendState({
         "hicState": hic.state
-      });
+      })
+      */
       sign = true;
     }
     hicCfgDiv = renderCfg(opts, hic.state, undefined);
+    container.extendState({
+      "hicState": hic.state
+    });
 
   });
   //console.log("container",container)
@@ -5306,7 +5463,7 @@ var ctrlCanvas = function (layout, container, state, app) {
     var _bedHeight = 10;
     var bbs = [];
     var tracks = [];
-    var yoffset = scope.edge / 2 + 40 + 4 * (_barHeight + 10) + 5;
+    var yoffset = scope.edge / 2 + 40 + 4 * (_barHeight$1 + 10) + 5;
     //var yoffset = 300
     var coords = coord().regions(regions).width(scope.edge);
     //TODO : load localStorage configure?
@@ -5350,9 +5507,9 @@ var ctrlCanvas = function (layout, container, state, app) {
         .URI(server + "/bw") //set this?
         .id(b)
         .x(10)
-        .y(scope.edge / 2 + 40 + i * (_barHeight + 10))
+        .y(scope.edge / 2 + 40 + i * (_barHeight$1 + 10))
         .width(scope.edge)
-        .barHeight(_barHeight)
+        .barHeight(_barHeight$1)
         .gap(20) //TODO REMV
         .regions(toolsAddChrPrefix(regions))
         .panel(main)
@@ -5555,6 +5712,7 @@ exports.toolsAddChrPrefix = toolsAddChrPrefix;
 exports.simpleMonitor = simpleMonitor;
 exports.panel = panel;
 exports.render = render;
+exports.datgui = datgui;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
