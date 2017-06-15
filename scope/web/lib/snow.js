@@ -4959,13 +4959,21 @@ const _barHeight = 30;
 
 
 var ctrlCanvas = function (layout, container, state, app) {
-  /*
-   var trackdbs = [
-    {"prefix":"hic","format":"hic"},
-    {"prefix":"bw","format":"bigwig"},
-    {"prefix":"bigbed","format":"bigbed"}
-   ]
-  */
+
+  var trackdbs = [{
+      "prefix": "hic",
+      "format": "hic"
+    },
+    {
+      "prefix": "bw",
+      "format": "bigwig"
+    },
+    {
+      "prefix": "bigbed",
+      "format": "bigbed"
+    }
+  ];
+
 
 
   var scope = {
@@ -4978,8 +4986,7 @@ var ctrlCanvas = function (layout, container, state, app) {
   };
   var server = app["server"] || "";
   var hic = {};
-  var dispatch = d3.dispatch("update", "brush", "cfg", "replot", "domain", "monitor", "switchHic", "switchBw");
-  //switch means
+  var dispatch = d3.dispatch("update", "brush", "cfgHic", "replot", "domain", "monitor", "switchHic", "switchBw");
   var main = d3.select(container.getElement()[0])
     .append("div")
     .attr("class", "content")
@@ -5036,8 +5043,11 @@ var ctrlCanvas = function (layout, container, state, app) {
     cfg.append("div").style("height", "25px");
     return container0
   };
+
+
+
   var hicCfgDiv;
-  dispatch.on("cfg", function (data) { //Config HiC
+  dispatch.on("cfgHic", function (data) { //Config HiC
     //TODO FIX THIS .
     if (hicCfgDiv) {
       hicCfgDiv.remove();
@@ -5060,21 +5070,16 @@ var ctrlCanvas = function (layout, container, state, app) {
       opts["norm"][k] = d;
     });
     hic.state = {};
-    hicCfgDiv = renderCfg(opts, hic.state);
-
-    //hic.ctrl = H.chart().data(data)
-    //console.log("hic state", container.getState().state)
-    //TODO add hics options.
-    //cfg.append("div").call(hic.ctrl) //TODO add more config here
-    if (container.getState().state && sign == false) {
-      //hic.ctrl.state(container.getState().state)
-      hic.state = container.getState().state;
+    hicCfgDiv = renderCfg(opts, hic.state, undefined);
+    if (container.getState().hicState && sign == false) {
+      hic.state = container.getState().hicState;
+      console.log("load hic STATE");
       sign = true; //load once.
     } else {
       container.extendState({
-        //"state": hic.ctrl.state()
-        "state": hic.state
+        "hicState": hic.state
       });
+      sign = true;
     }
 
   });
@@ -5177,17 +5182,20 @@ var ctrlCanvas = function (layout, container, state, app) {
   ];
   var initHic = function (data) {
     hic.opts = data; //hic.opts.chrs
-    dispatch.call("cfg", this, data);
+    dispatch.call("cfgHic", this, data);
     init.hic = true;
     var r = state.regions || testBeds;
-    render(r); //TODO d3 queue ?
+    console.log("hic",hic);
+    renderHic(r); //TODO d3 queue ?
   };
   cfg.append("input")
     .attr("type", "button")
     .attr("value", "submit")
     .on("click", function (d) {
       container.extendState({
-        "state": hic.state
+        "hicState": hic.state,
+        "bigWigState": bw.config,
+        "bigBedState": bb.config
       });
       container.extendState({
         "configView": false
@@ -5215,11 +5223,18 @@ var ctrlCanvas = function (layout, container, state, app) {
     "config": {}
   };
   var initBw = function (data) {
-    console.log("bigwig", data);
     bigwig = data;
-    bigwig.trackIds.forEach(function (d, i) {
-      bw.opts[d] = (i < 4);
-    });
+    if (container.getState().bigWigState) {
+      console.log("getState");
+      bw.config = container.getState().bigWigState;
+      bigwig.trackIds.forEach(function (d, i) {
+        bw.opts[d] = bw.config[d];
+      });
+    } else {
+      bigwig.trackIds.forEach(function (d, i) {
+        bw.opts[d] = (i < 4);
+      });
+    }
     renderCfg(bw.opts, bw.config);
     init.bigwig = true;
   };
@@ -5231,32 +5246,36 @@ var ctrlCanvas = function (layout, container, state, app) {
   };
   var bigbed;
   var initBb = function (data) {
-    console.log("bigwig", data);
     bigbed = data;
-    bigbed.trackIds.forEach(function (d, i) {
-      bb.opts[d] = false;
-    });
+    if (container.getState().bigBedState) {
+      console.log("getState");
+      bb.config = container.getState().bigBedState;
+      bigbed.trackIds.forEach(function (d, i) {
+        bb.opts[d] = bb.config[d];
+      });
+    } else {
+      bigbed.trackIds.forEach(function (d, i) {
+        bb.opts[d] = (i < 4);
+      });
+    }
+
     renderCfg(bb.opts, bb.config);
     init.bigbed = true;
   };
-  /*
-  var bwconfig = localStorage.getItem("bwconfig"); //TODO IMPROVE
-  if (bwconfig) {
-      bwconfig = JSON.parse(bwconfig)
-  }
-  */
+
   B.Get(server + "/bw", initBw);
   BB.Get(server + "/bigbed", initBb);
 
   // URI is default now. change this. TODO : handle
-  var URI;
+  var URI; //TODO THIS
+
   d3.json(server + "/hic/list", function (d) {
     hic.hics = d;
     var opts = {
       "hic": d
     };
     var cfg = {
-
+      "hic" : d[0]
     };
     var callback = function (k, v) {
       URI = server + "/hic/" + v;
@@ -5273,7 +5292,7 @@ var ctrlCanvas = function (layout, container, state, app) {
     var _bedHeight = 10;
     var bbs = [];
     var tracks = [];
-    var yoffset = scope.edge/2 + 40 + 4 * (_barHeight+10) + 5;
+    var yoffset = scope.edge / 2 + 40 + 4 * (_barHeight + 10) + 5;
     //var yoffset = 300
     var coords = coord().regions(regions).width(scope.edge);
     //TODO : load localStorage configure?
@@ -5289,37 +5308,12 @@ var ctrlCanvas = function (layout, container, state, app) {
       }
     }
     tracks.forEach(function (id, i) {
-      /*
-      bbs.push(
-        BB.canvas()
-        .URI(server + "/bw") //set this?
-        .id(b)
-        .x(10)
-        .y(scope.edge / 2 + 40 + i * _barHeight)
-        .width(scope.edge)
-        .barHeight(_barHeight)
-        .gap(20) //TODO REMV
-        .regions(toolsAddChrPrefix(regions))
-        .panel(main)
-        .mode(1)
-        .pos(i)
-      )
-      */
-
       var chart = BB.canvas().coord(coords).regions(regions).URI(server + "/" + dbname).id(id).x(10).y(yoffset + i * _bedHeight);
       canvas.call(chart);
-      console.log("TODO Render", b, i);
+      //console.log("TODO Render", b, i)
     });
-    /*
-    dispatch.on("brush.local", function (e) {
-      bws.forEach(function (b, i) {
-        b.response(e)
-      })
-    })
-    bws.forEach(function (b) {
-      canvas.call(b)
-    })
-    */
+
+
   };
   var renderBigwig = function (regions) {
     var bws = [];
@@ -5391,7 +5385,7 @@ var ctrlCanvas = function (layout, container, state, app) {
     };
     //hic.state = config;
     hic.chart = H.canvas()
-      .URI(URI)
+      .URI(URI) //TODO
       .norm(hic.state.norm)
       .unit(hic.state.unit)
       .bpres(hic.opts.bpres)
@@ -5434,6 +5428,7 @@ var ctrlCanvas = function (layout, container, state, app) {
       renderBigwig(regions);
     }
     if (init.hic) {
+      console.log("Render HiC");
       renderHic(regions);
     }
     if (init.bigbed) {
