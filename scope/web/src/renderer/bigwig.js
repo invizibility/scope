@@ -27,8 +27,7 @@ export default function (layout, container, state, app) {
     renderCfg(data)
   }
   var datGui = datgui().closable(false)
-  var renderCfg = function (data) { // TODO make checkbox working
-
+  var renderCfg = function (data) { // TODO make checkbox workin
     var factory = function(d,n) {
       var a = {}
       d.forEach(function(id,i){
@@ -42,17 +41,7 @@ export default function (layout, container, state, app) {
     }
     var dat = {}
     dat["options"] = factory(data.trackIds,10)
-    dat["config"] = {}
-    /*
-    var gui = new dat.GUI({ autoPlace: false });
-    data.trackIds.forEach(function(d){
-      gui.add(text,d)
-    })
-    //console.log("CFG",cfg.node())
-    var container0 = cfg.append("div").node();
-    container0.appendChild(gui.domElement)
-    cfg.append("div").style("height","25px")
-    */
+    dat["config"] = container.getState()["trackConfig"] || {}
     cfg.selectAll(".io").remove()
     cfg.selectAll(".io")
       .data([dat])
