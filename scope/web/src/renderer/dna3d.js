@@ -1,3 +1,4 @@
+import datgui from "../datgui"
 export default function(layout, container, state, app) {
 var rainbow = d3.scaleOrdinal(d3.schemeCategory20)
 console.log(state)
@@ -20,9 +21,26 @@ container.getElement().append("<div class='content'></div>")
 var cfg = d3.select(container.getElement()[0])
 		.append("div")
 		.classed("cfg",true)
-cfg.append("div").text("Data URI:")
-var uri = cfg.append("select")
+var datGui = datgui().closable(false)
+
+//cfg.append("div").text("Data URI:")
+// var uri = cfg.append("select")
+var dat = {}
 d3.json(server + "/3d/list",function(d){  //TODO Server
+
+
+	dat = {
+		"options":{"src":d},
+		"config":{"src":d[0]}
+	}
+	cfg.selectAll(".io")
+	.data([dat])
+	.enter()
+	.append("div")
+	.classed("io",true)
+	.call(datGui)
+
+	/*
 	uri.selectAll("option")
 		 .data(d)
 		 .enter()
@@ -33,6 +51,7 @@ d3.json(server + "/3d/list",function(d){  //TODO Server
 		 .text(function(d){
 			 return d
 		 })
+	*/
 })
 //container.getElement().find(".cfg .uri").val(state.dataURI)
 d3.select(container.getElement()[0])
@@ -41,7 +60,7 @@ d3.select(container.getElement()[0])
 .attr("value","submit")
 .on("click", function(){
 	 //var v = container.getElement().find(".cfg .uri").val()
-	 var v = uri.node().value
+	 var v = "/3d/get/"+dat.config.src
 	 console.log(v)
 	 if (v!=state.dataURI) {
 		state.dataURI = v;

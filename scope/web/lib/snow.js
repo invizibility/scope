@@ -3051,7 +3051,7 @@ var datgui = function() {
       if (callback) {
         for (var k in inputs) {
           inputs[k].onFinishChange(function (value) {
-            callback(k, value);
+            callback(k, value); //callback key and value
           });
         }
       }
@@ -3063,21 +3063,6 @@ var datgui = function() {
   chart.closable = function(_) { return arguments.length ? (closable= _, chart) : closable; };
   return chart
 };
-
-/*
-var renderCfg = function (data, config, callback) { //TODO SOFISTIGATED OPTIONS
-
-
-  if (callback) {
-    for (var k in inputs) {
-      inputs[k].onFinishChange(function (value) {
-        callback(k, value)
-      })
-    }
-  }
-
-}
-*/
 
 //import toolsAddChrPrefix from "../tools/addChrPrefix"
 //import brush from "../scopebrush" //TODO
@@ -4050,9 +4035,26 @@ container.getElement().append("<div class='content'></div>");
 var cfg = d3.select(container.getElement()[0])
 		.append("div")
 		.classed("cfg",true);
-cfg.append("div").text("Data URI:");
-var uri = cfg.append("select");
+var datGui = datgui().closable(false);
+
+//cfg.append("div").text("Data URI:")
+// var uri = cfg.append("select")
+var dat = {};
 d3.json(server + "/3d/list",function(d){  //TODO Server
+
+
+	dat = {
+		"options":{"src":d},
+		"config":{"src":d[0]}
+	};
+	cfg.selectAll(".io")
+	.data([dat])
+	.enter()
+	.append("div")
+	.classed("io",true)
+	.call(datGui);
+
+	/*
 	uri.selectAll("option")
 		 .data(d)
 		 .enter()
@@ -4062,7 +4064,8 @@ d3.json(server + "/3d/list",function(d){  //TODO Server
 		 })
 		 .text(function(d){
 			 return d
-		 });
+		 })
+	*/
 });
 //container.getElement().find(".cfg .uri").val(state.dataURI)
 d3.select(container.getElement()[0])
@@ -4071,7 +4074,7 @@ d3.select(container.getElement()[0])
 .attr("value","submit")
 .on("click", function(){
 	 //var v = container.getElement().find(".cfg .uri").val()
-	 var v = uri.node().value;
+	 var v = "/3d/get/"+dat.config.src;
 	 console.log(v);
 	 if (v!=state.dataURI) {
 		state.dataURI = v;
@@ -4611,36 +4614,52 @@ var bigwig = function (layout, container, state, app) {
     init = true;
     renderCfg(data);
   };
+  var datGui = datgui().closable(false);
   var renderCfg = function (data) { // TODO make checkbox working
-    var factory = function(d) {
+
+    var factory = function(d,n) {
       var a = {};
-      d.forEach(function(id){
-        a[id]=true;
+      d.forEach(function(id,i){
+        if (i<n) {
+          a[id] = true;
+        } else {
+          a[id] = false;
+        }
       });
       return a
     };
-    var text = factory(data.trackIds);
-
+    var dat = {};
+    dat["options"] = factory(data.trackIds,10);
+    dat["config"] = {};
+    /*
     var gui = new dat.GUI({ autoPlace: false });
     data.trackIds.forEach(function(d){
-      gui.add(text,d);
-    });
+      gui.add(text,d)
+    })
     //console.log("CFG",cfg.node())
     var container0 = cfg.append("div").node();
-    container0.appendChild(gui.domElement);
-    cfg.append("div").style("height","25px");
+    container0.appendChild(gui.domElement)
+    cfg.append("div").style("height","25px")
+    */
+    cfg.selectAll(".io").remove();
+    cfg.selectAll(".io")
+      .data([dat])
+      .enter()
+      .append("div")
+      .classed("io",true)
+      .call(datGui);
+
     cfg.append("div").append("input")
     .attr("type","button")
     .attr("value","submit")
     .text("submit")
     .on("click",function(){
-      //console.log(text)
-      bwconfig = text;
+      bwconfig = dat.config;
       cfg.style("display", "none");
       content.style("display", "block");
 
       container.extendState({
-          "bwconfig":bwconfig
+          "bwconfig":dat.config
       });
       container.extendState({
           "configView": false
@@ -5102,7 +5121,7 @@ var ctrlCanvas = function (layout, container, state, app) {
     "options": {},
     "config": {}
   };
-  var dispatch = d3.dispatch("update", "brush", "cfgHic", "replot", "domain", "monitor", "switchHic", "switchBw");
+  var dispatch = d3.dispatch("update", "brush", "cfgHic", "replot", "domain", "monitor");
   var main = d3.select(container.getElement()[0])
     .append("div")
     .attr("class", "content")

@@ -1,5 +1,6 @@
 import B from "../data/bigwig"
 import toolsAddChrPrefix from "../tools/addChrPrefix"
+import datgui from "../datgui"
 //TODO Config Part
 export default function (layout, container, state, app) {
   var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg", true);
@@ -25,16 +26,24 @@ export default function (layout, container, state, app) {
     init = true;
     renderCfg(data)
   }
+  var datGui = datgui().closable(false)
   var renderCfg = function (data) { // TODO make checkbox working
-    var factory = function(d) {
+
+    var factory = function(d,n) {
       var a = {}
-      d.forEach(function(id){
-        a[id]=true
+      d.forEach(function(id,i){
+        if (i<n) {
+          a[id] = true
+        } else {
+          a[id] = false
+        }
       })
       return a
     }
-    var text = factory(data.trackIds)
-
+    var dat = {}
+    dat["options"] = factory(data.trackIds,10)
+    dat["config"] = {}
+    /*
     var gui = new dat.GUI({ autoPlace: false });
     data.trackIds.forEach(function(d){
       gui.add(text,d)
@@ -43,18 +52,26 @@ export default function (layout, container, state, app) {
     var container0 = cfg.append("div").node();
     container0.appendChild(gui.domElement)
     cfg.append("div").style("height","25px")
+    */
+    cfg.selectAll(".io").remove()
+    cfg.selectAll(".io")
+      .data([dat])
+      .enter()
+      .append("div")
+      .classed("io",true)
+      .call(datGui)
+
     cfg.append("div").append("input")
     .attr("type","button")
     .attr("value","submit")
     .text("submit")
     .on("click",function(){
-      //console.log(text)
-      bwconfig = text;
+      bwconfig = dat.config;
       cfg.style("display", "none")
       content.style("display", "block")
 
       container.extendState({
-          "bwconfig":bwconfig
+          "bwconfig":dat.config
       })
       container.extendState({
           "configView": false

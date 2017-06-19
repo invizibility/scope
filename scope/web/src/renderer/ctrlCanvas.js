@@ -48,7 +48,7 @@ export default function (layout, container, state, app) {
     "options": {},
     "config": {}
   }
-  var dispatch = d3.dispatch("update", "brush", "cfgHic", "replot", "domain", "monitor", "switchHic", "switchBw")
+  var dispatch = d3.dispatch("update", "brush", "cfgHic", "replot", "domain", "monitor")
   var main = d3.select(container.getElement()[0])
     .append("div")
     .attr("class", "content")

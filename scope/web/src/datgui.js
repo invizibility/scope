@@ -44,7 +44,7 @@ export default function() {
       if (callback) {
         for (var k in inputs) {
           inputs[k].onFinishChange(function (value) {
-            callback(k, value)
+            callback(k, value) //callback key and value
           })
         }
       }
@@ -56,18 +56,3 @@ export default function() {
   chart.closable = function(_) { return arguments.length ? (closable= _, chart) : closable; }
   return chart
 }
-
-/*
-var renderCfg = function (data, config, callback) { //TODO SOFISTIGATED OPTIONS
-
-
-  if (callback) {
-    for (var k in inputs) {
-      inputs[k].onFinishChange(function (value) {
-        callback(k, value)
-      })
-    }
-  }
-
-}
-*/
