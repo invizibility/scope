@@ -94,47 +94,7 @@ export default function (layout, container, state, app) {
                 main.style("display", "block")
                 dispatch.call("replot", this, {})
             })
-        //cfg.append("hr")
-        /*
-        var uri = cfg.append("select")
-
-        d3.json(server + "/hic/list",function(d){  //TODO Server
-          //console.log("hic data",d)
-          uri.selectAll("option")
-             .data(d)
-             .enter()
-             .append("option")
-             .attr("value",function(d){
-               return server + "/hic/"+d;  //TODO Server
-             })
-             .text(function(d){
-               return d
-             })
-        })
-        cfg.append("input")
-            .attr("type", "button")
-            .attr("value", "load new data")
-            .on("click", function (d) {
-                container.extendState({
-                    "URI": uri.node().value
-                })
-                if (uri.node().value != URI) {
-                    URI = uri.node().value;
-                    container.setTitle(URI)
-                    H.Get(URI, initHic)
-                    container.extendState({
-                        "configView": false
-                    })
-                    container.extendState({
-                        "URI": URI
-                    })
-                    cfg.style("display", "none")
-                    main.style("display", "block")
-                    dispatch.call("replot", this, {})
-                }
-            })
-            */
-
+        
     })
 
     var canvas = main.append("canvas").style("position", "absolute")

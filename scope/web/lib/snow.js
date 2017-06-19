@@ -3163,47 +3163,7 @@ var hicMonitor = function (layout, container, state, app) {
                 main.style("display", "block");
                 dispatch.call("replot", this, {});
             });
-        //cfg.append("hr")
-        /*
-        var uri = cfg.append("select")
-
-        d3.json(server + "/hic/list",function(d){  //TODO Server
-          //console.log("hic data",d)
-          uri.selectAll("option")
-             .data(d)
-             .enter()
-             .append("option")
-             .attr("value",function(d){
-               return server + "/hic/"+d;  //TODO Server
-             })
-             .text(function(d){
-               return d
-             })
-        })
-        cfg.append("input")
-            .attr("type", "button")
-            .attr("value", "load new data")
-            .on("click", function (d) {
-                container.extendState({
-                    "URI": uri.node().value
-                })
-                if (uri.node().value != URI) {
-                    URI = uri.node().value;
-                    container.setTitle(URI)
-                    H.Get(URI, initHic)
-                    container.extendState({
-                        "configView": false
-                    })
-                    container.extendState({
-                        "URI": URI
-                    })
-                    cfg.style("display", "none")
-                    main.style("display", "block")
-                    dispatch.call("replot", this, {})
-                }
-            })
-            */
-
+        
     });
 
     var canvas = main.append("canvas").style("position", "absolute");
@@ -5138,6 +5098,10 @@ var ctrlCanvas = function (layout, container, state, app) {
   };
   var server = app["server"] || "";
   var hic = {};
+  var hics = {
+    "options": {},
+    "config": {}
+  };
   var dispatch = d3.dispatch("update", "brush", "cfgHic", "replot", "domain", "monitor", "switchHic", "switchBw");
   var main = d3.select(container.getElement()[0])
     .append("div")
@@ -5148,65 +5112,10 @@ var ctrlCanvas = function (layout, container, state, app) {
     .append("div")
     .attr("class", "cfg");
   var sign = false;
-  /* MODULIZED THIS PART */
-
-  var renderCfg = function (data, config, callback) { //TODO SOFISTIGATED OPTIONS
-    var factory = function (data, config) {
-      //var c = {}
-      var c = config;
-      for (var k in data) {
-        if (!c[k]) {
-          if (Object.prototype.toString.call(data[k]) === '[object Array]') {
-            c[k] = data[k][0];
-          } else if (typeof data[k] === 'string') {
-            c[k] = data[k];
-          } else if (typeof data[k] === 　"boolean") {
-            c[k] = data[k];
-          } else {
-            c[k] = 0; //TODO
-          }
-        }
-      }
-    };
-    var gui = new dat.GUI({
-      autoPlace: false
-    }); //dat gui
-    gui.__closeButton.style.display = "none"; //TODO
-    factory(data, config);
-    var inputs = {};
-    for (var k in data) {
-      if (Object.prototype.toString.call(data[k]) === '[object Array]') {
-        inputs[k] = gui.add(config, k, data[k]).listen();
-      } else if (typeof data[k] === 'string' && data[k].match(/^#\S\S\S\S\S\S$/)) {
-        inputs[k] = gui.addColor(config, k).listen();
-      } else if (typeof data[k] === 'boolean') {
-        inputs[k] = gui.add(config, k).listen();
-      } else {
-        inputs[k] = gui.add(config, k, data[k]).listen();
-      }
-    }
-    if (callback) {
-      for (var k in inputs) {
-        inputs[k].onFinishChange(function (value) {
-          callback(k, value);
-        });
-      }
-    }
-
-    var container0 = cfg.append("div").node();
-    container0.appendChild(gui.domElement);
-    //cfg.append("div").style("height", "25px") //TODO
-    return container0
-  };
+  var datGui = datgui().closable(false);
 
 
-
-  var hicCfgDiv;
   dispatch.on("cfgHic", function (data) { //Config HiC
-    if (hicCfgDiv) {
-      hicCfgDiv.remove();
-    }
-    console.log("hic", hic);
     var opts = {
       "color2": "#ff0000",
       "color1": "#ffffff"
@@ -5230,17 +5139,22 @@ var ctrlCanvas = function (layout, container, state, app) {
       opts["color2"] = hic.state.color2;
       sign = true; //load once.
     } else {
-      /*
-      container.extendState({
-        "hicState": hic.state
-      })
-      */
       sign = true;
     }
-    hicCfgDiv = renderCfg(opts, hic.state, undefined);
     container.extendState({
       "hicState": hic.state
     });
+    var hicConfig = {
+      options: opts,
+      config: hic.state
+    };
+    cfg.selectAll(".hicio").remove();
+    cfg.selectAll(".hicio")
+    .data([hicConfig])
+    .enter()
+    .append("div")
+    .classed("hicio",true)
+    .call(datGui);
 
   });
   //console.log("container",container)
@@ -5347,12 +5261,14 @@ var ctrlCanvas = function (layout, container, state, app) {
     var r = state.regions || testBeds;
     renderHic(r); //TODO d3 queue ?
   };
+
+  //TODO.
   cfg.append("input")
     .attr("type", "button")
     .attr("value", "submit")
     .on("click", function (d) {
       container.extendState({
-        "hicsState": hic.hics,
+        "hicsState": hics.config,
         "hicState": hic.state,
         "bigWigState": bw.config,
         "bigBedState": bb.config
@@ -5364,6 +5280,9 @@ var ctrlCanvas = function (layout, container, state, app) {
       main.style("display", "block");
       dispatch.call("replot", this, {});
     });
+
+
+
   var getChrLength = function (chr) {
     console.log(hic.opts.chrs, hic.opts.chr2idx);
     var i;
@@ -5377,9 +5296,11 @@ var ctrlCanvas = function (layout, container, state, app) {
     return hic.opts.chrs[i].Length
   };
 
+
+
   var bigwig;
   var bw = {
-    "opts": {},
+    "options": {},
     "config": {}
   };
   var initBw = function (data) {
@@ -5388,75 +5309,90 @@ var ctrlCanvas = function (layout, container, state, app) {
       console.log("getState");
       bw.config = container.getState().bigWigState;
       bigwig.trackIds.forEach(function (d, i) {
-        bw.opts[d] = bw.config[d];
+        bw.options[d] = bw.config[d];
       });
     } else {
       bigwig.trackIds.forEach(function (d, i) {
-        bw.opts[d] = (i < 4);
+        bw.options[d] = (i < 4);
       });
     }
-    renderCfg(bw.opts, bw.config);
+    cfg.selectAll(".bwio").data([bw])
+    .enter()
+    .append("div")
+    .classed("bwio",true)
+    .call(datGui);
     init.bigwig = true;
   };
 
 
   var bb = {
-    "opts": {},
+    "options": {},
     "config": {}
   };
   var bigbed;
   var initBb = function (data) {
+    console.log("INIT BIGBED  ???",data);
     bigbed = data;
     if (container.getState().bigBedState) {
       console.log("getState");
       bb.config = container.getState().bigBedState;
       bigbed.trackIds.forEach(function (d, i) {
-        bb.opts[d] = bb.config[d];
+        bb.options[d] = bb.config[d];
       });
     } else {
       bigbed.trackIds.forEach(function (d, i) {
-        bb.opts[d] = (i < 4);
+        bb.options[d] = (i < 4);
       });
     }
-
-    renderCfg(bb.opts, bb.config);
+    cfg.selectAll(".bbio").data([bb])
+    .enter()
+    .append("div")
+    .classed("bbio",true)
+    .call(datGui);
+    console.log("call cfg bbio");
     init.bigbed = true;
   };
 
   B.Get(server + "/bw", initBw);
   BB.Get(server + "/bigbed", initBb);
 
-  // URI is default now. change this. TODO : handle
   var URI; //TODO THIS
-  var hics = {
-    "opts": {},
-    "config": {}
-  };
-  d3.json(server + "/hic/list", function (d) {
-    hic.hics = d;
-    hics.opts = {
-      "hic": d
-    };
-    if (container.getState().hicsState) {
-      hics.cfg = container.getState().hicsState;
-    } else {
-      hics.cfg = {
-        "hic": d[0]
-      };
-    }
 
-    var callback = function (k, v) {
-      container.extendState({
-        "hicsState": hics.cfg
-      });
-      URI = server + "/hic/" + v;
-      H.Get(URI, initHic);
-    };
-
-    renderCfg(hics.opts, hics.cfg, callback);
-    URI = server + "/hic/" + hics.cfg.hic;
+  var resetHics = function (k, v) {
+    container.extendState({
+      "hicsState": hics.config
+    });
+    URI = server + "/hic/" + v;
     H.Get(URI, initHic);
+  };
+  // URI is default now. change this. TODO : handle
 
+  var hicIO = datgui().callback(resetHics).closable(false);
+  d3.json(server + "/hic/list", function (d) {
+      hic.hics = d;
+      hics.options = {
+        "hic": d
+      };
+      if (container.getState().hicsState) {
+        hics.config = container.getState().hicsState;
+      } else {
+        hics.config = {
+          "hic": d[0]
+        };
+      }
+
+      cfg.selectAll(".hicsgui").remove();
+      cfg.selectAll(".hicsgui")
+      .data([
+        hics
+      ])
+      .enter()
+      .append("div")
+      .classed("hicsgui",true)
+      .call(hicIO);
+      //renderCfg(hics.opts, hics.cfg, callback)
+      URI = server + "/hic/" + hics.config.hic;
+      H.Get(URI, initHic);
   });
   var renderBigbed = function (regions) {
     //console.log("TODO render BigBed", regions)
