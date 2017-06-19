@@ -17,6 +17,7 @@ var factory = function (data, config) {
 
 export default function() {
   var callback
+  var closable = true
   var chart = function(selection) {
     selection.each(function(d){
       var el = d3.select(this)
@@ -24,6 +25,9 @@ export default function() {
       var gui = new dat.GUI({
         autoPlace: false
       })
+      if (!closable) {
+        gui.__closeButton.style.display = "none"
+      }
       factory(d.options,d.config)
       var inputs = {}
       for (var k in d.options) {
@@ -49,6 +53,7 @@ export default function() {
     })
   }
   chart.callback = function(_) { return arguments.length ? (callback= _, chart) : callback; }
+  chart.closable = function(_) { return arguments.length ? (closable= _, chart) : closable; }
   return chart
 }
 

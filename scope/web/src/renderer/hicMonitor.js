@@ -34,7 +34,7 @@ export default function (layout, container, state, app) {
         .attr("class", "cfg")
     var sign = false
     //var hicCfgDiv
-    var datIO = datgui()
+    var datIO = datgui().closable(false)
     dispatch.on("cfg", function (data) {
         //console.log("hic", hic)
         var opts = {
@@ -55,16 +55,11 @@ export default function (layout, container, state, app) {
         hic.state = {}
         if (container.getState().hicState && sign == false) {
           hic.state = container.getState().hicState
-          //console.log("load hic STATE")
           opts["color1"] = hic.state.color1
           opts["color2"] = hic.state.color2
-          sign = true; //load once.
+          sign = true;
         } else {
-          /*
-          container.extendState({
-            "hicState": hic.state
-          })
-          */
+
           sign = true;
         }
 
@@ -82,9 +77,10 @@ export default function (layout, container, state, app) {
         container.extendState({
           "hicState": hic.state
         })
-
+        cfg.selectAll(".submit").remove();
         cfg.append("input")
             .attr("type", "button")
+            .classed("submit",true)
             .attr("value", "submit")
             .on("click", function (d) {
                 container.extendState({
@@ -98,7 +94,7 @@ export default function (layout, container, state, app) {
                 main.style("display", "block")
                 dispatch.call("replot", this, {})
             })
-        cfg.append("hr")
+        //cfg.append("hr")
         /*
         var uri = cfg.append("select")
 
@@ -211,7 +207,7 @@ export default function (layout, container, state, app) {
       URI = server + "/hic/" + v
       H.Get(URI, initHic)
     }
-    var hicIO = datgui().callback(resetHics)
+    var hicIO = datgui().callback(resetHics).closable(false)
     var initHics = function(){
       d3.json(server + "/hic/list", function (d) {
         hic.hics = d;

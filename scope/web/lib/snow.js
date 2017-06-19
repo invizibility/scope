@@ -3024,6 +3024,7 @@ var factory = function (data, config) {
 
 var datgui = function() {
   var callback;
+  var closable = true;
   var chart = function(selection) {
     selection.each(function(d){
       var el = d3.select(this);
@@ -3031,6 +3032,9 @@ var datgui = function() {
       var gui = new dat.GUI({
         autoPlace: false
       });
+      if (!closable) {
+        gui.__closeButton.style.display = "none";
+      }
       factory(d.options,d.config);
       var inputs = {};
       for (var k in d.options) {
@@ -3056,6 +3060,7 @@ var datgui = function() {
     });
   };
   chart.callback = function(_) { return arguments.length ? (callback= _, chart) : callback; };
+  chart.closable = function(_) { return arguments.length ? (closable= _, chart) : closable; };
   return chart
 };
 
@@ -3098,7 +3103,7 @@ var hicMonitor = function (layout, container, state, app) {
         .attr("class", "cfg");
     var sign = false;
     //var hicCfgDiv
-    var datIO = datgui();
+    var datIO = datgui().closable(false);
     dispatch.on("cfg", function (data) {
         //console.log("hic", hic)
         var opts = {
@@ -3119,16 +3124,11 @@ var hicMonitor = function (layout, container, state, app) {
         hic.state = {};
         if (container.getState().hicState && sign == false) {
           hic.state = container.getState().hicState;
-          //console.log("load hic STATE")
           opts["color1"] = hic.state.color1;
           opts["color2"] = hic.state.color2;
-          sign = true; //load once.
+          sign = true;
         } else {
-          /*
-          container.extendState({
-            "hicState": hic.state
-          })
-          */
+
           sign = true;
         }
 
@@ -3146,9 +3146,10 @@ var hicMonitor = function (layout, container, state, app) {
         container.extendState({
           "hicState": hic.state
         });
-
+        cfg.selectAll(".submit").remove();
         cfg.append("input")
             .attr("type", "button")
+            .classed("submit",true)
             .attr("value", "submit")
             .on("click", function (d) {
                 container.extendState({
@@ -3162,7 +3163,7 @@ var hicMonitor = function (layout, container, state, app) {
                 main.style("display", "block");
                 dispatch.call("replot", this, {});
             });
-        cfg.append("hr");
+        //cfg.append("hr")
         /*
         var uri = cfg.append("select")
 
@@ -3275,7 +3276,7 @@ var hicMonitor = function (layout, container, state, app) {
       URI = server + "/hic/" + v;
       H.Get(URI, initHic);
     };
-    var hicIO = datgui().callback(resetHics);
+    var hicIO = datgui().callback(resetHics).closable(false);
     var initHics = function(){
       d3.json(server + "/hic/list", function (d) {
         hic.hics = d;
