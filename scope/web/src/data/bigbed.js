@@ -2,6 +2,7 @@ import {
   totalLength,
   overlap
 } from "./funcs"
+import bed6 from "./bed6"
 
 export default {
   Get: function (URI, callback) {
@@ -18,12 +19,14 @@ export default {
   canvas: function () {
     var id = "gene" //TODO
     var pos = 0 //for response rect TODO remove this limitation (change to id or get the response var)
-    var height = 20
+    var height = 5
+    var gap = 2
     var x = 0
     var y = 0
     var coord
     var regions
     var el
+    var trackY
     var ctx
     var URI = ""
     var _render_ = function (error, results) {
@@ -40,13 +43,15 @@ export default {
             "end": parseInt(t[2]),
             "name": t[3]
           }
+
           var xs = coord(a)
           //console.log(a,x)
           //TODO console.log(coord(a))
           ctx.fillStyle = "blue"
           xs.forEach(function(o){
             var width = o.l > 1 ? o.l : 1;
-            ctx.fillRect(x + o.x, y, width, height)
+            var yi = trackY.AssignTrack(a)
+            ctx.fillRect(x + o.x, y + yi * (height+gap), width, height)
           })
 
         })
@@ -61,6 +66,7 @@ export default {
       q.awaitAll(_render_)
     }
     var chart = function (selection) {
+      trackY = bed6().coord(coord)
       el = selection //canvas?
       ctx = el.node().getContext("2d")
       render();

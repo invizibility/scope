@@ -2,6 +2,9 @@ import {
   totalLength,
   overlap
 } from "./funcs"
+/* coord API
+
+ */
 export default function () {
   var regions
   var width = 500
@@ -18,24 +21,52 @@ export default function () {
     //console.log(e,regions)
 
     regions.forEach(function (r, i) {
+      var domain = scales[i].domain();
       if (Object.prototype.toString.call(e) === '[object Array]') {
         e.forEach(function (d, j) {
           if (overlap(r, d)) {
-            var x = scales[i](d.start) + offsets[i]
-            var l = scales[i](d.end) + offsets[i] - x
+            var start = d.start
+            var end = d.end
+            var full = true;
+            if (d.start < domain[0]) {
+              start = domain[0]
+              full = false
+            }
+            if (d.end > domain[1]) {
+              end = domain[1]
+              full = false
+            }
+            var x = scales[i](start) + offsets[i]
+            var full = true;
+            var l = scales[i](end) + offsets[i] - x
+
             rdata.push({
               "x": x,
-              "l": l
+              "l": l,
+              "f":full
             })
           }
         })
       } else {
         if (overlap(r, e)) {
-          var x = scales[i](e.start) + offsets[i]
-          var l = scales[i](e.end) + offsets[i] - x
+          var start = e.start
+          var end = e.end
+          var full = true;
+          if (e.start < domain[0]) {
+            start = domain[0]
+            full = false
+          }
+          if (e.end > domain[1]) {
+            end = domain[1]
+            full = false
+          }
+          var x = scales[i](start) + offsets[i]
+          var full = true;
+          var l = scales[i](end) + offsets[i] - x
           rdata.push({
             "x": x,
-            "l": l
+            "l": l,
+            "f":full
           })
         }
       }

@@ -4754,94 +4754,9 @@ var bigwig = function (layout, container, state, app) {
 
 };
 
-var BB = {
-  Get: function (URI, callback) {
-    var config = {};
-    var ready = function (error, results) {
-      config.URI = URI;
-      config.trackIds = results[0];
-      callback(config);
-    };
-    d3_queue.queue(2)
-      .defer(d3.json, URI + "/list")
-      .awaitAll(ready);
-  },
-  canvas: function () {
-    var id = "gene"; //TODO
-    var pos = 0; //for response rect TODO remove this limitation (change to id or get the response var)
-    var height = 20;
-    var x = 0;
-    var y = 0;
-    var coord;
-    var regions;
-    var el;
-    var ctx;
-    var URI = "";
-    var _render_ = function (error, results) {
-      ctx.fillStyle = "grey";
-      ctx.fillRect(x,y,coord.width(),height);
-      results.forEach(function (d) {
-        //onsole.log(d)
-        var lines = d.split("\n");
-        lines.forEach(function (d) {
-          var t = d.split("\t");
-          var a = {
-            "chr": t[0],
-            "start": parseInt(t[1]),
-            "end": parseInt(t[2]),
-            "name": t[3]
-          };
-          var xs = coord(a);
-          //console.log(a,x)
-          //TODO console.log(coord(a))
-          ctx.fillStyle = "blue";
-          xs.forEach(function(o){
-            var width = o.l > 1 ? o.l : 1;
-            ctx.fillRect(x + o.x, y, width, height);
-          });
+/* coord API
 
-        });
-      });
-    };
-    var render = function () {
-      /* NOT JSON BUT BED */
-      var q = d3_queue.queue(2);
-      regions.forEach(function (d) {
-        q.defer(d3.text, URI + "/" + id + "/get/" + d.chr + ":" + d.start + "-" + d.end);
-      });
-      q.awaitAll(_render_);
-    };
-    var chart = function (selection) {
-      el = selection; //canvas?
-      ctx = el.node().getContext("2d");
-      render();
-    };
-    chart.x = function (_) {
-      return arguments.length ? (x = _, chart) : x;
-    };
-    chart.y = function (_) {
-      return arguments.length ? (y = _, chart) : y;
-    };
-    chart.height = function (_) {
-      return arguments.length ? (height = _, chart) : height;
-    };
-    chart.URI = function (_) {
-      return arguments.length ? (URI = _, chart) : URI;
-    };
-    chart.coord = function (_) {
-      return arguments.length ? (coord = _, chart) : coord;
-    };
-    chart.regions = function (_) {
-      return arguments.length ? (regions = _, chart) : regions;
-    };
-    chart.id = function (_) {
-      return arguments.length ? (id = _, chart) : id;
-    };
-    return chart
-  }
-
-};
-
+ */
 var coord = function () {
   var regions;
   var width = 500;
@@ -4858,24 +4773,52 @@ var coord = function () {
     //console.log(e,regions)
 
     regions.forEach(function (r, i) {
+      var domain = scales[i].domain();
       if (Object.prototype.toString.call(e) === '[object Array]') {
         e.forEach(function (d, j) {
           if (overlap(r, d)) {
-            var x = scales[i](d.start) + offsets[i];
-            var l = scales[i](d.end) + offsets[i] - x;
+            var start = d.start;
+            var end = d.end;
+            var full = true;
+            if (d.start < domain[0]) {
+              start = domain[0];
+              full = false;
+            }
+            if (d.end > domain[1]) {
+              end = domain[1];
+              full = false;
+            }
+            var x = scales[i](start) + offsets[i];
+            var full = true;
+            var l = scales[i](end) + offsets[i] - x;
+
             rdata.push({
               "x": x,
-              "l": l
+              "l": l,
+              "f":full
             });
           }
         });
       } else {
         if (overlap(r, e)) {
-          var x = scales[i](e.start) + offsets[i];
-          var l = scales[i](e.end) + offsets[i] - x;
+          var start = e.start;
+          var end = e.end;
+          var full = true;
+          if (e.start < domain[0]) {
+            start = domain[0];
+            full = false;
+          }
+          if (e.end > domain[1]) {
+            end = domain[1];
+            full = false;
+          }
+          var x = scales[i](start) + offsets[i];
+          var full = true;
+          var l = scales[i](end) + offsets[i] - x;
           rdata.push({
             "x": x,
-            "l": l
+            "l": l,
+            "f":full
           });
         }
       }
@@ -4911,6 +4854,216 @@ var coord = function () {
     return arguments.length ? (gap = _, inited = false, chart) : gap;
   };
   return chart
+};
+
+var bed6 = function () {
+  var callback;
+  var width = 800;
+  //var scale = d3.scale.linear().range([0, width]);
+  var coord$$1;
+  var color = function (d) {
+    return "blue";
+  };
+  //var rectClass = "bed6"
+  var trackHeight = 5;
+  var trackSize = 40;
+  var trackNumber = 0;
+  var trackAvailableArray = Array.apply(null, Array(trackSize)).map(Number.prototype.valueOf, 0);
+
+  var minTrackId = function () {
+    var i = 0;
+    var x = trackAvailableArray[0];
+    trackAvailableArray.forEach(function (d, j) {
+      if (d < x) {
+        x = d;
+        i = j;
+      }
+    });
+    return i;
+  };
+
+  var _trackAvailable = function (d) {
+    var start_pos = d.x;
+    for (var i = 0; i < trackSize; i++) {
+      if (trackAvailableArray[i] < start_pos) {
+        // trackAvailableArray[i] = d.x + d.l //commit to update.
+        /*
+        if (trackNumber < i) {
+          trackNumber = i
+        };
+        */
+        return i;
+      }
+    }
+    return minTrackId()
+  };
+  var _putToTrack = function (d, i) {
+    d.forEach(function (d) {
+      if (trackAvailableArray[i] < d.x + d.l) {
+        trackAvailableArray[i] = d.x + d.l;
+      }
+    });
+    if (trackNumber < i) {
+      trackNumber = i;
+    }
+  };
+  var trackAssign = function(d) {
+    var i = 0;
+    d.forEach(function (d0) {
+      var x = _trackAvailable(d0);
+      if (i < x) {
+        i = x;
+      }
+    });
+    _putToTrack(d, i);
+    return i
+  };
+
+  var chart = function (selection) {
+    /*
+    selection.each(function (d, i) {
+      var r = coord(d)
+      var iTrack = trackAssign(r)
+
+    })
+    */
+  };
+  chart.AssignTrack = function(d) {
+    var r = coord$$1(d);
+    return trackAssign(r)
+  };
+  /*
+  chart.color = function (x) {
+    if (!arguments.length == 0) {
+      color = x;
+      return chart
+    } else {
+      return color;
+    }
+  }
+  */
+  chart.trackSize = function (x) {
+    if (!arguments.length == 0) {
+      trackSize = x;
+      trackAvailableArray = Array.apply(null, Array(trackSize)).map(Number.prototype.valueOf, 0);
+      trackNumber = 0; //reset track index;
+      return chart
+    } else {
+      return trackSize;
+    }
+  };
+  chart.trackHeight = function (x) {
+    if (!arguments.length == 0) {
+      trackHeight = x;
+      return chart
+    } else {
+      return trackHeight;
+    }
+  };
+
+  chart.coord = function (_) {
+    return arguments.length ? (coord$$1 = _, chart) : coord$$1;
+  };
+  chart.regions = function (_) {
+    return arguments.length ? (regions = _, chart) : regions;
+  };
+  chart.callback = function (_) {
+    return arguments.length ? (callback = _, chart) : callback;
+  };
+  return chart;
+};
+
+var BB = {
+  Get: function (URI, callback) {
+    var config = {};
+    var ready = function (error, results) {
+      config.URI = URI;
+      config.trackIds = results[0];
+      callback(config);
+    };
+    d3_queue.queue(2)
+      .defer(d3.json, URI + "/list")
+      .awaitAll(ready);
+  },
+  canvas: function () {
+    var id = "gene"; //TODO
+    var pos = 0; //for response rect TODO remove this limitation (change to id or get the response var)
+    var height = 5;
+    var gap = 2;
+    var x = 0;
+    var y = 0;
+    var coord;
+    var regions;
+    var el;
+    var trackY;
+    var ctx;
+    var URI = "";
+    var _render_ = function (error, results) {
+      ctx.fillStyle = "grey";
+      ctx.fillRect(x,y,coord.width(),height);
+      results.forEach(function (d) {
+        //onsole.log(d)
+        var lines = d.split("\n");
+        lines.forEach(function (d) {
+          var t = d.split("\t");
+          var a = {
+            "chr": t[0],
+            "start": parseInt(t[1]),
+            "end": parseInt(t[2]),
+            "name": t[3]
+          };
+
+          var xs = coord(a);
+          //console.log(a,x)
+          //TODO console.log(coord(a))
+          ctx.fillStyle = "blue";
+          xs.forEach(function(o){
+            var width = o.l > 1 ? o.l : 1;
+            var yi = trackY.AssignTrack(a);
+            ctx.fillRect(x + o.x, y + yi * (height+gap), width, height);
+          });
+
+        });
+      });
+    };
+    var render = function () {
+      /* NOT JSON BUT BED */
+      var q = d3_queue.queue(2);
+      regions.forEach(function (d) {
+        q.defer(d3.text, URI + "/" + id + "/get/" + d.chr + ":" + d.start + "-" + d.end);
+      });
+      q.awaitAll(_render_);
+    };
+    var chart = function (selection) {
+      trackY = bed6().coord(coord);
+      el = selection; //canvas?
+      ctx = el.node().getContext("2d");
+      render();
+    };
+    chart.x = function (_) {
+      return arguments.length ? (x = _, chart) : x;
+    };
+    chart.y = function (_) {
+      return arguments.length ? (y = _, chart) : y;
+    };
+    chart.height = function (_) {
+      return arguments.length ? (height = _, chart) : height;
+    };
+    chart.URI = function (_) {
+      return arguments.length ? (URI = _, chart) : URI;
+    };
+    chart.coord = function (_) {
+      return arguments.length ? (coord = _, chart) : coord;
+    };
+    chart.regions = function (_) {
+      return arguments.length ? (regions = _, chart) : regions;
+    };
+    chart.id = function (_) {
+      return arguments.length ? (id = _, chart) : id;
+    };
+    return chart
+  }
+
 };
 
 //TODO Config Part
