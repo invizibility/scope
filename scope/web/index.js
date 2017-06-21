@@ -38,3 +38,6 @@ export{default as panel} from "./src/panel"
 
 export{default as render} from "./src/render"
 export{default as datgui} from "./src/datgui"
+
+
+export{default as shapeRects} from "./src/shape/rects"

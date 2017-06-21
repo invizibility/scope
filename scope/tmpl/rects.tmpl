@@ -1,0 +1,34 @@
+{{define "html"}}
+<html>
+
+<head>
+    {{template "lib"}}
+    <script src="/lib0/snow.js"></script>
+    {{template "css"}}
+</head>
+
+<body>
+    <div id="wrapper">
+        <ul id="menuContainer"></ul>
+        <div id="layoutContainer" style="padding:20px">
+          <canvas id="canvas">
+          </canvas>
+          <svg id="svg">
+          </svg>
+        </div>
+    </div>
+</body>
+<script>
+    (function(d3, S, $) {
+        var data = [{
+          x:10,y:10,height:10,width:20,color:"#FF10FF"
+        }]
+        var ctx = d3.select("#canvas").node().getContext("2d")
+        S.shapeRects().context(ctx)(data)
+        var k = S.shapeRects()(data)
+        console.log(k)
+      d3.select('#svg').append('path').attr('d', k);
+    })(d3, snow, jQuery)
+</script>
+</html>
+{{end}}
