@@ -61,7 +61,6 @@ export default function () {
             full = false
           }
           var x = scales[i](start) + offsets[i]
-          var full = true;
           var l = scales[i](end) + offsets[i] - x
           rdata.push({
             "x": x,

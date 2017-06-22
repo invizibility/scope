@@ -1,0 +1,51 @@
+{{define "html"}}
+<html>
+
+<head>
+    {{template "lib"}}
+    <script src="/lib0/snow.js"></script>
+    {{template "css"}}
+</head>
+
+<body>
+    <div id="wrapper">
+        <ul id="menuContainer"></ul>
+        <div id="layoutContainer" style="padding:20px">
+          <canvas id="canvas">
+          </canvas>
+          <svg id="svg">
+          </svg>
+        </div>
+    </div>
+</body>
+<script>
+    (function(d3, S, $) {
+        var data = {
+          "start":10000,
+          "end":20000,
+          "thickStart":10500,
+          "thickEnd":18000,
+          "blockCount":3,
+          "blockStarts":[0,5000,7000],
+          "blockSizes":[1000,1000,3000],
+          "strand":"-"
+        }
+        var ctx = d3.select("#canvas").node().getContext("2d")
+        S.shapeGene().context(ctx)(data)
+        var k = S.shapeGene()(data)
+        console.log(k)
+      d3.select('#svg').append('path').attr('d', k)
+      .attr("fill",function(d){
+      return  "blue"
+    })
+      .attr("stroke-width",function(d){
+        return 1
+      })
+      .attr("stroke",function(d){
+        return "blue"
+      });
+
+    })(d3, snow, jQuery)
+</script>
+</html>
+{{end}}

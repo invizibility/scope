@@ -3,6 +3,15 @@ import {
   overlap
 } from "./funcs"
 import bed6 from "./bed6"
+import shapeGene from "../shape/gene"
+
+function parseInts(s) {
+  var a = []
+  s.split(",").forEach(function (d) {
+    a.push(parseInt(d))
+  })
+  return a;
+}
 
 export default {
   Get: function (URI, callback) {
@@ -19,8 +28,8 @@ export default {
   canvas: function () {
     var id = "gene" //TODO
     var pos = 0 //for response rect TODO remove this limitation (change to id or get the response var)
-    var height = 5
-    var gap = 2
+    var height = 12
+    var gap = 3
     var x = 0
     var y = 0
     var coord
@@ -31,7 +40,7 @@ export default {
     var URI = ""
     var _render_ = function (error, results) {
       ctx.fillStyle = "grey"
-      ctx.fillRect(x,y,coord.width(),height)
+      ctx.fillRect(x, y, coord.width(), height)
       results.forEach(function (d) {
         //onsole.log(d)
         var lines = d.split("\n")
@@ -40,18 +49,42 @@ export default {
           var a = {
             "chr": t[0],
             "start": parseInt(t[1]),
-            "end": parseInt(t[2]),
-            "name": t[3]
+            "end": parseInt(t[2])
           }
+          if (t.length >= 6) {
+            a["name"] = t[3]
+            a["score"] = parseInt(t[4])
+            a["strand"] = t[5]
+          }
+          if (t.length >= 12) {
+            a["thickStart"] = parseInt(t[6])
+            a["thickEnd"] = parseInt(t[7])
+            a["itemRgb"] = t[8]
+            a["blockCount"] = parseInt(t[9])
+            a["blockSizes"] = parseInts(t[10])
+            a["blockStarts"] = parseInts(t[11])
+          }
+
 
           var xs = coord(a)
           //console.log(a,x)
           //TODO console.log(coord(a))
           ctx.fillStyle = "blue"
-          xs.forEach(function(o){
-            var width = o.l > 1 ? o.l : 1;
-            var yi = trackY.AssignTrack(a)
-            ctx.fillRect(x + o.x, y + yi * (height+gap), width, height)
+          xs.forEach(function (o, i) {
+            if (o.f) {
+              var width = o.l > 1 ? o.l : 1;
+              var yi = trackY.AssignTrack(a)
+              //TODO ctx.fillRect(x + o.x, y + yi * (height+gap), width, height)
+
+              ctx.translate(x + o.x, y + yi * (height + gap))
+              shapeGene().width(width).context(ctx)(a)
+              ctx.translate(-x - o.x, -y - yi * (height + gap))
+
+            } else {
+              ctx.fillStyle = "red" //TODO partial overlap problem.
+              ctx.fillRect(x + o.x, y + yi * (height + gap), width, height)
+            }
+
           })
 
         })

@@ -4813,7 +4813,6 @@ var coord = function () {
             full = false;
           }
           var x = scales[i](start) + offsets[i];
-          var full = true;
           var l = scales[i](end) + offsets[i] - x;
           rdata.push({
             "x": x,
@@ -4973,6 +4972,165 @@ var bed6 = function () {
   return chart;
 };
 
+var symbolArrow = {
+    draw: function (context, size) {
+        context.moveTo(0, -size/2);
+        context.lineTo(size/2, 0);
+        context.lineTo(0, size/2);
+    }
+};
+
+var symbolRarrow = {
+    draw: function (context, size) {
+        context.moveTo(size/2, -size/2);
+        context.lineTo(0, 0);
+        context.lineTo(size/2, size/2);
+    }
+};
+
+function split(start, end, thickStart, thickEnd) {
+  if (end < thickStart || start > thickEnd) {
+    return [{
+      "s": start,
+      "e": end,
+      "t": 0
+    }]
+  }
+  if (start >= thickStart && end <= thickEnd) {
+    return [{
+      "s": start,
+      "e": end,
+      "t": 1
+    }]
+  }
+  if (start < thickStart && end < thickEnd) {
+    return [{
+      "s": start,
+      "e": thickStart,
+      "t": 0
+    }, {
+      "s": thickStart,
+      "e": end,
+      "t": 1
+    }]
+  }
+  if (start > thickStart && end > thickEnd) {
+    return [{
+      "s": start,
+      "e": thickEnd,
+      "t": 1
+    }, {
+      "s": thickEnd,
+      "e": end,
+      "t": 0
+    }]
+  }
+  if (start < thickStart && end > thickEnd) {
+    return [{
+      "s": start,
+      "e": thickStart,
+      "t": 0
+    }, {
+      "s": thickStart,
+      "e": thickEnd,
+      "t": 1
+    }, {
+      "s": thickEnd,
+      "e": end,
+      "t": 0
+    }]
+  }
+  console.log("WARNING",start,end,thickStart,thickEnd);
+  return []
+}
+var shapeGene = function () {
+  var color = "blue";
+  var context;
+  var buffer;
+  var width = 200;
+
+  function chart(data) {
+    var scale = d3.scaleLinear().domain([0, data.end - data.start]).range([0, width]);
+    if (context == null) {
+      buffer = context = d3.path();
+    } else {
+      context.strokeStyle = context.fillStyle = color;
+    }
+    var hs = [6,10];
+    var y = 0; //TODO
+    var arrows = {
+      "+":d3.symbol().type(symbolArrow).size(4).context(context),
+      "-":d3.symbol().type(symbolRarrow).size(4).context(context)
+    };
+    var arrow = arrows[data.strand];
+    context.moveTo(0, y);
+    console.log(context);
+    context.lineTo(width, y);
+    if (!buffer) {
+      context.stroke();
+    }
+    var thickStart = data.thickStart - data.start;
+    var thickEnd = data.thickEnd - data.start;
+    for (var i = 0; i < data.blockCount; i++) {
+      var starti = data.blockStarts[i];
+      var endi = data.blockStarts[i] + data.blockSizes[i];
+      var di = split(starti, endi, thickStart, thickEnd);
+      di.forEach(function (d) {
+        var x = scale(d.s);
+        var w = scale(d.e) - x;
+        var h = hs[d.t];
+        context.rect(x, y - h / 2, w, h);
+      });
+    }
+
+    if (!buffer) {
+      //context.stroke();
+      context.fill();
+    }
+    for (var i = 0; i < data.blockCount - 1; i++) {
+      var s = scale(data.blockStarts[i] + data.blockSizes[i]);
+      var e = scale(data.blockStarts[i + 1]);
+      console.log(s,e);
+      if(!buffer && arrow){
+      context.strokeStyle = "#333333";
+      context.beginPath();
+      for (var j = 10; j < e - s; j += 10) {
+        var x = s + j;
+        context.translate(x, y);
+        context.beginPath();
+        arrow();
+        //context.closePath()
+        context.stroke();
+        context.translate(-x, -y);
+      }
+    }
+    }
+    if (buffer) {
+      return buffer + "";
+    } else {
+
+    }
+  }
+  chart.width = function (_) {
+    return arguments.length ? (width = _, chart) : width;
+  };
+  chart.color = function (_) {
+    return arguments.length ? (color = _, chart) : color;
+  };
+  chart.context = function (_) {
+    return arguments.length ? (context = _, chart) : context;
+  };
+  return chart
+};
+
+function parseInts(s) {
+  var a = [];
+  s.split(",").forEach(function (d) {
+    a.push(parseInt(d));
+  });
+  return a;
+}
+
 var BB = {
   Get: function (URI, callback) {
     var config = {};
@@ -4988,8 +5146,8 @@ var BB = {
   canvas: function () {
     var id = "gene"; //TODO
     var pos = 0; //for response rect TODO remove this limitation (change to id or get the response var)
-    var height = 5;
-    var gap = 2;
+    var height = 12;
+    var gap = 3;
     var x = 0;
     var y = 0;
     var coord;
@@ -5000,7 +5158,7 @@ var BB = {
     var URI = "";
     var _render_ = function (error, results) {
       ctx.fillStyle = "grey";
-      ctx.fillRect(x,y,coord.width(),height);
+      ctx.fillRect(x, y, coord.width(), height);
       results.forEach(function (d) {
         //onsole.log(d)
         var lines = d.split("\n");
@@ -5009,18 +5167,42 @@ var BB = {
           var a = {
             "chr": t[0],
             "start": parseInt(t[1]),
-            "end": parseInt(t[2]),
-            "name": t[3]
+            "end": parseInt(t[2])
           };
+          if (t.length >= 6) {
+            a["name"] = t[3];
+            a["score"] = parseInt(t[4]);
+            a["strand"] = t[5];
+          }
+          if (t.length >= 12) {
+            a["thickStart"] = parseInt(t[6]);
+            a["thickEnd"] = parseInt(t[7]);
+            a["itemRgb"] = t[8];
+            a["blockCount"] = parseInt(t[9]);
+            a["blockSizes"] = parseInts(t[10]);
+            a["blockStarts"] = parseInts(t[11]);
+          }
+
 
           var xs = coord(a);
           //console.log(a,x)
           //TODO console.log(coord(a))
           ctx.fillStyle = "blue";
-          xs.forEach(function(o){
-            var width = o.l > 1 ? o.l : 1;
-            var yi = trackY.AssignTrack(a);
-            ctx.fillRect(x + o.x, y + yi * (height+gap), width, height);
+          xs.forEach(function (o, i) {
+            if (o.f) {
+              var width = o.l > 1 ? o.l : 1;
+              var yi = trackY.AssignTrack(a);
+              //TODO ctx.fillRect(x + o.x, y + yi * (height+gap), width, height)
+
+              ctx.translate(x + o.x, y + yi * (height + gap));
+              shapeGene().width(width).context(ctx)(a);
+              ctx.translate(-x - o.x, -y - yi * (height + gap));
+
+            } else {
+              ctx.fillStyle = "red"; //TODO partial
+              ctx.fillRect(x + o.x, y + yi * (height + gap), width, height);
+            }
+
           });
 
         });
@@ -5795,7 +5977,6 @@ var rects = function() {
   function chart(data){
     if (context == null) buffer = context = d3.path(); //only path works.
     data.forEach(function(d){
-      console.log(context);
       context.fillStyle = d.color || color;
       context.rect(d.x,d.y,d.width,d.height);
       if (context.fill) {
@@ -5838,6 +6019,7 @@ exports.panel = panel;
 exports.render = render;
 exports.datgui = datgui;
 exports.shapeRects = rects;
+exports.shapeGene = shapeGene;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

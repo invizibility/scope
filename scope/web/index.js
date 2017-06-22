@@ -41,3 +41,4 @@ export{default as datgui} from "./src/datgui"
 
 
 export{default as shapeRects} from "./src/shape/rects"
+export{default as shapeGene} from "./src/shape/gene"

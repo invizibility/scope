@@ -5,7 +5,6 @@ export default function() {
   function chart(data){
     if (context == null) buffer = context = d3.path(); //only path works.
     data.forEach(function(d){
-      console.log(context)
       context.fillStyle = d.color || color
       context.rect(d.x,d.y,d.width,d.height)
       if (context.fill) {
