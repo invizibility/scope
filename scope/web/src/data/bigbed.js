@@ -2,7 +2,7 @@ import {
   totalLength,
   overlap
 } from "./funcs"
-import bed6 from "./bed6"
+import trackManager from "./trackManager"
 import shapeGene from "../shape/gene"
 
 function parseInts(s) {
@@ -35,7 +35,7 @@ export default {
     var coord
     var regions
     var el
-    var trackY
+    var trackM
     var ctx
     var URI = ""
     var _render_ = function (error, results) {
@@ -73,12 +73,12 @@ export default {
           xs.forEach(function (o, i) {
             if (o.f) {
               var width = o.l > 1 ? o.l : 1;
-              var yi = trackY.AssignTrack(a)
+              var yi = trackM.AssignTrack(a)
               //TODO ctx.fillRect(x + o.x, y + yi * (height+gap), width, height)
 
-              ctx.translate(x + o.x, y + yi * (height + gap))
-              shapeGene().width(width).context(ctx)(a)
-              ctx.translate(-x - o.x, -y - yi * (height + gap))
+              ctx.translate(x + o.x, y + yi.i * (height + gap))
+              shapeGene().width(width).label(!yi.c).context(ctx)(a)
+              ctx.translate(-x - o.x, -y - yi.i * (height + gap))
 
             } else {
               ctx.fillStyle = "red" //TODO partial overlap problem.
@@ -99,7 +99,7 @@ export default {
       q.awaitAll(_render_)
     }
     var chart = function (selection) {
-      trackY = bed6().coord(coord)
+      trackM = trackManager().coord(coord)
       el = selection //canvas?
       ctx = el.node().getContext("2d")
       render();

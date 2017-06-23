@@ -61,6 +61,7 @@ export default function () {
   var context
   var buffer
   var width = 200
+  var label = false
 
   function chart(data) {
     var scale = d3.scaleLinear().domain([0, data.end - data.start]).range([0, width])
@@ -77,7 +78,6 @@ export default function () {
     }
     var arrow = arrows[data.strand]
     context.moveTo(0, y)
-    console.log(context)
     context.lineTo(width, y)
     if (!buffer) {
       context.stroke();
@@ -98,7 +98,15 @@ export default function () {
 
     if (!buffer) {
       //context.stroke();
+      // context.save();
+      //context.moveTo(-110,y);
       context.fill();
+      if (label) {
+      context.fillStyle = "black"
+      context.font = "8px Geogria"
+      context.fillText(data.name, scale(0) - 4*data.name.length -4,y + 2)
+      }
+      //context.restore();
     }
     for (var i = 0; i < data.blockCount - 1; i++) {
       var s = scale(data.blockStarts[i] + data.blockSizes[i])
@@ -133,5 +141,6 @@ export default function () {
   chart.context = function (_) {
     return arguments.length ? (context = _, chart) : context;
   }
+  chart.label = function(_) { return arguments.length ? (label= _, chart) : label; }
   return chart
 }

@@ -5157,11 +5157,12 @@ var coord = function () {
   return chart
 };
 
-var bed6 = function () {
+var trackManager = function () {
   var callback;
   var width = 800;
   //var scale = d3.scale.linear().range([0, width]);
   var coord$$1;
+  var labelSize = 110; //TODO.
   var color = function (d) {
     return "blue";
   };
@@ -5169,7 +5170,7 @@ var bed6 = function () {
   var trackHeight = 5;
   var trackSize = 40;
   var trackNumber = 0;
-  var trackAvailableArray = Array.apply(null, Array(trackSize)).map(Number.prototype.valueOf, 0);
+  var trackAvailableArray = Array.apply(null, Array(trackSize)).map(Number.prototype.valueOf, -labelSize);
 
   var minTrackId = function () {
     var i = 0;
@@ -5186,17 +5187,17 @@ var bed6 = function () {
   var _trackAvailable = function (d) {
     var start_pos = d.x;
     for (var i = 0; i < trackSize; i++) {
-      if (trackAvailableArray[i] < start_pos) {
+      if (trackAvailableArray[i] + labelSize <= start_pos) {
         // trackAvailableArray[i] = d.x + d.l //commit to update.
         /*
         if (trackNumber < i) {
           trackNumber = i
         };
         */
-        return i;
+        return {"i":i,"c":false};
       }
     }
-    return minTrackId()
+    return {"i":minTrackId(),"c":true};
   };
   var _putToTrack = function (d, i) {
     d.forEach(function (d) {
@@ -5209,15 +5210,16 @@ var bed6 = function () {
     }
   };
   var trackAssign = function(d) {
-    var i = 0;
+    var r = {i:0,c:false};
     d.forEach(function (d0) {
       var x = _trackAvailable(d0);
-      if (i < x) {
-        i = x;
+      if (r.i <= x.i) {
+         r.i = x.i;
+         r.c = x.c;
       }
     });
-    _putToTrack(d, i);
-    return i
+    _putToTrack(d, r.i);
+    return r
   };
 
   var chart = function (selection) {
@@ -5350,6 +5352,7 @@ var shapeGene = function () {
   var context;
   var buffer;
   var width = 200;
+  var label = false;
 
   function chart(data) {
     var scale = d3.scaleLinear().domain([0, data.end - data.start]).range([0, width]);
@@ -5366,7 +5369,6 @@ var shapeGene = function () {
     };
     var arrow = arrows[data.strand];
     context.moveTo(0, y);
-    console.log(context);
     context.lineTo(width, y);
     if (!buffer) {
       context.stroke();
@@ -5387,7 +5389,15 @@ var shapeGene = function () {
 
     if (!buffer) {
       //context.stroke();
+      // context.save();
+      //context.moveTo(-110,y);
       context.fill();
+      if (label) {
+      context.fillStyle = "black";
+      context.font = "8px Geogria";
+      context.fillText(data.name, scale(0) - 4*data.name.length -4,y + 2);
+      }
+      //context.restore();
     }
     for (var i = 0; i < data.blockCount - 1; i++) {
       var s = scale(data.blockStarts[i] + data.blockSizes[i]);
@@ -5422,6 +5432,7 @@ var shapeGene = function () {
   chart.context = function (_) {
     return arguments.length ? (context = _, chart) : context;
   };
+  chart.label = function(_) { return arguments.length ? (label= _, chart) : label; };
   return chart
 };
 
@@ -5455,7 +5466,7 @@ var BB = {
     var coord;
     var regions;
     var el;
-    var trackY;
+    var trackM;
     var ctx;
     var URI = "";
     var _render_ = function (error, results) {
@@ -5493,12 +5504,12 @@ var BB = {
           xs.forEach(function (o, i) {
             if (o.f) {
               var width = o.l > 1 ? o.l : 1;
-              var yi = trackY.AssignTrack(a);
+              var yi = trackM.AssignTrack(a);
               //TODO ctx.fillRect(x + o.x, y + yi * (height+gap), width, height)
 
-              ctx.translate(x + o.x, y + yi * (height + gap));
-              shapeGene().width(width).context(ctx)(a);
-              ctx.translate(-x - o.x, -y - yi * (height + gap));
+              ctx.translate(x + o.x, y + yi.i * (height + gap));
+              shapeGene().width(width).label(!yi.c).context(ctx)(a);
+              ctx.translate(-x - o.x, -y - yi.i * (height + gap));
 
             } else {
               ctx.fillStyle = "red"; //TODO partial overlap problem.
@@ -5519,7 +5530,7 @@ var BB = {
       q.awaitAll(_render_);
     };
     var chart = function (selection) {
-      trackY = bed6().coord(coord);
+      trackM = trackManager().coord(coord);
       el = selection; //canvas?
       ctx = el.node().getContext("2d");
       render();

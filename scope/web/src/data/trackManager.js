@@ -4,6 +4,7 @@ export default function () {
   var width = 800;
   //var scale = d3.scale.linear().range([0, width]);
   var coord;
+  var labelSize = 110; //TODO.
   var color = function (d) {
     return "blue";
   };
@@ -11,7 +12,7 @@ export default function () {
   var trackHeight = 5;
   var trackSize = 40;
   var trackNumber = 0;
-  var trackAvailableArray = Array.apply(null, Array(trackSize)).map(Number.prototype.valueOf, 0);
+  var trackAvailableArray = Array.apply(null, Array(trackSize)).map(Number.prototype.valueOf, -labelSize);
 
   var minTrackId = function () {
     var i = 0;
@@ -28,17 +29,17 @@ export default function () {
   var _trackAvailable = function (d) {
     var start_pos = d.x;
     for (var i = 0; i < trackSize; i++) {
-      if (trackAvailableArray[i] < start_pos) {
+      if (trackAvailableArray[i] + labelSize <= start_pos) {
         // trackAvailableArray[i] = d.x + d.l //commit to update.
         /*
         if (trackNumber < i) {
           trackNumber = i
         };
         */
-        return i;
+        return {"i":i,"c":false};
       }
     }
-    return minTrackId()
+    return {"i":minTrackId(),"c":true};
   }
   var _putToTrack = function (d, i) {
     d.forEach(function (d) {
@@ -51,15 +52,16 @@ export default function () {
     };
   }
   var trackAssign = function(d) {
-    var i = 0;
+    var r = {i:0,c:false};
     d.forEach(function (d0) {
       var x = _trackAvailable(d0)
-      if (i < x) {
-        i = x;
+      if (r.i <= x.i) {
+         r.i = x.i;
+         r.c = x.c;
       }
     })
-    _putToTrack(d, i)
-    return i
+    _putToTrack(d, r.i)
+    return r
   }
 
   var chart = function (selection) {
