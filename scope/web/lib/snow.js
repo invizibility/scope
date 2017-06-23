@@ -5394,8 +5394,8 @@ var shapeGene = function () {
       context.fill();
       if (label) {
       context.fillStyle = "black";
-      context.font = "8px Geogria";
-      context.fillText(data.name, scale(0) - 4*data.name.length -4,y + 2);
+      context.font = "8px Arial";
+      context.fillText(data.name, scale(0) - 4*data.name.length -10,y + 2);
       }
       //context.restore();
     }
