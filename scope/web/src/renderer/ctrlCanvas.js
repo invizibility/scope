@@ -1,4 +1,5 @@
 import B from "../data/bigwig"
+import bigwigCanvas from "../data/bigwig2"
 import BB from "../data/bigbed"
 import H from "../data/hic2"
 import toolsFixRegions from "../tools/fixRegions"
@@ -386,7 +387,8 @@ export default function (layout, container, state, app) {
     }
     tracks.forEach(function (b, i) {
       bws.push(
-        B.canvas()
+        //B.canvas()
+        bigwigCanvas()
         .URI(server + "/bw") //set this?
         .id(b)
         .x(10)

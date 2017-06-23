@@ -31,7 +31,7 @@ export default {
     var height = 12
     var gap = 3
     var x = 0
-    var y = 0
+    var y = 10
     var coord
     var regions
     var el
@@ -40,7 +40,7 @@ export default {
     var URI = ""
     var _render_ = function (error, results) {
       ctx.fillStyle = "grey"
-      ctx.fillRect(x, y, coord.width(), height)
+      //ctx.fillRect(x, y, coord.width(), height)
       results.forEach(function (d) {
         //onsole.log(d)
         var lines = d.split("\n")
