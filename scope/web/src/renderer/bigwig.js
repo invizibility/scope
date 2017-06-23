@@ -1,4 +1,5 @@
 import B from "../data/bigwig"
+import bigwigCanvas from "../data/bigwig2" //TODO
 import toolsAddChrPrefix from "../tools/addChrPrefix"
 import datgui from "../datgui"
 //TODO Config Part
@@ -90,7 +91,8 @@ export default function (layout, container, state, app) {
     }
     tracks.forEach(function (b, i) {
       bw.push(
-        B.canvas()
+        //B.canvas()
+        bigwigCanvas()
         .URI(server + "/bw") //set this?
         .id(b)
         .x(10)
