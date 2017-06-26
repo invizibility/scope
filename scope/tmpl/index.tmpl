@@ -90,7 +90,7 @@
       "3d": S.render.dna3d
     }
     //  var renderList = ["simple", "3d", "hicMonitor", "hicIcon", "ucsc", "links", "popouts", "external"] //for monitors
-    var renderList = ["simple", "3d", "hicMonitor", "ucsc", "links","ideogram","bigwig","bigbed"] //for monitors
+    var renderList = ["simple", "3d", "hicMonitor", "ucsc", "links","ideogram","bigwig","bigbed","gb"] //for monitors
     var app = {
       "species": S.toolsGetUrlParam("species") || "human",
       "genome": S.toolsGetUrlParam("genome") || "hg19",
@@ -330,6 +330,7 @@
       console.log("init panels")
       $("#layoutContainer").empty();
       initPanels(d, $("#layoutContainer"))
+      //$("#layoutContainer").css("overflow-y","scroll") //TODO
     })
     dispatch.on("initWindows", function(d) {
       console.log("init windows", d)

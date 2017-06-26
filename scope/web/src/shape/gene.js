@@ -111,7 +111,6 @@ export default function () {
     for (var i = 0; i < data.blockCount - 1; i++) {
       var s = scale(data.blockStarts[i] + data.blockSizes[i])
       var e = scale(data.blockStarts[i + 1])
-      console.log(s,e)
       if(!buffer && arrow){
       context.strokeStyle = "#333333"
       context.beginPath();

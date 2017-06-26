@@ -10,7 +10,7 @@
 }
 
 #wrapper {
-    height: 100%;
+    height: calc(100% - 32px);
     position: relative;
     width: 100%;
     overflow: hidden;

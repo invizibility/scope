@@ -278,7 +278,6 @@ export default function (layout, container, state, app) {
   }
   var bigbed;
   var initBb = function (data) {
-    console.log("INIT BIGBED  ???",data)
     bigbed = data;
     if (container.getState().bigBedState) {
       console.log("getState")
