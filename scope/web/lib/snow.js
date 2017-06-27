@@ -6300,48 +6300,43 @@ var gb = function (layout, container, state, app) {
   d3.select(d3.select(container.getElement()[0]).parentNode).style("overflow-y", "scroll");
   var cfg = d3.select(container.getElement()[0]).append("div").classed("cfg", true);
   var content = d3.select(container.getElement()[0]).append("div").classed("content", true).style("overflow-y", "scroll");
-  var dispatch = d3.dispatch("resize","update","brush");
-  content.style("padding-left","10px");
+  var dispatch = d3.dispatch("resize", "update", "brush");
+  content.style("padding-left", "10px");
   var gbtable = content.append("table").classed("gbtable", true).style("table-layout", "fixed");
   var gbtbody = gbtable.append("tbody");
   var tracks = [];
   var trackViews = [];
   //gbtable.merge()
-  var render = function () {
 
-  };
   var heights = {
     "hic": container.width / 2,
     "bigwig": 40,
     "bigbed": 30
   };
   var q = d3.queue();
-  var render = function(){
-    //TODO remember the order, not remove but update;
+  var render = function () {
     gbtbody.selectAll("tr").remove();
     var bw = [];
-    tracks.forEach(function (d,i) {
-      var db = trackdbs[i];
-      d.forEach(function (d,j) { //TODO;
-        var tr = gbtbody.append("tr").attr("id",db.prefix+":"+d);
-        var handle = tr.append("td").classed("dragHandle",true).style("width",10).style("background-color",'#' + Math.floor(Math.random() * 16777215).toString(16));
-        var label = tr.append("td").classed("trackLabel", true).style("width", 80).style("text-align", "right").style("padding-right", 10).text(d);
-        var view = tr.append("td")
-          .classed("trackView", true)
-          .style("width", container.width - 120)
-          .style("height", heights[db.format]);
-        var viewDiv = view.append("div").style("position", "relative").style("height", "100%").style("width", "100%").style("padding-right","0px")
-          .style("background-color", '#' + Math.floor(Math.random() * 16777215).toString(16));
-        var canvas = viewDiv.append("canvas")
-          .attr("width", container.width - 120)
-          .attr("height", heights[db.format]);
-        var ctx = canvas.node().getContext("2d");
-        ctx.fillStyle = "grey";
-        ctx.fillRect(0, 0, container.width - 120, heights[db.format]);
-        if (db.format == "bigwig") {
-          var b = bigwigCanvas()
-          .URI("/" + db.prefix) //set this?
-          .id(d)
+    trackViews.forEach(function (d, i) {
+      var tr = gbtbody.append("tr").attr("id", d.prefix + ":" + d.format + ":" + d.id);
+      var handle = tr.append("td").classed("dragHandle", true).style("width", 10).style("background-color", '#' + Math.floor(Math.random() * 16777215).toString(16));
+      var label = tr.append("td").classed("trackLabel", true).style("width", 80).style("text-align", "right").style("padding-right", 10).text(d.id);
+      var view = tr.append("td")
+        .classed("trackView", true)
+        .style("width", container.width - 120)
+        .style("height", heights[d.format]);
+      var viewDiv = view.append("div").style("position", "relative").style("height", "100%").style("width", "100%").style("padding-right", "0px")
+        .style("background-color", '#' + Math.floor(Math.random() * 16777215).toString(16));
+      var canvas = viewDiv.append("canvas")
+        .attr("width", container.width - 120)
+        .attr("height", heights[d.format]);
+      var ctx = canvas.node().getContext("2d");
+      ctx.fillStyle = "grey";
+      ctx.fillRect(0, 0, container.width - 120, heights[d.format]);
+      if (d.format == "bigwig") {
+        var b = bigwigCanvas()
+          .URI("/" + d.prefix) //set this?
+          .id(d.id)
           .x(0)
           .y(0)
           .width(container.width - 120)
@@ -6350,37 +6345,53 @@ var gb = function (layout, container, state, app) {
           .regions(toolsAddChrPrefix(regions$1))
           .panel(viewDiv)
           .mode(1);
-          bw.push(b);
-          canvas.call(b);
-        }
-
-      });
-
+        bw.push(b);
+        canvas.call(b);
+      }
       dispatch.on("brush.local", function (e) {
-          bw.forEach(function (b, i) {
-              b.response(e);
-          });
+        bw.forEach(function (b, i) {
+          b.response(e);
+        });
       });
 
     });
     $(gbtable.node()).tableDnD({
-      onDrop: function(table,row){
+      onDrop: function (table, row) {
         var rows = table.tBodies[0].rows;
-        var debugStr = "Row dropped was "+row.id+". New order: ";
-        for (var i=0; i<rows.length; i++) {
-            debugStr += rows[i].id+" ";
+        trackViews = [];
+        var debugStr = "Row dropped was " + row.id + ". New order: ";
+        for (var i = 0; i < rows.length; i++) {
+          debugStr += rows[i].id + " ";
+          var x=rows[i].id.split(":");
+          trackViews.push({
+            "prefix": x[0],
+            "format": x[1],
+            "id": x[2]
+          });
         }
         console.log(debugStr);
       },
       dragHandle: ".dragHandle"
     });
   };
+  var initTracks = function () {
+    tracks.forEach(function (d, i) {
+      d.forEach(function (d, j) {
+        trackViews.push({
+          "prefix": trackdbs[i].prefix,
+          "format": trackdbs[i].format,
+          "id": d
+        });
+      });
+    });
+    render();
+  };
   trackdbs.forEach(function (db) {
     q.defer(d3.json, "/" + db.prefix + "/list");
   });
   q.awaitAll(function (error, results) {
     tracks = results;
-    render();
+    initTracks();
 
   });
 
