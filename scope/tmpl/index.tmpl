@@ -8,6 +8,7 @@
   <script src="/lib0/TrackballControls.js"></script>
   <script src="/lib0/CanvasRenderer.js"></script>
   <script src="/lib0/Projector.js"></script>
+  <script type="text/javascript" src="/lib0/jquery.tablednd.js"></script>
   <script src="/lib0/snow.js"></script>
 
   {{template "css"}}
@@ -69,6 +70,7 @@
   var idx = 0;
 
   (function($, d3, S) {
+    console.log($("body"),d3,S)
     //var hiccfg = d3.select("body").append("div").style("display", "none") //TODO
     var generateLinks = function(name, app) {
       var para = [];

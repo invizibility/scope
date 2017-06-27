@@ -219,7 +219,7 @@ export default function () {
   }
   var chart = function (selection) { //selection is canvas;
     canvas = selection;
-    panel.selectAll(".resp" + "_" + pos).remove();
+    panel.selectAll(".resp" + "_" + pos).remove(); //TODO
     if (vertical) {
       respSvg = panel.append("svg")
         .classed("resp_" + pos, true)
